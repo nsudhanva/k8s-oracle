@@ -135,6 +135,9 @@ spec:
           kubernetesGateway:
             enabled: true
         hostNetwork: true
+        updateStrategy:
+          rollingUpdate:
+            maxUnavailable: 1
         tolerations:
           - key: node-role.kubernetes.io/control-plane
             operator: Exists
