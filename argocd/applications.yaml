@@ -138,6 +138,15 @@ spec:
         hostNetwork: true
         service:
           type: ClusterIP
+        securityContext:
+          capabilities:
+            add:
+              - NET_BIND_SERVICE
+            drop:
+              - ALL
+          runAsNonRoot: false
+          runAsUser: 0
+          runAsGroup: 0
         tolerations:
           - key: node-role.kubernetes.io/control-plane
             operator: Exists
