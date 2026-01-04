@@ -5,9 +5,9 @@ export default defineConfig({
   integrations: [
     starlight({
       title: 'K3s on OCI Always Free',
-      social: {
-        github: 'https://github.com/nsudhanva/k3s-oracle',
-      },
+      social: [
+        { icon: 'github', label: 'GitHub', href: 'https://github.com/nsudhanva/k3s-oracle' },
+      ],
       sidebar: [
         {
           label: 'Setup',
