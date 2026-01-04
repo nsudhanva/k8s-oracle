@@ -7,6 +7,13 @@ title: K3s on Oracle Cloud Always Free
 
 This project automates the deployment of a High Availability-ready Kubernetes cluster on Oracle Cloud Infrastructure's **Always Free** tier, solving specific challenges related to networking, ARM architecture, and GitOps bootstrapping.
 
+## Documentation Sections
+
+- [Initial Setup](/setup/initial-setup)
+- [Networking & NAT](/networking/nat-and-firewall)
+- [GitOps Guide](/gitops/app-of-apps)
+- [Troubleshooting](/troubleshooting)
+
 ## Architecture
 
 ### Compute (Ampere A1 Flex)
