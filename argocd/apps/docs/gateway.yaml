@@ -4,7 +4,7 @@ metadata:
   name: docs-gateway
   namespace: default
 spec:
-  gatewayClassName: traefik
+  gatewayClassName: eg
   listeners:
   - name: web
     port: 80
