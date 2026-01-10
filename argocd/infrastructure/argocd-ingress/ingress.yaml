@@ -3,13 +3,10 @@ kind: HTTPRoute
 metadata:
   name: argocd-route
   namespace: argocd
-  annotations:
-    external-dns.alpha.kubernetes.io/target: "132.226.43.62"
 spec:
   parentRefs:
-  - name: public-gateway
-    namespace: default
-    sectionName: https-argocd
+  - name: argocd-gateway
+    namespace: argocd
   hostnames:
   - "cd.k3s.sudhanva.me"
   rules:
@@ -22,27 +19,29 @@ spec:
       port: 80
 ---
 apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
+kind: Gateway
 metadata:
-  name: argocd-redirect
+  name: argocd-gateway
   namespace: argocd
 spec:
-  parentRefs:
-  - name: public-gateway
-    namespace: default
-    sectionName: http
-  hostnames:
-  - "cd.k3s.sudhanva.me"
-  rules:
-  - matches:
-    - path:
-        type: PathPrefix
-        value: /
-    filters:
-    - type: RequestRedirect
-      requestRedirect:
-        scheme: https
-        statusCode: 301
+  gatewayClassName: eg
+  listeners:
+  - name: web
+    port: 80
+    protocol: HTTP
+    allowedRoutes:
+      namespaces:
+        from: Same
+  - name: websecure
+    port: 443
+    protocol: HTTPS
+    allowedRoutes:
+      namespaces:
+        from: Same
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - name: argocd-tls
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
@@ -58,18 +57,3 @@ spec:
   commonName: "cd.k3s.sudhanva.me"
   dnsNames:
   - "cd.k3s.sudhanva.me"
----
-apiVersion: gateway.networking.k8s.io/v1beta1
-kind: ReferenceGrant
-metadata:
-  name: allow-gateway-to-argocd-tls
-  namespace: argocd
-spec:
-  from:
-  - group: gateway.networking.k8s.io
-    kind: Gateway
-    namespace: default
-  to:
-  - group: ""
-    kind: Secret
-    name: argocd-tls

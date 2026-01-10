@@ -11,7 +11,7 @@ resource "oci_identity_policy" "k3s_secrets_policy" {
   description    = "Allow K3s nodes to read secrets from Vault"
 
   statements = [
-    "Allow dynamic-group k3s-nodes-dg to read secret-bundles in compartment id ${var.compartment_ocid}",
-    "Allow dynamic-group k3s-nodes-dg to read secret-bundle-versions in compartment id ${var.compartment_ocid}"
+    "Allow dynamic-group k3s-nodes-dg to read secret-family in compartment id ${var.compartment_ocid}",
+    "Allow dynamic-group k3s-nodes-dg to use vaults in compartment id ${var.compartment_ocid}"
   ]
 }

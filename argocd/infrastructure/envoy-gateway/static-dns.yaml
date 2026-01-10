@@ -9,4 +9,4 @@ spec:
     recordTTL: 300
     recordType: A
     targets:
-    - 132.226.43.62
+    - 150.136.61.40
