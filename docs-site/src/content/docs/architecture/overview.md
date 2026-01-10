@@ -37,24 +37,43 @@ The `tf-k3s` directory contains Terraform code to provision the OCI environment.
   * **NodePorts**: Range `30000-32767` open for Kubernetes services.
   * **Internal**: Full communication allowed within `10.0.0.0/16`.
 
-## 2. Bootstrapping (Ansible)
+## 2. Bootstrapping (Cloud-Init)
 
-Once infrastructure is provisioned, Ansible configures the nodes.
+Once infrastructure is provisioned, cloud-init scripts configure each node automatically.
 
-**Key Roles:**
+**Node Roles:**
 
-* **Base**: Updates packages, configures `netfilter-persistent` (important for firewall persistence).
-* **Kubernetes**: Installs K3s using the official script.
-  * *Server*: Initialized with `--cluster-init`.
-  * *Agents*: Joined using the K3s token.
+* **Ingress Node** (`cloud-init/ingress.yaml`):
+  * Enables IP forwarding for NAT
+  * Configures iptables masquerade
+  * Installs K3s agent with `--node-label role=ingress`
+
+* **Server Node** (`cloud-init/server.yaml`):
+  * Installs K3s server with `--disable traefik`
+  * Deploys Argo CD via HelmChart manifest
+  * Creates secrets (Cloudflare, GitHub, registry credentials)
+  * Configures root Application for GitOps
+
+* **Worker Node** (`cloud-init/worker.yaml`):
+  * Installs K3s agent
+  * Joins cluster using K3s token
 
 ## 3. GitOps (Argo CD)
 
 We use the **App of Apps** pattern.
 
-1. **Bootstrap**: Apply `argocd/install.yaml` manually or via script.
-2. **Parent App**: `argocd/applications.yaml` defines the root application pointing to this repository.
-3. **Sync**: Argo CD automatically syncs infrastructure apps (Cert Manager, Envoy Gateway, etc.) and payload apps (Docs, etc.).
+1. **Bootstrap**: Argo CD is installed automatically via K3s HelmChart during cloud-init on the server node.
+2. **Root App**: The root Application is created pointing to `argocd/` directory in this repository.
+3. **Sync**: Argo CD automatically syncs infrastructure apps (Cert Manager, Envoy Gateway, External DNS) and user apps (Docs).
+
+**Applications deployed:**
+- `gateway-api-crds` - Gateway API CRDs
+- `cert-manager` - TLS certificate automation
+- `external-dns` - Cloudflare DNS management
+- `envoy-gateway` - Gateway API implementation
+- `argocd-self-managed` - Self-managed Argo CD
+- `argocd-ingress` - Argo CD UI ingress
+- `docs-app` - Documentation website
 
 ## 4. Ingress & Networking (Critical Configuration)
 
@@ -98,8 +117,9 @@ OCI Ubuntu images often ship with strict `iptables` rules that can block Kuberne
 
 We use **cert-manager** with **Let's Encrypt** for automatic TLS.
 
-* **ClusterIssuer**: Configured with the **Cloudflare DNS-01** solver. This allows issuing certificates for servers behind firewalls or without public Load Balancers.
-* **Secret Management**: The Cloudflare API Token Secret (`cloudflare-api-token-secret`) **must** reside in the `cert-manager` namespace for the `ClusterIssuer` to access it.
+* **ClusterIssuer**: Configured with the **HTTP-01** challenge via Gateway API. This is simpler than DNS-01 and works well when the cluster has public ingress.
+* **Gateway Integration**: The solver uses `gatewayHTTPRoute` to handle ACME challenges through the Envoy Gateway.
+* **Cloudflare Token**: Still required for External DNS to update A records (Zone:Read, DNS:Edit permissions).
 
 ### Verification
 

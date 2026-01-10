@@ -49,8 +49,42 @@ The Ingress node handles all egress traffic for the private subnet.
 
 ## Ingress Traffic
 
-We use the **Kubernetes Gateway API**.
+We use the **Kubernetes Gateway API** with Envoy Gateway as the implementation.
 
-- Traefik runs on the Ingress node with `hostNetwork: true`.
-- Ports 80 and 443 are bound directly to the node's public IP.
-- Cloudflare DNS points `*.your-domain` to this public IP.
+### Why hostPort Instead of hostNetwork?
+
+Envoy Gateway uses `hostPort` binding instead of `hostNetwork: true`:
+
+- **Service Type**: `ClusterIP` (internal only)
+- **Port Mapping**: Envoy container binds ports 80/443 directly to the host interface
+- **Benefit**: Pod remains in cluster network (overlay), can resolve internal services via CoreDNS
+
+### Configuration
+
+The Envoy proxy is configured via `EnvoyProxy` custom resource:
+
+```yaml
+spec:
+  provider:
+    kubernetes:
+      envoyDeployment:
+        pod:
+          nodeSelector:
+            role: ingress  # Only runs on ingress node
+        patch:
+          value:
+            spec:
+              containers:
+                - name: envoy
+                  ports:
+                    - containerPort: 80
+                      hostPort: 80
+                    - containerPort: 443
+                      hostPort: 443
+```
+
+### DNS
+
+- External DNS automatically updates Cloudflare A records
+- Points your domain to the ingress node's public IP
+- Configured via `external-dns.alpha.kubernetes.io/target` annotation on HTTPRoutes

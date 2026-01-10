@@ -33,8 +33,12 @@ Since the API server is private, you cannot run `kubectl` from your Mac directly
 - **Fix**: Open an SSH tunnel to the Ingress node:
 
   ```bash
-  ssh -L 6443:10.0.2.10:6443 ubuntu@<ingress-ip>
+  ssh -N -L 16443:10.0.2.10:6443 ubuntu@<ingress-ip>
   ```
+
+  We use port `16443` locally to avoid conflicts with any local Kubernetes cluster.
+
+  See [Accessing the Cluster](/operation/accessing-cluster/) for complete setup instructions.
 
 ## 5. Network & CNI (Firewall)
 
