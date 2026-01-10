@@ -60,3 +60,8 @@ variable "common_tags" {
     Environment = "Production"
   }
 }
+
+variable "argocd_admin_password" {
+  description = "ArgoCD admin password to store in OCI Vault"
+  sensitive   = true
+}

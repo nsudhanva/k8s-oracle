@@ -49,6 +49,19 @@ The cluster runs on three Ampere A1 ARM64 instances within OCI's Always Free lim
 | Envoy Gateway | Gateway API implementation |
 | External DNS | Automatic Cloudflare DNS updates |
 | Cert Manager | Let's Encrypt certificate automation |
+| OCI Vault | Secrets storage (Always Free) |
+| External Secrets | Sync Vault secrets to Kubernetes |
+
+## OCI Always Free Resources
+
+| Resource | Free Limit | Usage |
+|----------|------------|-------|
+| Ampere A1 Compute | 4 OCPUs, 24 GB RAM | 4 OCPUs, 24 GB |
+| Object Storage | 20 GB | ~1 MB (Terraform state) |
+| Vault Secrets | 150 secrets | ~10 secrets |
+| Vault Master Keys | 20 key versions | 1 key |
+| Flexible NLB | 1 instance | Reserved |
+| Load Balancer | 1 instance (10 Mbps) | Reserved |
 
 ```mermaid
 flowchart LR
@@ -143,6 +156,7 @@ ssh -J ubuntu@<ingress-ip> ubuntu@10.0.2.10 "sudo kubectl get applications -n ar
 The full documentation is available at the live cluster site: **[https://k3s.sudhanva.me](https://k3s.sudhanva.me)**.
 
 To view and edit the documentation locally:
+
 ```bash
 cd docs-site
 bun install

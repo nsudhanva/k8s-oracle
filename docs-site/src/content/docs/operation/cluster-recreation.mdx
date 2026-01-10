@@ -1,0 +1,239 @@
+---
+title: Cluster Recreation
+description: Step-by-step guide to recreate the cluster from scratch
+---
+
+import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+This guide walks through recreating the entire K3s cluster from scratch using this repository and secrets stored in OCI Vault.
+
+## Prerequisites
+
+Before starting, ensure you have:
+
+- **OCI Account** with Always Free eligibility
+- **Cloudflare Account** with a managed domain
+- **GitHub Account** with fork of this repository
+- **Local Tools**: Terraform, OCI CLI, kubectl
+
+## Step 1: OCI CLI Setup
+
+<Steps>
+1. **Install OCI CLI**
+   ```bash
+   brew install oci-cli
+   ```
+
+2. **Configure authentication**
+   ```bash
+   oci setup config
+   ```
+   
+   This creates `~/.oci/config` with your tenancy details.
+
+3. **Verify connection**
+   ```bash
+   oci iam user get --user-id <your-user-ocid>
+   ```
+</Steps>
+
+## Step 2: Retrieve Secrets from Vault
+
+If recreating after a disaster, secrets are stored in OCI Vault:
+
+```bash
+# List all secrets in the vault
+oci vault secret list \
+  --compartment-id <compartment-ocid> \
+  --query 'data[].{"name":"secret-name","id":id}' \
+  --output table
+```
+
+### Retrieve Individual Secrets
+
+```bash
+# Generic retrieval command
+oci secrets secret-bundle get \
+  --secret-id <secret-ocid> \
+  --query 'data."secret-bundle-content".content' \
+  --raw-output | base64 -d
+```
+
+<Aside type="note">
+  OCI authentication values (tenancy_ocid, user_ocid, fingerprint) are NOT stored in Vault since they're needed to access Vault. Keep these in a secure password manager.
+</Aside>
+
+## Step 3: Create terraform.tfvars
+
+Create the Terraform variables file with values from Vault:
+
+```bash
+cd tf-k3s
+
+cat > terraform.tfvars << 'EOF'
+# OCI Authentication (from ~/.oci/config or password manager)
+tenancy_ocid     = "ocid1.tenancy.oc1..xxxxx"
+user_ocid        = "ocid1.user.oc1..xxxxx"
+fingerprint      = "xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx"
+private_key_path = "~/.oci/oci_api_key.pem"
+region           = "us-ashburn-1"
+compartment_ocid = "ocid1.compartment.oc1..xxxxx"
+
+# SSH (from Vault: ssh-public-key)
+ssh_public_key_path = "./oci_key.pub"
+
+# Cloudflare (from Vault)
+cloudflare_api_token = "<from vault: cloudflare-api-token>"
+cloudflare_zone_id   = "<from vault: cloudflare-zone-id>"
+domain_name          = "<from vault: domain-name>"
+
+# GitHub (from Vault)
+git_repo_url  = "<from vault: git-repo-url>"
+git_pat       = "<from vault: github-pat>"
+git_username  = "<from vault: github-username>"
+
+# K3s (from Vault)
+k3s_token = "<from vault: k3s-token>"
+
+# Let's Encrypt (from Vault)
+acme_email = "<from vault: acme-email>"
+
+# ArgoCD (from Vault)
+argocd_admin_password = "<from vault: argocd-admin-password>"
+EOF
+```
+
+## Step 4: Create SSH Key
+
+If you don't have the SSH key:
+
+```bash
+# Generate new key pair
+ssh-keygen -t ed25519 -f ./oci_key -N ""
+
+# Or retrieve from Vault
+oci secrets secret-bundle get \
+  --secret-id <ssh-public-key-ocid> \
+  --query 'data."secret-bundle-content".content' \
+  --raw-output | base64 -d > oci_key.pub
+```
+
+## Step 5: Initialize Terraform
+
+<Tabs>
+  <TabItem label="New Cluster">
+    ```bash
+    terraform init
+    terraform plan
+    terraform apply
+    ```
+  </TabItem>
+  <TabItem label="With Existing State">
+    ```bash
+    # State is in OCI Object Storage bucket
+    terraform init
+    terraform plan
+    ```
+  </TabItem>
+</Tabs>
+
+<Aside type="caution">
+  If the Object Storage bucket with state already exists, Terraform will connect to it automatically. Never run `terraform apply` without reviewing the plan carefully.
+</Aside>
+
+## Step 6: Wait for Bootstrap
+
+After Terraform completes, wait approximately 5 minutes for:
+
+1. Cloud-init to complete on all nodes
+2. K3s cluster to form
+3. ArgoCD to bootstrap
+4. Applications to sync
+
+## Step 7: Verify Cluster
+
+### Connect via SSH
+
+```bash
+# Get ingress IP from Terraform output
+INGRESS_IP=$(terraform output -raw ingress_public_ip)
+
+# SSH to server via ingress jump host
+ssh -J ubuntu@$INGRESS_IP ubuntu@10.0.2.10
+```
+
+### Check Kubernetes
+
+```bash
+sudo kubectl get nodes
+sudo kubectl get pods -A
+```
+
+### Check ArgoCD Applications
+
+```bash
+sudo kubectl get applications -n argocd
+```
+
+## Step 8: Access ArgoCD UI
+
+### Get Credentials
+
+<Tabs>
+  <TabItem label="From Vault">
+    ```bash
+    oci secrets secret-bundle get \
+      --secret-id <argocd-admin-password-ocid> \
+      --query 'data."secret-bundle-content".content' \
+      --raw-output | base64 -d
+    ```
+  </TabItem>
+  <TabItem label="From Cluster">
+    ```bash
+    kubectl -n argocd get secret argocd-initial-admin-secret \
+      -o jsonpath='{.data.password}' | base64 -d
+    ```
+  </TabItem>
+</Tabs>
+
+### Login
+
+```bash
+argocd login argocd.<your-domain> \
+  --username admin \
+  --password <password-from-above>
+```
+
+## Troubleshooting
+
+### State Lock Issues
+
+If Terraform state is locked from a previous run:
+
+```bash
+terraform force-unlock <lock-id>
+```
+
+### ArgoCD Sync Issues
+
+If applications aren't syncing, check the repo credentials:
+
+```bash
+kubectl -n argocd get secret repo-creds -o yaml
+```
+
+### DNS Not Resolving
+
+Wait for External DNS to create records (up to 5 minutes), then verify:
+
+```bash
+dig @1.1.1.1 argocd.<your-domain>
+```
+
+## Post-Recreation Checklist
+
+- [ ] All nodes are Ready
+- [ ] ArgoCD applications are Synced
+- [ ] DNS records are created
+- [ ] TLS certificates are issued
+- [ ] Applications are accessible via HTTPS
