@@ -25,7 +25,7 @@ resource "local_file" "external_dns_kustomization" {
 }
 
 resource "local_file" "external_dns_rbac" {
-  for_each = fileset("${path.module}/templates/manifests/external-dns", "*.yaml*")
+  for_each = { for f in fileset("${path.module}/templates/manifests/external-dns", "*.yaml*") : f => f if f != "kustomization.yaml.tpl" }
   filename = "../argocd/infrastructure/external-dns/${replace(each.value, ".tpl", "")}"
   content  = file("${path.module}/templates/manifests/external-dns/${each.value}")
 }
