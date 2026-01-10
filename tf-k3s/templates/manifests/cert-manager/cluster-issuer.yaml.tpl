@@ -8,9 +8,9 @@ spec:
     server: https://acme-v02.api.letsencrypt.org/directory
     privateKeySecretRef:
       name: cloudflare-issuer-account-key
-        solvers:
-        - http01:
-            gatewayHTTPRoute:
+    solvers:
+    - http01:
+        gatewayHTTPRoute:
               parentRefs:
               - name: docs-gateway
                 namespace: default
