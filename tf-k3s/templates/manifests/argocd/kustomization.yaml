@@ -9,6 +9,8 @@ helmCharts:
     namespace: argocd
     valuesInline:
       server:
+        config:
+          kustomize.buildOptions: "--enable-helm"
         service:
           type: ClusterIP
       # We must ensure we don't break the existing install.
