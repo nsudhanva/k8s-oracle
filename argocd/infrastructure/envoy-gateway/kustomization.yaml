@@ -5,3 +5,4 @@ resources:
   - https://github.com/envoyproxy/gateway/releases/download/v1.3.0/install.yaml
   # Custom EnvoyProxy and GatewayClass config
   - config.yaml
+  - static-dns.yaml

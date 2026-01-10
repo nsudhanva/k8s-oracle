@@ -19,6 +19,8 @@ spec:
   provider:
     type: Kubernetes
     kubernetes:
+      envoyService:
+        type: NodePort
       useListenerPortAsContainerPort: true
       envoyDeployment:
         pod:
