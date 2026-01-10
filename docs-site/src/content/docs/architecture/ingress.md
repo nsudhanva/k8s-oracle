@@ -91,6 +91,86 @@ Using `hostNetwork: true` would give the pod the host's network namespace. This 
 
 Using `hostPort` keeps the pod in the cluster network namespace while still binding to host ports. The pod can resolve Kubernetes services via CoreDNS.
 
+## Single Public Gateway
+
+All public applications share a single Gateway resource (`public-gateway` in the `default` namespace). This is required because only one Envoy deployment can bind to hostPort 80/443 on the ingress node.
+
+The Gateway defines multiple HTTPS listeners, one per hostname:
+
+```yaml
+listeners:
+- name: http
+  port: 80
+  protocol: HTTP
+  allowedRoutes:
+    namespaces:
+      from: All
+- name: https-docs
+  port: 443
+  protocol: HTTPS
+  hostname: "k3s.sudhanva.me"
+  tls:
+    certificateRefs:
+    - name: docs-tls
+- name: https-argocd
+  port: 443
+  protocol: HTTPS
+  hostname: "cd.k3s.sudhanva.me"
+  tls:
+    certificateRefs:
+    - name: argocd-tls
+      namespace: argocd
+```
+
+## HTTPS Enforcement
+
+All HTTP traffic is redirected to HTTPS using a 301 permanent redirect. Each application has two HTTPRoutes:
+
+1. A route attached to the HTTPS listener that serves traffic
+2. A redirect route attached to the HTTP listener
+
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: docs-redirect
+spec:
+  parentRefs:
+  - name: public-gateway
+    sectionName: http
+  hostnames:
+  - "k3s.sudhanva.me"
+  rules:
+  - filters:
+    - type: RequestRedirect
+      requestRedirect:
+        scheme: https
+        statusCode: 301
+```
+
+## Cross-Namespace References
+
+When the Gateway references a TLS secret in a different namespace, a ReferenceGrant is required:
+
+```yaml
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: allow-gateway-to-argocd-tls
+  namespace: argocd
+spec:
+  from:
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    namespace: default
+  to:
+  - group: ""
+    kind: Secret
+    name: argocd-tls
+```
+
+This allows the public-gateway in the default namespace to use the argocd-tls secret.
+
 ## Security Considerations
 
 ### Single Point of Entry

@@ -69,9 +69,29 @@ spec:
       targetPort: 80
 ```
 
-## HTTPRoute Manifest
+## Update Public Gateway
 
-Create `argocd/apps/nginx/httproute.yaml`:
+Add a new HTTPS listener for nginx to `argocd/apps/docs/gateway.yaml`:
+
+```yaml
+- name: https-nginx
+  port: 443
+  protocol: HTTPS
+  hostname: "nginx.example.com"
+  allowedRoutes:
+    namespaces:
+      from: All
+  tls:
+    mode: Terminate
+    certificateRefs:
+    - name: nginx-tls
+```
+
+All applications share the single `public-gateway` since only one Envoy can bind to hostPort 80/443.
+
+## HTTPRoute Manifests
+
+Create `argocd/apps/nginx/httproute.yaml` with both HTTPS route and HTTP redirect:
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -83,17 +103,40 @@ metadata:
     external-dns.alpha.kubernetes.io/target: "<ingress-public-ip>"
 spec:
   parentRefs:
-    - name: docs-gateway
+  - name: public-gateway
+    sectionName: https-nginx
   hostnames:
-    - "nginx.example.com"
+  - "nginx.example.com"
   rules:
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /
-      backendRefs:
-        - name: nginx
-          port: 80
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: nginx
+      port: 80
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: nginx-redirect
+  namespace: default
+spec:
+  parentRefs:
+  - name: public-gateway
+    sectionName: http
+  hostnames:
+  - "nginx.example.com"
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    filters:
+    - type: RequestRedirect
+      requestRedirect:
+        scheme: https
+        statusCode: 301
 ```
 
 Replace `<ingress-public-ip>` with your ingress node's public IP from `terraform output`.
@@ -116,43 +159,8 @@ spec:
     name: cloudflare-issuer
     kind: ClusterIssuer
   dnsNames:
-    - "nginx.example.com"
+  - "nginx.example.com"
 ```
-
-## Gateway (Optional)
-
-You can use the existing `docs-gateway` or create a dedicated gateway.
-
-To create a separate gateway, add `argocd/apps/nginx/gateway.yaml`:
-
-```yaml
-apiVersion: gateway.networking.k8s.io/v1
-kind: Gateway
-metadata:
-  name: nginx-gateway
-  namespace: default
-spec:
-  gatewayClassName: eg
-  listeners:
-    - name: http
-      port: 80
-      protocol: HTTP
-      allowedRoutes:
-        namespaces:
-          from: Same
-    - name: https
-      port: 443
-      protocol: HTTPS
-      tls:
-        mode: Terminate
-        certificateRefs:
-          - name: nginx-tls
-      allowedRoutes:
-        namespaces:
-          from: Same
-```
-
-Update the HTTPRoute's `parentRefs` to reference `nginx-gateway` instead of `docs-gateway`.
 
 ## Register with Argo CD
 
