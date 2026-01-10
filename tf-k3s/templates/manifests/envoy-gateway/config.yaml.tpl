@@ -59,3 +59,42 @@ spec:
                           hostPort: 443
                           name: https
                           protocol: TCP
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: public-gateway
+  namespace: envoy-gateway-system
+spec:
+  gatewayClassName: eg
+  listeners:
+    - name: http
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: https-docs
+      port: 443
+      protocol: HTTPS
+      hostname: "${domain_name}"
+      allowedRoutes:
+        namespaces:
+          from: All
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: docs-tls
+            namespace: default
+    - name: https-argocd
+      port: 443
+      protocol: HTTPS
+      hostname: "cd.${domain_name}"
+      allowedRoutes:
+        namespaces:
+          from: All
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: argocd-tls
+            namespace: argocd

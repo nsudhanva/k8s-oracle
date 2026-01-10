@@ -32,7 +32,9 @@ resource "local_file" "external_dns_rbac" {
 
 resource "local_file" "envoy_gateway_config" {
   filename = "../argocd/infrastructure/envoy-gateway/config.yaml"
-  content  = file("${path.module}/templates/manifests/envoy-gateway/config.yaml")
+  content = templatefile("${path.module}/templates/manifests/envoy-gateway/config.yaml.tpl", {
+    domain_name = var.domain_name
+  })
 }
 
 resource "local_file" "envoy_gateway_kustomization" {

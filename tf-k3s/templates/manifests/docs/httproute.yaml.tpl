@@ -7,7 +7,8 @@ metadata:
     external-dns.alpha.kubernetes.io/target: "${ingress_public_ip}"
 spec:
   parentRefs:
-  - name: docs-gateway
+  - name: public-gateway
+    namespace: envoy-gateway-system
   hostnames:
   - "${domain_name}"
   rules:

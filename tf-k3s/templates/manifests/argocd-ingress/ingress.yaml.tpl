@@ -5,8 +5,8 @@ metadata:
   namespace: argocd
 spec:
   parentRefs:
-  - name: argocd-gateway
-    namespace: argocd
+  - name: public-gateway
+    namespace: envoy-gateway-system
   hostnames:
   - "cd.${domain_name}"
   rules:
@@ -17,31 +17,6 @@ spec:
     backendRefs:
     - name: argocd-server
       port: 80
----
-apiVersion: gateway.networking.k8s.io/v1
-kind: Gateway
-metadata:
-  name: argocd-gateway
-  namespace: argocd
-spec:
-  gatewayClassName: eg
-  listeners:
-  - name: web
-    port: 80
-    protocol: HTTP
-    allowedRoutes:
-      namespaces:
-        from: Same
-  - name: websecure
-    port: 443
-    protocol: HTTPS
-    allowedRoutes:
-      namespaces:
-        from: Same
-    tls:
-      mode: Terminate
-      certificateRefs:
-      - name: argocd-tls
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate

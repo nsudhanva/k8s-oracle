@@ -7,7 +7,8 @@ metadata:
     external-dns.alpha.kubernetes.io/target: "129.80.56.234"
 spec:
   parentRefs:
-  - name: docs-gateway
+  - name: public-gateway
+    namespace: envoy-gateway-system
   hostnames:
   - "k3s.sudhanva.me"
   rules:
