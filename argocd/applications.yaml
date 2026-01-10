@@ -103,41 +103,6 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/envoyproxy/gateway.git
-    targetRevision: v1.3.0
-    path: charts/gateway-helm
-    helm:
-      valuesObject:
-        deployment:
-          replicas: 1
-        service:
-          annotations: {}
-        config:
-          envoyGateway:
-            gateway:
-              controllerName: gateway.envoyproxy.io/gatewayclass-controller
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: envoy-gateway-system
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
----
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: envoy-gateway-config
-  namespace: argocd
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
-  annotations:
-    argocd.argoproj.io/sync-wave: "2"
-spec:
-  project: default
-  source:
     repoURL: https://github.com/nsudhanva/k3s-oracle.git
     targetRevision: HEAD
     path: argocd/infrastructure/envoy-gateway
@@ -150,6 +115,7 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - ServerSideApply=true
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
