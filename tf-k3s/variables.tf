@@ -8,7 +8,7 @@ variable "compartment_ocid" {}
 variable "ssh_public_key_path" {
   description = "Path to the SSH Public Key to use for instances."
   type        = string
-  default     = "/Users/sudhanva/.oci/oci_api_key_public.pem"
+  default     = "./oci_key.pub"
 }
 
 variable "ssh_source_cidr" {
