@@ -12,7 +12,7 @@ spec:
     - http01:
         gatewayHTTPRoute:
               parentRefs:
-              - name: docs-gateway
-                namespace: default
+              - name: public-gateway
+                namespace: envoy-gateway-system
                 kind: Gateway
                 group: gateway.networking.k8s.io
