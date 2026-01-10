@@ -18,12 +18,12 @@ helmCharts:
             secretKeyRef:
               name: cloudflare-api-token-secret
               key: api-token
-      domainFilters:
-        - sudhanva.me
-      zoneIdFilter:
-        - 293c1768d72a5378bbdb4d59fc8e8bfc
-                        sources:
-                          - ingress
+            domainFilters:
+              - sudhanva.me
+            extraArgs:
+              - --zone-id-filter=293c1768d72a5378bbdb4d59fc8e8bfc
+              - --log-level=debug
+            sources:                          - ingress
                           - crd
                         rbac:        create: true
         extraRules:
