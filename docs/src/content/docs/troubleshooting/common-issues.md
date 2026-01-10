@@ -66,7 +66,7 @@ See [Accessing the Cluster](/operation/accessing-cluster/) for complete instruct
 
 ## Firewall Blocking CNI Traffic
 
-OCI Ubuntu images have strict iptables rules that block Flannel VXLAN traffic.
+OCI Ubuntu images have strict iptables rules that block Flannel VXLAN traffic (UDP 8472).
 
 ```mermaid
 flowchart LR
@@ -81,18 +81,37 @@ flowchart LR
     end
 ```
 
-Symptom: Pods cannot resolve DNS with `i/o timeout` errors.
+Symptom: Pods cannot resolve DNS with `i/o timeout` errors, or pods on the ingress node cannot reach pods on other nodes.
 
-Fix:
+The ingress node requires specific iptables rules because it's in a different subnet (10.0.1.0/24) than the server/worker nodes (10.0.2.0/24):
 
 ```bash
-sudo iptables -P INPUT ACCEPT
-sudo iptables -P FORWARD ACCEPT
-sudo iptables -F
+sudo iptables -I INPUT -p udp --dport 8472 -j ACCEPT
+sudo iptables -I INPUT -s 10.0.2.0/24 -j ACCEPT
+sudo iptables -I INPUT -s 10.42.0.0/16 -j ACCEPT
+sudo iptables -I FORWARD -s 10.42.0.0/16 -d 10.42.0.0/16 -j ACCEPT
 sudo netfilter-persistent save
 ```
 
 Cloud-init applies these rules automatically.
+
+## Pod-to-Pod Connectivity Issues
+
+If pods on the ingress node (e.g., Envoy) cannot connect to pods on other nodes:
+
+Symptom: Envoy returns `503 Service Unavailable` with `upstream_reset_before_response_started{remote_connection_failure}`.
+
+This occurs when:
+1. VXLAN traffic (UDP 8472) is blocked by iptables
+2. Traffic from the pod network (10.42.0.0/16) is blocked
+
+Verify connectivity:
+
+```bash
+ssh ubuntu@<ingress-ip> "ping -c 2 10.42.0.26"
+```
+
+If ping works but TCP doesn't, check iptables INPUT chain for REJECT rules.
 
 ## Argo CD Helm Chart Errors
 
@@ -136,3 +155,32 @@ Fix: Explicitly provide the zone ID with `--zone-id-filter=<zone-id>`.
 External DNS may not detect HTTPRoute targets if the Gateway status address is internal.
 
 Fix: Add the annotation `external-dns.alpha.kubernetes.io/target: <public-ip>` to the HTTPRoute.
+
+## Gateway TLS Certificate RefNotPermitted
+
+If the Gateway shows `PROGRAMMED: False` with `RefNotPermitted` errors, it cannot access TLS secrets from other namespaces.
+
+Symptom: `kubectl describe gateway public-gateway` shows:
+```
+Certificate ref to secret argocd/argocd-tls not permitted by any ReferenceGrant
+```
+
+Fix: Create ReferenceGrants in each namespace containing TLS secrets:
+
+```yaml
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: allow-gateway-to-secrets
+  namespace: argocd
+spec:
+  from:
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    namespace: envoy-gateway-system
+  to:
+  - group: ""
+    kind: Secret
+```
+
+The Envoy Gateway config template includes these ReferenceGrants automatically.

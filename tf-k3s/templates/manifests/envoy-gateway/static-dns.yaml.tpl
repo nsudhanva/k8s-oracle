@@ -10,3 +10,8 @@ spec:
     recordType: A
     targets:
     - ${ingress_public_ip}
+  - dnsName: cd.${domain_name}
+    recordTTL: 300
+    recordType: A
+    targets:
+    - ${ingress_public_ip}

@@ -77,11 +77,21 @@ iptables -t nat -A POSTROUTING -o enp0s6 -j MASQUERADE
 
 ### Firewall Rules
 
-Ubuntu 24.04 on OCI includes restrictive iptables rules that block forwarded traffic:
+Ubuntu 24.04 on OCI includes restrictive iptables rules that block forwarded traffic. The ingress node requires additional rules because it's in a different subnet and needs to:
+
+1. Allow VXLAN traffic (UDP 8472) for Flannel pod networking
+2. Allow traffic from the private subnet (10.0.2.0/24)
+3. Allow traffic from the pod network (10.42.0.0/16)
+4. Allow HTTP/HTTPS traffic (ports 80, 443)
 
 ```bash
 iptables -P FORWARD ACCEPT
-iptables -F FORWARD
+iptables -I INPUT -p udp --dport 8472 -j ACCEPT
+iptables -I INPUT -s 10.0.2.0/24 -j ACCEPT
+iptables -I INPUT -s 10.42.0.0/16 -j ACCEPT
+iptables -I INPUT -p tcp --dport 80 -j ACCEPT
+iptables -I INPUT -p tcp --dport 443 -j ACCEPT
+iptables -I FORWARD -s 10.42.0.0/16 -d 10.42.0.0/16 -j ACCEPT
 netfilter-persistent save
 ```
 
@@ -98,6 +108,8 @@ flowchart LR
         I2 -->|MASQUERADE| Int[Internet]
     end
 ```
+
+Cloud-init applies these rules automatically during node bootstrap.
 
 ## Ingress Traffic
 

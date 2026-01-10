@@ -1,3 +1,31 @@
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: allow-gateway-to-secrets
+  namespace: default
+spec:
+  from:
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    namespace: envoy-gateway-system
+  to:
+  - group: ""
+    kind: Secret
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: allow-gateway-to-secrets
+  namespace: argocd
+spec:
+  from:
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    namespace: envoy-gateway-system
+  to:
+  - group: ""
+    kind: Secret
+---
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
