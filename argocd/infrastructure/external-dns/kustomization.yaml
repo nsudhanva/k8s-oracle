@@ -19,7 +19,7 @@ helmCharts:
               name: cloudflare-api-token-secret
               key: api-token
       domainFilters:
-        - k3s.sudhanva.me
+        - ${domain_name}
       sources:
         - ingress
         - gateway-httproute

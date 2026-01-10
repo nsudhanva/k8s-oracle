@@ -25,8 +25,8 @@ resource "local_file" "external_dns_kustomization" {
 }
 
 resource "local_file" "external_dns_rbac" {
-  for_each = fileset("${path.module}/templates/manifests/external-dns", "*.yaml")
-  filename = "../argocd/infrastructure/external-dns/${each.value}"
+  for_each = fileset("${path.module}/templates/manifests/external-dns", "*.yaml*")
+  filename = "../argocd/infrastructure/external-dns/${replace(each.value, ".tpl", "")}"
   content  = file("${path.module}/templates/manifests/external-dns/${each.value}")
 }
 
@@ -62,7 +62,7 @@ resource "local_file" "argocd_self_managed" {
 
 resource "local_file" "docs_manifests" {
   for_each = fileset("${path.module}/templates/manifests/docs", "*")
-  filename = "../argocd/apps/docs/${each.value}"
+  filename = "../argocd/apps/docs/${replace(each.value, ".tpl", "")}"
   content = templatefile("${path.module}/templates/manifests/docs/${each.value}", {
     domain_name   = var.domain_name
     git_username  = var.git_username
