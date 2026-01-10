@@ -18,14 +18,16 @@ helmCharts:
             secretKeyRef:
               name: cloudflare-api-token-secret
               key: api-token
-            domainFilters:
-              - sudhanva.me
-            extraArgs:
-              - --zone-id-filter=293c1768d72a5378bbdb4d59fc8e8bfc
-              - --log-level=debug
-            sources:                          - ingress
-                          - crd
-                        rbac:        create: true
+      domainFilters:
+        - sudhanva.me
+      extraArgs:
+        - --zone-id-filter=293c1768d72a5378bbdb4d59fc8e8bfc
+        - --log-level=debug
+      sources:
+        - ingress
+        - crd
+      rbac:
+        create: true
         extraRules:
           - apiGroups: ["gateway.networking.k8s.io"]
             resources: ["gateways","httproutes","grpcroutes","tlsroutes","tcproutes","udproutes","gatewayclasses"]
