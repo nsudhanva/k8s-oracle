@@ -1,36 +1,36 @@
 ---
-title: K3s on Oracle Cloud Always Free
-description: Automating a High Availability-ready Kubernetes cluster on Oracle Cloud Infrastructure's Always Free tier.
+title: Welcome
+description: Complete guide to the OCI K3s Cluster.
 template: splash
 hero:
-  tagline: A robust, automated, GitOps-driven Kubernetes cluster on OCI Always Free ARM64.
+  tagline: A production-ready, self-healing K3s cluster on OCI Always Free tier using GitOps.
   image:
     file: ../../assets/houston.webp
   actions:
     - text: Get Started
-      link: /setup/initial-setup
+      link: /getting-started/prerequisites/
       icon: right-arrow
       variant: primary
-    - text: View on GitHub
-      link: https://github.com/nsudhanva/k3s-oracle
+    - text: Architecture
+      link: /architecture/overview/
       icon: external
 ---
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
-## Features
+## Key Features
 
 <CardGrid stagger>
-	<Card title="Always Free" icon="star">
-		Runs entirely on OCI's Always Free tier using Ampere A1 Compute (4 OCPUs, 24GB RAM).
+	<Card title="Always Free" icon="rocket">
+		Runs entirely on Oracle Cloud's free tier (Ampere A1 ARM64 instances).
 	</Card>
-	<Card title="Automated NAT" icon="pencil">
-		Solves OCI's lack of free NAT Gateway with a software router on the Ingress node.
+	<Card title="GitOps Powered" icon="github">
+		Managed by **Argo CD**. All infrastructure and applications are defined as code.
 	</Card>
-	<Card title="GitOps Driven" icon="add-document">
-		Managed by Argo CD with the App-of-Apps pattern. Infrastructure as Code via Terraform.
+	<Card title="Modern Ingress" icon="seti:graphql">
+		Uses **Envoy Gateway** (Gateway API) for advanced traffic management.
 	</Card>
-	<Card title="Gateway API" icon="setting">
-		Exposes services via Kubernetes Gateway API (Traefik) on ports 80/443 without paid Load Balancers.
-	</Card>
+    <Card title="Automated DNS & TLS" icon="setting">
+        **External DNS** (Cloudflare) and **Cert Manager** (Let's Encrypt) handle domains and certificates automatically.
+    </Card>
 </CardGrid>
