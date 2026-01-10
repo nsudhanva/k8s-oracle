@@ -35,3 +35,42 @@ Since the API server is private, you cannot run `kubectl` from your Mac directly
   ```bash
   ssh -L 6443:10.0.2.10:6443 ubuntu@<ingress-ip>
   ```
+
+## 5. Network & CNI (Firewall)
+
+OCI Ubuntu images have strict `iptables` that can block Flannel VXLAN (UDP 8472) traffic between nodes, causing DNS timeouts inside the cluster.
+
+- **Symptom**: Pods cannot resolve DNS (`i/o timeout` lookup `kubernetes.default`).
+- **Fix**: Flush default rules. Cloud-init handles this, but if it fails:
+  ```bash
+  sudo iptables -P INPUT ACCEPT
+  sudo iptables -P FORWARD ACCEPT
+  sudo iptables -F
+  sudo netfilter-persistent save
+  ```
+
+## 6. Argo CD & Helm Charts
+
+When using Kustomize to inflate Helm Charts (like `cert-manager`), Argo CD requires explicit enablement.
+
+- **Error**: `must specify --enable-helm`.
+- **Fix**: Patch `argocd-cm` ConfigMap in the `argocd-self-managed` application.
+  ```yaml
+  data:
+    kustomize.buildOptions: "--enable-helm"
+  ```
+
+## 7. SSH Key Format
+
+OCI Metadata requires OpenSSH formatted public keys (`ssh-rsa ...`), not PEM format (`-----BEGIN...`).
+
+- **Fix**: Convert PEM keys before using in Terraform.
+  ```bash
+  ssh-keygen -y -f ~/.oci/oci_api_key.pem > oci_key.pub
+  ```
+
+## 8. Envoy Gateway & Docker Hub OCI
+
+Docker Hub often rate-limits or blocks OCI artifact requests (`oci://`) from Cloud IPs without authentication (`401 Unauthorized`).
+
+- **Fix**: Use the Git-based installation method instead of Helm OCI for Envoy Gateway. The `kustomization.yaml` should point to the raw `install.yaml` from the GitHub release.
