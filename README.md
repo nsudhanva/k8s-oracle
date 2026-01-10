@@ -158,7 +158,7 @@ The full documentation is available at the live cluster site: **[https://k3s.sud
 To view and edit the documentation locally:
 
 ```bash
-cd docs-site
+cd docs
 bun install
 bun start
 ```
