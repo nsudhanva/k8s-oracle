@@ -26,6 +26,7 @@ helmCharts:
       sources:
         - ingress
         - crd
+        - gateway-httproute
       rbac:
         create: true
         extraRules:
