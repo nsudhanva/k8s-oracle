@@ -11,6 +11,7 @@ helmCharts:
     releaseName: external-dns
     namespace: external-dns
     valuesInline:
+      logLevel: debug
       provider: cloudflare
       env:
         - name: CF_API_TOKEN
@@ -22,7 +23,6 @@ helmCharts:
         - sudhanva.me
       extraArgs:
         - --zone-id-filter=293c1768d72a5378bbdb4d59fc8e8bfc
-        - --log-level=debug
       sources:
         - ingress
         - crd
