@@ -16,13 +16,17 @@ This page covers how to stand up the cluster from zero using Terraform.
 
 Create `tf-k3s/terraform.tfvars`. Ensure the following variables are set:
 
-- `tenancy_ocid`, `user_ocid`, `fingerprint`, `private_key_path`.
-- `cloudflare_api_token`, `domain_name`, `acme_email`.
-- `git_repo_url`: The URL of **this** repository.
-- `git_pat`: Your GitHub Personal Access Token (Classic) with `repo` and `read:packages` scope. This allows Argo CD to access the repo and K3s to pull private images.
-- `git_username`: Your GitHub username (used for GHCR image paths).
-- `git_repo_name`: The name of this repository (default `k3s-oracle`).
-- `ssh_public_key_path`: Path to your OCI/SSH public key (default `/Users/sudhanva/.oci/oci_api_key_public.pem`).
+- `tenancy_ocid`, `user_ocid`, `fingerprint`, `private_key_path`: Your OCI credentials.
+- `cloudflare_api_token`: Cloudflare API Token (Edit Zone DNS).
+- `cloudflare_zone_id`: The Zone ID for your domain (found on the Cloudflare dashboard overview).
+- `domain_name`: Your target domain (e.g., `example.com`).
+- `acme_email`: Email for Let's Encrypt notifications.
+- `git_repo_url`: The HTTPS URL of **your fork** of this repository.
+- `git_pat`: Your GitHub Personal Access Token (Classic) with `repo` and `read:packages` scope.
+- `git_username`: Your GitHub username.
+- `ssh_public_key_path`: Absolute path to your OCI-compatible SSH public key (e.g., `~/.oci/oci_api_key_public.pem` or `~/.ssh/id_rsa.pub`).
+
+> **Note**: This setup uses the **HTTP-01** challenge for SSL certificates to avoid complex Cloudflare permission issues. Ensure your `cloudflare_api_token` has at least `Zone:Read` and `DNS:Edit` permissions.
 
 ## 3. Provisioning
 
