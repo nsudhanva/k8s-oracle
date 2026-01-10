@@ -27,7 +27,7 @@ This project provisions a **3-node K3s cluster on Oracle Cloud Infrastructure (O
 ### 1. NEVER Commit Secrets
 
 - **terraform.tfvars** - Contains all sensitive credentials (gitignored)
-- **terraform.tfstate** - Contains infrastructure state with secrets (gitignored)
+- **terraform.tfstate** - Contains infrastructure state with secrets - this needs to be stored in OCI Bucket
 - OCI API keys, Cloudflare tokens, GitHub PATs are stored in OCI Vault
 - Always check `git diff --staged` before committing
 
