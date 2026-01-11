@@ -80,6 +80,7 @@ flowchart LR
     subgraph External["External Services"]
         OCI[(OCI)]
         GH[(GitHub)]
+        GHCR[(GHCR)]
         CFl[(Cloudflare)]
         LE[(Let's Encrypt)]
         Vault[(OCI Vault)]
@@ -88,7 +89,9 @@ flowchart LR
     TF -->|provisions| OCI
     TF -->|provisions| Vault
     TF -->|generates| GH
+    GH -->|Actions| GHCR
     GH -->|syncs| Argo
+    GHCR -->|images| Argo
     Argo -->|deploys| EG
     Argo -->|deploys| CM
     Argo -->|deploys| ED
