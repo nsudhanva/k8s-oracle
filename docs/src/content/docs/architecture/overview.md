@@ -1,5 +1,6 @@
 ---
-title: Architecture Overview
+title: K3s Cluster Architecture on Oracle Cloud
+description: Complete architecture of a 3-node K3s Kubernetes cluster on OCI Always Free tier. Includes Ampere A1 ARM64 instances, GitOps with ArgoCD, and Gateway API ingress.
 ---
 
 This cluster runs on Oracle Cloud Infrastructure's Always Free tier using three Ampere A1 ARM64 instances.

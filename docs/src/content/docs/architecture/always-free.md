@@ -1,5 +1,6 @@
 ---
-title: Always Free Tier
+title: Oracle Cloud Always Free Tier for Kubernetes
+description: Run K3s Kubernetes for free on OCI Always Free tier. Get 4 ARM64 OCPUs, 24GB RAM, 200GB storage, and 10TB egress monthly - perfect for a 3-node cluster.
 ---
 
 This cluster runs entirely within Oracle Cloud Infrastructure's Always Free tier limits.

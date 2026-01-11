@@ -1,5 +1,6 @@
 ---
-title: GitOps
+title: GitOps with ArgoCD for K3s Kubernetes
+description: Implement GitOps on K3s using ArgoCD App-of-Apps pattern. Automatic sync, self-healing, and declarative infrastructure management for Kubernetes clusters.
 ---
 
 Argo CD manages all cluster resources using the App-of-Apps pattern.

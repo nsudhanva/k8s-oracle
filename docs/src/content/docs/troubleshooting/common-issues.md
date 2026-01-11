@@ -1,5 +1,6 @@
 ---
-title: Common Issues
+title: K3s on OCI Troubleshooting - Common Issues and Solutions
+description: Fix common K3s Kubernetes issues on Oracle Cloud. Solutions for out of capacity errors, DNS resolution, pod networking, ArgoCD sync problems, and Gateway TLS certificates.
 ---
 
 ```mermaid

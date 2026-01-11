@@ -1,5 +1,6 @@
 ---
-title: Accessing the Cluster
+title: Access K3s Cluster via SSH Tunnel - kubectl Setup
+description: Connect to K3s Kubernetes cluster in private subnet using SSH jump host. Setup local kubectl access with SSH tunneling to the control plane.
 ---
 
 The K3s control plane runs in a private subnet. Access requires using the ingress node as a jump host.

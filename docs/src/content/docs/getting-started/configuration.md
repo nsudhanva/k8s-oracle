@@ -1,6 +1,6 @@
 ---
-title: Configuration
-description: Setting up Terraform variables for cluster deployment
+title: Terraform Configuration for K3s on OCI
+description: Complete terraform.tfvars configuration guide for K3s on Oracle Cloud. Includes OCI credentials, Cloudflare API tokens, GitHub PAT, and cluster settings.
 ---
 
 import { Aside } from '@astrojs/starlight/components';

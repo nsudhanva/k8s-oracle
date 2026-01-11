@@ -1,5 +1,6 @@
 ---
-title: Installation
+title: Install K3s on Oracle Cloud - Step by Step Guide
+description: Complete installation guide for deploying K3s Kubernetes cluster on OCI Always Free tier using Terraform. Includes provisioning, ArgoCD setup, and verification steps.
 ---
 
 ```mermaid

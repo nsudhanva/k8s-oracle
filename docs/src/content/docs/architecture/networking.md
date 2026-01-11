@@ -1,5 +1,6 @@
 ---
-title: Networking
+title: K3s Networking on Oracle Cloud - NAT Gateway Alternative
+description: Implement software NAT for K3s on OCI without a managed NAT Gateway. Network architecture with public/private subnets, Flannel CNI, and iptables routing.
 ---
 
 OCI Always Free does not include a managed NAT Gateway. This cluster implements software NAT on the ingress node.

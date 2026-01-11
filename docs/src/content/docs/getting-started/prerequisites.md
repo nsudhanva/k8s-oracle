@@ -1,5 +1,6 @@
 ---
-title: Prerequisites
+title: Prerequisites for K3s on Oracle Cloud
+description: Requirements for deploying K3s Kubernetes on OCI Always Free tier - Oracle Cloud account, Cloudflare DNS, GitHub repository, Terraform, and kubectl setup guide.
 ---
 
 ```mermaid

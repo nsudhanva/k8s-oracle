@@ -1,5 +1,6 @@
 ---
-title: Ingress Without Load Balancer
+title: Kubernetes Ingress Without Load Balancer - Envoy Gateway
+description: Expose K3s services without a cloud load balancer using Envoy Gateway with hostPort. Free ingress solution with Gateway API, automatic TLS via Let's Encrypt and Cloudflare DNS.
 ---
 
 This cluster exposes applications to the internet without using a cloud load balancer.
