@@ -411,7 +411,7 @@ This is common during iterative cluster development where you destroy and recrea
 
 **Prevention:**
 
-1.  **Use Staging Issuer (Recommended):**
+1. **Use Staging Issuer (Recommended):**
     For development, use the Let's Encrypt Staging environment which has much higher limits. The certificates won't be trusted by browsers (you'll see a warning), but it verifies the entire ACME flow works.
 
     Update `cluster-issuer.yaml` (or create a separate staging issuer):
@@ -422,13 +422,7 @@ This is common during iterative cluster development where you destroy and recrea
         server: https://acme-staging-v02.api.letsencrypt.org/directory
     ```
 
-2.  **Wait:** The limit resets after 7 days from the first issuance.
-
-**Prevention:**
-
-- Use staging server during development
-- Reuse existing certificates when possible
-- Consider wildcard certificates (`*.example.com`) which have separate limits
+2. **Wait:** The limit resets after 7 days from the first issuance.
 
 ## Envoy Gateway Pod Stuck Pending
 
