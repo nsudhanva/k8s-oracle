@@ -32,7 +32,7 @@ spec:
                 "username": "${git_username}",
                 "password": "{{ .github_pat }}",
                 "email": "${git_email}",
-                "auth": "{{ printf \"${git_username}:%s\" .github_pat | b64enc }}"
+                "auth": "{{ printf "%s:%s" "${git_username}" .github_pat | b64enc }}"
               }
             }
           }
