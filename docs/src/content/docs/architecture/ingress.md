@@ -117,20 +117,20 @@ flowchart TB
 
 ```mermaid
 flowchart TB
-    subgraph HostNetwork["hostNetwork: true ❌"]
+    subgraph HostNetwork["hostNetwork: true - Not Used"]
         HN_Pod[Pod]
         HN_Host[Host Network Namespace]
-        HN_DNS[/etc/resolv.conf<br/>Host DNS]
+        HN_DNS["resolv.conf - Host DNS"]
         HN_Pod --> HN_Host
         HN_Host --> HN_DNS
         HN_DNS -.->|Cannot resolve| K8S_SVC[kubernetes.default]
     end
 
-    subgraph HostPort["hostPort ✓"]
+    subgraph HostPort["hostPort - Used"]
         HP_Pod[Pod]
         HP_Cluster[Cluster Network Namespace]
         HP_CoreDNS[CoreDNS]
-        HP_Ports[Host Ports :80/:443]
+        HP_Ports["Host Ports 80/443"]
         HP_Pod --> HP_Cluster
         HP_Cluster --> HP_CoreDNS
         HP_Pod -.-> HP_Ports
