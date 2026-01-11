@@ -52,9 +52,9 @@ Ampere A1 Flex instances are ARM64-based. Container images must support the `lin
 
 - 1 VCN with up to 2 subnets
 - 1 Internet Gateway
+- 1 Network Load Balancer (Always Free includes 1 flexible NLB)
 - Security lists and route tables
 - No NAT Gateway (implemented in software on ingress node)
-- No Load Balancer (traffic routed directly to ingress node)
 
 ### Storage
 
@@ -74,32 +74,37 @@ This cluster replaces paid OCI services with free alternatives:
 ```mermaid
 flowchart LR
     subgraph Paid["Paid Services (Avoided)"]
-        LB[OCI Load Balancer<br/>~$12/month]
         NAT[OCI NAT Gateway<br/>~$32/month]
         BV[Block Volumes<br/>~$0.02/GB/month]
     end
 
     subgraph Free["Free Alternatives (Used)"]
-        HP[hostPort Binding<br/>on Ingress Node]
+        NLB[Network Load Balancer<br/>Always Free]
         IPT[iptables NAT<br/>on Ingress Node]
         LP[local-path-provisioner<br/>on Boot Volume]
     end
 
-    LB -.->|replaced by| HP
     NAT -.->|replaced by| IPT
     BV -.->|replaced by| LP
 ```
 
-### No Load Balancer
+### Network Load Balancer
 
-OCI Load Balancers are not included in Always Free. This cluster uses hostPort binding on the ingress node to expose ports 80 and 443 directly.
+OCI Always Free includes 1 Flexible Network Load Balancer. This cluster uses it to provide a stable public IP for ingress traffic:
 
 ```mermaid
 flowchart LR
-    Internet((Internet)) -->|:443| Ingress[Ingress Node<br/>hostPort]
+    Internet((Internet)) -->|:443| NLB[Network Load Balancer]
+    NLB -->|TCP forward| Ingress[Ingress Node<br/>hostPort]
     Ingress --> Envoy[Envoy Pod]
     Envoy --> Apps[Applications]
 ```
+
+Benefits of using the NLB:
+
+- Stable public IP (doesn't change if ingress node is replaced)
+- Health checks on backend
+- Can add more ingress nodes later for HA
 
 ### No NAT Gateway
 

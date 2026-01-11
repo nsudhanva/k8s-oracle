@@ -1,9 +1,9 @@
 ---
-title: Kubernetes Ingress Without Load Balancer - Envoy Gateway
-description: Expose K3s services without a cloud load balancer using Envoy Gateway with hostPort. Free ingress solution with Gateway API, automatic TLS via Let's Encrypt and Cloudflare DNS.
+title: Kubernetes Ingress with OCI Network Load Balancer
+description: Expose K3s services using OCI's free Network Load Balancer and Envoy Gateway. Gateway API ingress with automatic TLS via Let's Encrypt and Cloudflare DNS.
 ---
 
-This cluster exposes applications to the internet without using a cloud load balancer.
+This cluster uses OCI's Always Free Network Load Balancer combined with Envoy Gateway for ingress.
 
 ## Traditional Cloud Setup
 
@@ -24,24 +24,27 @@ This requires a paid load balancer resource.
 
 ## This Cluster's Approach
 
-This cluster binds the ingress controller directly to the host network interface:
+This cluster uses the OCI Always Free Network Load Balancer for a stable ingress IP:
 
 ```mermaid
 flowchart LR
     User((User)) --> DNS[Cloudflare DNS]
-    DNS --> Ingress[Ingress Node<br/>hostPort :80/:443]
+    DNS --> NLB[OCI Network<br/>Load Balancer]
+    NLB --> Ingress[Ingress Node<br/>hostPort :80/:443]
     Ingress --> Envoy[Envoy Pod]
     Envoy --> Pod[Application Pod]
 
+    style NLB fill:#FFD700
     style Ingress fill:#90EE90
     style DNS fill:#87CEEB
 ```
 
-1. DNS points directly to the ingress node's public IP
-2. Envoy Gateway binds ports 80/443 on the host
-3. Envoy routes traffic to backend services
+1. DNS points to the Network Load Balancer's public IP
+2. NLB forwards TCP traffic to the ingress node
+3. Envoy Gateway binds ports 80/443 on the host via hostPort
+4. Envoy routes traffic to backend services
 
-No load balancer is involved.
+The NLB provides a stable IP that doesn't change if the ingress node is replaced.
 
 ## How It Works
 
@@ -264,8 +267,9 @@ Envoy terminates TLS using certificates issued by Cert Manager. Traffic between 
 
 | Approach | Cost | Complexity | Availability |
 |----------|------|------------|--------------|
-| Cloud Load Balancer | Paid | Low | High |
-| hostPort (this cluster) | Free | Medium | Single node |
+| Paid Cloud Load Balancer | ~$12/month | Low | High |
+| OCI Free NLB + hostPort (this cluster) | Free | Medium | Single node (expandable) |
+| hostPort only | Free | Low | Single node, IP tied to instance |
 | NodePort + DNS | Free | Low | Single node |
 
-This cluster uses hostPort for the balance of simplicity and Gateway API compatibility.
+This cluster uses the free OCI Network Load Balancer with hostPort for a stable IP and Gateway API compatibility.
