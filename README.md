@@ -10,6 +10,7 @@ graph TB
     end
 
     subgraph OCI["Oracle Cloud (Always Free)"]
+        NLB[Network Load Balancer]
         subgraph Public["Public Subnet"]
             Ingress[k3s-ingress<br/>NAT + Envoy]
         end
@@ -24,7 +25,8 @@ graph TB
     end
 
     User -->|HTTPS| CF
-    CF --> Ingress
+    CF --> NLB
+    NLB --> Ingress
     Ingress --> Server
     Ingress --> Worker
     Repo -->|GitOps| Server
@@ -60,8 +62,8 @@ The cluster runs on three Ampere A1 ARM64 instances within OCI's Always Free lim
 | Object Storage | 20 GB | ~1 MB (Terraform state) |
 | Vault Secrets | 150 secrets | ~10 secrets |
 | Vault Master Keys | 20 key versions | 1 key |
-| Flexible NLB | 1 instance | Reserved |
-| Load Balancer | 1 instance (10 Mbps) | Reserved |
+| Flexible NLB | 1 instance | 1 instance (ingress) |
+| Load Balancer | 1 instance (10 Mbps) | Not used |
 
 ```mermaid
 flowchart LR
