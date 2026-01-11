@@ -331,6 +331,91 @@ Fix: Use `%s` format specifiers instead of escaped quotes:
 # Wrong
 "auth": "{{ printf \"${username}:%s\" .password | b64enc }}"
 
-# Correct  
+# Correct
 "auth": "{{ printf "%s:%s" "${username}" .password | b64enc }}"
 ```
+
+## Worker Node TLS Certificate Mismatch
+
+When a cluster is recreated, worker nodes may fail to rejoin with TLS certificate errors.
+
+Symptom: Worker node shows errors in `journalctl -u k3s-agent`:
+
+```text
+level=error msg="Failed to connect to proxy" error="tls: failed to verify certificate: x509: certificate signed by unknown authority"
+```
+
+This happens because the worker node has cached certificates from the old cluster that don't match the new server's CA.
+
+Fix: Reset the worker node's certificates:
+
+```bash
+ssh -J ubuntu@<ingress-ip> ubuntu@<worker-ip>
+sudo systemctl stop k3s-agent
+sudo rm -rf /var/lib/rancher/k3s/agent/*.kubeconfig /var/lib/rancher/k3s/agent/client*
+sudo systemctl start k3s-agent
+```
+
+The agent will re-download certificates from the server and rejoin the cluster.
+
+## Let's Encrypt Rate Limiting
+
+Let's Encrypt enforces strict rate limits that can prevent certificate issuance.
+
+Symptom: Certificate shows `Failed` status with error:
+
+```text
+429 urn:ietf:params:acme:error:rateLimited: too many certificates (5) already issued for this exact set of identifiers in the last 168h0m0s
+```
+
+This occurs when you've issued 5+ certificates for the same domain names within 7 days (common during iterative cluster development).
+
+**Options:**
+
+1. **Wait** - Rate limit resets after 7 days from the oldest issuance
+2. **Use staging** - Let's Encrypt staging server has higher limits (not browser-trusted):
+   ```yaml
+   spec:
+     acme:
+       server: https://acme-staging-v02.api.letsencrypt.org/directory
+   ```
+3. **Create self-signed cert** - Temporary workaround:
+   ```bash
+   # On the server node
+   openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+     -keyout /tmp/tls.key -out /tmp/tls.crt \
+     -subj "/CN=k3s.example.com"
+   kubectl create secret tls docs-tls \
+     --cert=/tmp/tls.crt --key=/tmp/tls.key \
+     -n default --dry-run=client -o yaml | kubectl apply -f -
+   ```
+
+**Prevention:**
+- Use staging server during development
+- Reuse existing certificates when possible
+- Consider wildcard certificates (`*.example.com`) which have separate limits
+
+## Envoy Gateway Pod Stuck Pending
+
+When restarting or rolling out Envoy Gateway pods, new pods may remain Pending.
+
+Symptom: `kubectl get pods -n envoy-gateway-system` shows:
+
+```text
+envoy-...-new   0/2   Pending   0   5m
+envoy-...-old   2/2   Running   0   1h
+```
+
+Events show: `0/3 nodes are available: 1 node(s) didn't have free ports for the requested pod ports`
+
+This occurs because Envoy uses `hostPort` for ports 80 and 443. Only one pod can bind these ports on a node at a time, causing deployment rollouts to deadlock.
+
+Fix: Delete the old pod to free the ports:
+
+```bash
+kubectl delete pod -n envoy-gateway-system <old-pod-name> --grace-period=10
+```
+
+The new pod will then schedule and start.
+
+**Note:** This is expected behavior for hostPort deployments. The deployment strategy could be changed to `Recreate` instead of `RollingUpdate` to avoid this, but that causes brief downtime during updates.

@@ -230,10 +230,58 @@ Wait for External DNS to create records (up to 5 minutes), then verify:
 dig @1.1.1.1 argocd.<your-domain>
 ```
 
+## Known Issues After Recreation
+
+### Worker Node Certificate Mismatch
+
+After cluster recreation, worker nodes may fail to join with TLS errors:
+
+```text
+level=error msg="Failed to connect to proxy" error="tls: failed to verify certificate: x509: certificate signed by unknown authority"
+```
+
+Fix by resetting the worker's certificates:
+
+```bash
+ssh -J ubuntu@$INGRESS_IP ubuntu@<worker-ip>
+sudo systemctl stop k3s-agent
+sudo rm -rf /var/lib/rancher/k3s/agent/*.kubeconfig /var/lib/rancher/k3s/agent/client*
+sudo systemctl start k3s-agent
+```
+
+### Let's Encrypt Rate Limiting
+
+<Aside type="caution">
+  If you've recreated the cluster multiple times, Let's Encrypt may rate limit certificate issuance (max 5 certificates per domain per 7 days).
+</Aside>
+
+If certificates fail with `429 rateLimited` error, you can:
+1. Wait for the rate limit to reset (7 days)
+2. Create a temporary self-signed certificate:
+   ```bash
+   openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+     -keyout /tmp/tls.key -out /tmp/tls.crt \
+     -subj "/CN=<your-domain>"
+   kubectl create secret tls docs-tls \
+     --cert=/tmp/tls.crt --key=/tmp/tls.key \
+     -n default --dry-run=client -o yaml | kubectl apply -f -
+   ```
+
+### Envoy Gateway Pod Restart
+
+If Envoy pods are stuck in Pending state after a restart:
+
+```bash
+# Find and delete the old pod to free hostPort 80/443
+kubectl delete pod -n envoy-gateway-system <old-pod-name> --grace-period=10
+```
+
 ## Post-Recreation Checklist
 
-- [ ] All nodes are Ready
+- [ ] All nodes are Ready (`kubectl get nodes`)
+- [ ] Worker node joined (check for TLS errors if missing)
 - [ ] ArgoCD applications are Synced
-- [ ] DNS records are created
-- [ ] TLS certificates are issued
+- [ ] DNS records are created (wait up to 5 minutes)
+- [ ] TLS certificates are issued (check for rate limiting)
 - [ ] Applications are accessible via HTTPS
+- [ ] Envoy Gateway pod is Running (not Pending)
