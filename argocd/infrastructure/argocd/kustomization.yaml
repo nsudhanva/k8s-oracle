@@ -11,5 +11,7 @@ helmCharts:
       server:
         config:
           kustomize.buildOptions: "--enable-helm"
+        extraArgs:
+          - --insecure
         service:
           type: ClusterIP
