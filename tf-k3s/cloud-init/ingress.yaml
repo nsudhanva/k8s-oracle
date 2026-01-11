@@ -42,11 +42,4 @@ runcmd:
       echo "Waiting for K3s Server..."
       sleep 10
     done
-  - curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="agent --node-label node-role.kubernetes.io/ingress=ingress" K3S_URL=https://${server_ip}:6443 K3S_TOKEN=${k3s_token} sh -
-  
-  # Label as ingress
-  - /usr/local/bin/kubectl --kubeconfig /etc/rancher/k3s/k3s.yaml label node $(hostname) node-role.kubernetes.io/ingress=ingress --overwrite
-  # Wait... Agent doesn't have kubectl access usually, or maybe it does? 
-  # Actually, only Server has the kubeconfig by default.
-  # So we can't label from here easily without extra auth.
-  # But we can pass `--node-label role=ingress` to install script!
+  - curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="agent --node-label role=ingress" K3S_URL=https://${server_ip}:6443 K3S_TOKEN=${k3s_token} sh -

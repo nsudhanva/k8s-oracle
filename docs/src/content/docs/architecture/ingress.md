@@ -228,20 +228,19 @@ When the Gateway references a TLS secret in a different namespace, a ReferenceGr
 apiVersion: gateway.networking.k8s.io/v1beta1
 kind: ReferenceGrant
 metadata:
-  name: allow-gateway-to-argocd-tls
+  name: allow-gateway-to-secrets
   namespace: argocd
 spec:
   from:
   - group: gateway.networking.k8s.io
     kind: Gateway
-    namespace: default
+    namespace: envoy-gateway-system
   to:
   - group: ""
     kind: Secret
-    name: argocd-tls
 ```
 
-This allows the public-gateway in the default namespace to use the argocd-tls secret.
+This allows the public-gateway in the envoy-gateway-system namespace to access TLS secrets in the argocd namespace. Similar ReferenceGrants are needed for each namespace containing TLS secrets (e.g., default for docs-tls).
 
 ## Security Considerations
 
