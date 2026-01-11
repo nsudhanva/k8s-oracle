@@ -5,6 +5,7 @@ metadata:
   namespace: default
   annotations:
     external-dns.alpha.kubernetes.io/target: "141.148.81.80"
+    external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
 spec:
   parentRefs:
   - name: public-gateway
@@ -48,7 +49,7 @@ metadata:
 spec:
   secretName: docs-tls
   issuerRef:
-    name: cloudflare-issuer
+    name: self-signed-issuer
     kind: ClusterIssuer
   commonName: "k3s.sudhanva.me"
   dnsNames:
