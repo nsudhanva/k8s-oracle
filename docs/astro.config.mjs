@@ -102,7 +102,7 @@ export default defineConfig({
             { label: 'Overview', slug: 'architecture/overview' },
             { label: 'Always Free Tier', slug: 'architecture/always-free' },
             { label: 'Secrets Management', slug: 'architecture/secrets-management' },
-            { label: 'Ingress Without Load Balancer', slug: 'architecture/ingress' },
+            { label: 'Ingress With Load Balancer', slug: 'architecture/ingress' },
             { label: 'Networking', slug: 'architecture/networking' },
             { label: 'GitOps', slug: 'architecture/gitops' },
           ],
