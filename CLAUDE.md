@@ -76,7 +76,7 @@ terraform apply tfplan
 - Modifying `availability_domain` (recreates instances)
 - Changing `cidr_block` on VCN/subnets (network disruption)
 
-### 4. Secrets Management
+### 6. Secrets Management
 
 - All secrets go to OCI Vault (managed by Terraform in `vault.tf`)
 - Kubernetes secrets are synced via External Secrets Operator
@@ -173,39 +173,6 @@ git_email     = "user@example.com"
 argocd_admin_password = "..."
 acme_email            = "admin@example.com"
 k3s_token             = "random-secure-token"
-```
-
-## Troubleshooting
-
-### Out of Capacity Error
-
-OCI ARM instances have limited availability. Try:
-
-- Different availability domain (change index in `compute.tf`)
-- Different region (requires new tenancy setup)
-- Retry later (capacity fluctuates)
-
-### Pods Can't Resolve DNS
-
-OCI Ubuntu images have restrictive iptables. Cloud-init should fix this, but if needed:
-
-```bash
-sudo iptables -P INPUT ACCEPT
-sudo iptables -P FORWARD ACCEPT
-sudo iptables -F
-sudo netfilter-persistent save
-```
-
-### Ingress Node Pod Networking Issues
-
-The ingress node is in a different subnet (10.0.1.0/24) than other nodes (10.0.2.0/24). Flannel VXLAN traffic and pod network traffic must be explicitly allowed:
-
-```bash
-sudo iptables -I INPUT -p udp --dport 8472 -j ACCEPT
-sudo iptables -I INPUT -s 10.0.2.0/24 -j ACCEPT
-sudo iptables -I INPUT -s 10.42.0.0/16 -j ACCEPT
-sudo iptables -I FORWARD -s 10.42.0.0/16 -d 10.42.0.0/16 -j ACCEPT
-sudo netfilter-persistent save
 ```
 
 ### Gateway TLS Certificate Errors
