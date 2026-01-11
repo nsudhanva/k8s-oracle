@@ -86,6 +86,12 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: envoy-gateway-system
+  ignoreDifferences:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      jsonPointers:
+        - /spec/listeners
+        - /status
   syncPolicy:
     automated:
       prune: true

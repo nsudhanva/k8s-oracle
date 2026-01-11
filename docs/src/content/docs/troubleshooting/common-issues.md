@@ -232,3 +232,93 @@ kubectl -n argocd rollout restart deploy argocd-repo-server
 ```
 
 The ArgoCD kustomization includes this configuration automatically via the argocd-self-managed application.
+
+## Envoy Gateway Always OutOfSync
+
+The Envoy Gateway controller modifies the Gateway resource after ArgoCD applies it, causing perpetual OutOfSync status.
+
+Symptom: `envoy-gateway` application shows OutOfSync but Healthy.
+
+Fix: Add `ignoreDifferences` to the Application spec:
+```yaml
+spec:
+  ignoreDifferences:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      jsonPointers:
+        - /spec/listeners
+        - /status
+```
+
+This is included in the `applications.yaml.tpl` template automatically.
+
+## ArgoCD Redirect Loop with Gateway TLS
+
+When using Envoy Gateway for TLS termination, ArgoCD may cause redirect loops because it expects HTTPS connections internally.
+
+Symptom: `cd.k3s.sudhanva.me` returns HTTP 307 redirect loop.
+
+Fix: Configure ArgoCD to run in insecure mode (TLS handled by Gateway):
+```yaml
+valuesInline:
+  server:
+    extraArgs:
+      - --insecure
+```
+
+The ArgoCD kustomization template includes this configuration.
+
+## HTTP-to-HTTPS Redirect Not Working
+
+HTTPRoutes may serve content on both HTTP and HTTPS if not bound to specific listeners.
+
+Symptom: `http://k3s.sudhanva.me` returns 200 instead of redirecting to HTTPS.
+
+Fix: Use `sectionName` to bind routes to HTTPS listeners and create separate redirect routes:
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: docs-route
+spec:
+  parentRefs:
+  - name: public-gateway
+    namespace: envoy-gateway-system
+    sectionName: https-docs
+  # ... backend config
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: docs-redirect
+spec:
+  parentRefs:
+  - name: public-gateway
+    namespace: envoy-gateway-system
+    sectionName: http
+  hostnames:
+  - "k3s.sudhanva.me"
+  rules:
+  - filters:
+    - type: RequestRedirect
+      requestRedirect:
+        scheme: https
+        statusCode: 301
+```
+
+The HTTPRoute templates include these redirect configurations.
+
+## ExternalSecret Template Parsing Error
+
+Go templates in ExternalSecret resources require specific syntax for nested expressions.
+
+Symptom: ExternalSecret shows `SecretSyncedError` with `unable to parse template`.
+
+Fix: Use `%s` format specifiers instead of escaped quotes:
+```yaml
+# Wrong
+"auth": "{{ printf \"${username}:%s\" .password | b64enc }}"
+
+# Correct  
+"auth": "{{ printf "%s:%s" "${username}" .password | b64enc }}"
+```

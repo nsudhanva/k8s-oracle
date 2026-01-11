@@ -138,7 +138,9 @@ cert-manager          Synced        Healthy
 docs-app              Synced        Healthy
 envoy-gateway         Synced        Healthy
 external-dns          Synced        Healthy
+external-secrets      Synced        Healthy
 gateway-api-crds      Synced        Healthy
+managed-secrets       Synced        Healthy
 root-app              Synced        Healthy
 ```
 
@@ -178,7 +180,7 @@ kubectl -n argocd rollout restart deploy argocd-repo-server
 
 3. Sync applications in dependency order:
 ```bash
-for app in external-dns cert-manager envoy-gateway docs-app argocd-ingress; do
+for app in gateway-api-crds external-dns cert-manager external-secrets envoy-gateway managed-secrets argocd-self-managed argocd-ingress docs-app; do
   kubectl -n argocd patch application $app --type=merge -p '{"operation":{"sync":{}}}'
   sleep 10
 done
@@ -195,6 +197,19 @@ If you see `unknown 'kubernetes.io' labels`, the cloud-init used a restricted la
 ```bash
 sudo /usr/local/bin/k3s-agent-uninstall.sh
 curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC='agent --node-label role=ingress' K3S_URL=https://10.0.2.10:6443 K3S_TOKEN='<token>' sh -
+```
+
+### HTTPS Verification
+
+After all applications are synced, verify HTTPS works:
+```bash
+curl -I https://k3s.yourdomain.com
+curl -I https://cd.k3s.yourdomain.com
+```
+
+Both should return `HTTP/2 200`. HTTP requests should redirect with `301`:
+```bash
+curl -I http://k3s.yourdomain.com
 ```
 
 See [Common Issues](/troubleshooting/common-issues/) for more solutions.
