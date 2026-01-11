@@ -190,11 +190,13 @@ If the Gateway can't access TLS secrets from other namespaces (RefNotPermitted e
 ### Worker Node TLS Certificate Mismatch
 
 After recreating the cluster, worker nodes may fail to join with:
+
 ```text
 x509: certificate signed by unknown authority
 ```
 
 Fix: Reset worker certificates:
+
 ```bash
 ssh -J ubuntu@<ingress-ip> ubuntu@<worker-ip>
 sudo systemctl stop k3s-agent
@@ -207,20 +209,23 @@ sudo systemctl start k3s-agent
 **CRITICAL**: Let's Encrypt limits you to 5 certificates per exact domain set per 7 days. If you've rebuilt the cluster multiple times, certificates may fail with `429 rateLimited`.
 
 Workarounds:
+
 1. Wait 7 days for rate limit reset
 2. Use staging server during development (not browser-trusted)
 3. Create self-signed cert as temporary fix:
-   ```bash
-   openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-     -keyout /tmp/tls.key -out /tmp/tls.crt -subj "/CN=<domain>"
-   kubectl create secret tls docs-tls --cert=/tmp/tls.crt --key=/tmp/tls.key -n default
-   ```
+
+```bash
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout /tmp/tls.key -out /tmp/tls.crt -subj "/CN=<domain>"
+kubectl create secret tls docs-tls --cert=/tmp/tls.crt --key=/tmp/tls.key -n default
+```
 
 ### Envoy Gateway Pod Stuck Pending
 
 Envoy uses hostPort 80/443. During rollouts, new pods can't start until old pods release the ports.
 
 Fix: Delete the old pod manually:
+
 ```bash
 kubectl delete pod -n envoy-gateway-system <old-pod-name> --grace-period=10
 ```

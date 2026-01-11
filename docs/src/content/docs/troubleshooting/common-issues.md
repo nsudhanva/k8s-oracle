@@ -373,24 +373,30 @@ This occurs when you've issued 5+ certificates for the same domain names within 
 **Options:**
 
 1. **Wait** - Rate limit resets after 7 days from the oldest issuance
-2. **Use staging** - Let's Encrypt staging server has higher limits (not browser-trusted):
-   ```yaml
-   spec:
-     acme:
-       server: https://acme-staging-v02.api.letsencrypt.org/directory
-   ```
-3. **Create self-signed cert** - Temporary workaround:
-   ```bash
-   # On the server node
-   openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-     -keyout /tmp/tls.key -out /tmp/tls.crt \
-     -subj "/CN=k3s.example.com"
-   kubectl create secret tls docs-tls \
-     --cert=/tmp/tls.crt --key=/tmp/tls.key \
-     -n default --dry-run=client -o yaml | kubectl apply -f -
-   ```
+2. **Use staging** - Let's Encrypt staging server has higher limits (not browser-trusted)
+3. **Create self-signed cert** - Temporary workaround (see below)
+
+**Use staging server:**
+
+```yaml
+spec:
+  acme:
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+```
+
+**Create self-signed certificate:**
+
+```bash
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout /tmp/tls.key -out /tmp/tls.crt \
+  -subj "/CN=k3s.example.com"
+kubectl create secret tls docs-tls \
+  --cert=/tmp/tls.crt --key=/tmp/tls.key \
+  -n default --dry-run=client -o yaml | kubectl apply -f -
+```
 
 **Prevention:**
+
 - Use staging server during development
 - Reuse existing certificates when possible
 - Consider wildcard certificates (`*.example.com`) which have separate limits
