@@ -3,7 +3,6 @@ kind: Kustomization
 resources:
   - cluster-issuer.yaml
   - cluster-issuer-staging.yaml
-  - self-signed-issuer.yaml
 
 helmCharts:
   - name: cert-manager
