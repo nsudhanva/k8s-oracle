@@ -3,4 +3,3 @@ kind: Kustomization
 resources:
   - https://github.com/envoyproxy/gateway/releases/download/v1.6.1/install.yaml
   - config.yaml
-  - static-dns.yaml

@@ -42,13 +42,6 @@ resource "local_file" "envoy_gateway_kustomization" {
   content  = file("${path.module}/templates/manifests/envoy-gateway/kustomization.yaml")
 }
 
-resource "local_file" "envoy_gateway_static_dns" {
-  filename = "../argocd/infrastructure/envoy-gateway/static-dns.yaml"
-  content = templatefile("${path.module}/templates/manifests/envoy-gateway/static-dns.yaml.tpl", {
-    domain_name       = var.domain_name
-    ingress_public_ip = oci_network_load_balancer_network_load_balancer.k3s_nlb.ip_addresses[0].ip_address
-  })
-}
 
 resource "local_file" "argocd_ingress_manifests" {
   filename = "../argocd/infrastructure/argocd-ingress/ingress.yaml"
@@ -66,10 +59,9 @@ resource "local_file" "docs_manifests" {
   for_each = fileset("${path.module}/templates/manifests/docs", "*")
   filename = "../argocd/apps/docs/${replace(each.value, ".tpl", "")}"
   content = templatefile("${path.module}/templates/manifests/docs/${each.value}", {
-    domain_name       = var.domain_name
-    git_username      = var.git_username
-    git_repo_name     = var.git_repo_name
-    ingress_public_ip = oci_network_load_balancer_network_load_balancer.k3s_nlb.ip_addresses[0].ip_address
+    domain_name   = var.domain_name
+    git_username  = var.git_username
+    git_repo_name = var.git_repo_name
   })
 }
 
@@ -89,10 +81,26 @@ resource "local_file" "managed_secrets_kustomization" {
 resource "local_file" "managed_secrets_secrets" {
   filename = "../argocd/infrastructure/managed-secrets/secrets.yaml"
   content = templatefile("${path.module}/templates/manifests/managed-secrets/secrets.yaml.tpl", {
-    vault_ocid   = oci_kms_vault.k3s_vault.id
+    vault_ocid   = oci_kms_vault.oke_vault.id
     oci_region   = var.region
     git_username = var.git_username
     git_email    = var.git_email
     git_repo_url = var.git_repo_url
   })
+}
+
+# K3s Docs App (legacy k3s documentation at k3s.sudhanva.me)
+resource "local_file" "k3s_docs_deployment" {
+  filename = "../argocd/apps/k3s-docs/deployment.yaml"
+  content  = file("${path.module}/templates/manifests/k3s-docs/deployment.yaml")
+}
+
+resource "local_file" "k3s_docs_service" {
+  filename = "../argocd/apps/k3s-docs/service.yaml"
+  content  = file("${path.module}/templates/manifests/k3s-docs/service.yaml")
+}
+
+resource "local_file" "k3s_docs_httproute" {
+  filename = "../argocd/apps/k3s-docs/httproute.yaml"
+  content  = file("${path.module}/templates/manifests/k3s-docs/httproute.yaml.tpl")
 }

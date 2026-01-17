@@ -48,45 +48,9 @@ spec:
     type: Kubernetes
     kubernetes:
       envoyService:
-        type: ClusterIP
-      useListenerPortAsContainerPort: true
-      envoyDeployment:
-        pod:
-          nodeSelector:
-            role: ingress
-          tolerations:
-            - effect: NoSchedule
-              key: node-role.kubernetes.io/control-plane
-              operator: Exists
-          securityContext:
-            runAsUser: 0
-            runAsGroup: 0
-            runAsNonRoot: false
-        container:
-          securityContext:
-            runAsUser: 0
-            runAsGroup: 0
-            runAsNonRoot: false
-            capabilities:
-              add:
-                - NET_BIND_SERVICE
-        patch:
-          type: StrategicMerge
-          value:
-            spec:
-              template:
-                spec:
-                  containers:
-                    - name: envoy
-                      ports:
-                        - containerPort: 80
-                          hostPort: 80
-                          name: http
-                          protocol: TCP
-                        - containerPort: 443
-                          hostPort: 443
-                          name: https
-                          protocol: TCP
+        type: LoadBalancer
+        annotations:
+          oci.oraclecloud.com/load-balancer-type: "nlb"
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
@@ -126,3 +90,15 @@ spec:
         certificateRefs:
           - name: argocd-tls
             namespace: argocd
+    - name: https-k3s-docs
+      port: 443
+      protocol: HTTPS
+      hostname: "k3s.sudhanva.me"
+      allowedRoutes:
+        namespaces:
+          from: All
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: k3s-docs-tls
+            namespace: default

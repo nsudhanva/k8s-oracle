@@ -1,36 +1,36 @@
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: argocd-route
-  namespace: argocd
+  name: k3s-docs-route
+  namespace: default
 spec:
   parentRefs:
   - name: public-gateway
     namespace: envoy-gateway-system
-    sectionName: https-argocd
+    sectionName: https-k3s-docs
   hostnames:
-  - "cd.k8s.sudhanva.me"
+  - "k3s.sudhanva.me"
   rules:
   - matches:
     - path:
         type: PathPrefix
         value: /
     backendRefs:
-    - name: argocd-server
+    - name: k3s-docs
       port: 80
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: argocd-redirect
-  namespace: argocd
+  name: k3s-docs-redirect
+  namespace: default
 spec:
   parentRefs:
   - name: public-gateway
     namespace: envoy-gateway-system
     sectionName: http
   hostnames:
-  - "cd.k8s.sudhanva.me"
+  - "k3s.sudhanva.me"
   rules:
   - filters:
     - type: RequestRedirect
@@ -41,14 +41,13 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: argocd-tls
-  namespace: argocd
+  name: k3s-docs-tls
+  namespace: default
 spec:
-  secretName: argocd-tls
+  secretName: k3s-docs-tls
   issuerRef:
     name: cloudflare-issuer
     kind: ClusterIssuer
-    group: cert-manager.io
-  commonName: "cd.k8s.sudhanva.me"
+  commonName: "k3s.sudhanva.me"
   dnsNames:
-  - "cd.k8s.sudhanva.me"
+  - "k3s.sudhanva.me"

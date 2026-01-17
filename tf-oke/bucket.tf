@@ -5,7 +5,7 @@ data "oci_objectstorage_namespace" "ns" {
 resource "oci_objectstorage_bucket" "tfstate" {
   compartment_id = var.compartment_ocid
   namespace      = data.oci_objectstorage_namespace.ns.namespace
-  name           = "k3s-tfstate"
+  name           = "oke-tfstate"
   access_type    = "NoPublicAccess"
   versioning     = "Enabled"
   freeform_tags  = var.common_tags

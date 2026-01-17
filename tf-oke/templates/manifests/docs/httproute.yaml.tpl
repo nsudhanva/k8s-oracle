@@ -3,8 +3,6 @@ kind: HTTPRoute
 metadata:
   name: docs-route
   namespace: default
-  annotations:
-    external-dns.alpha.kubernetes.io/target: "${ingress_public_ip}"
 spec:
   parentRefs:
   - name: public-gateway

@@ -1,28 +1,28 @@
-# K3s on Oracle Cloud - LLM Context
+# OKE on Oracle Cloud - LLM Context
 
 > Deploy a free, production-ready Kubernetes cluster on Oracle Cloud Infrastructure Always Free tier
 
-This documentation site explains how to deploy and operate a K3s Kubernetes cluster on OCI using GitOps principles.
+This documentation site explains how to deploy and operate an OKE (Oracle Kubernetes Engine) cluster on OCI using GitOps principles.
 
 ## Project Overview
 
-- **Repository**: https://github.com/nsudhanva/k3s-oracle
-- **Documentation**: https://k3s.sudhanva.me
+- **Repository**: https://github.com/nsudhanva/k8s-oracle
+- **Documentation**: https://k8s.sudhanva.me
 - **License**: MIT
 
 ## What This Project Does
 
-Provisions a 3-node K3s Kubernetes cluster entirely within Oracle Cloud's Always Free tier:
-- 1 ingress node (public subnet, NAT gateway, Envoy Gateway)
-- 1 server node (private subnet, control plane, ArgoCD)
-- 1 worker node (private subnet, workloads)
+Provisions an OKE Basic cluster entirely within Oracle Cloud's Always Free tier:
+- Free managed control plane (OKE Basic cluster)
+- 2 ARM worker nodes (2 OCPU, 12GB each - 4 OCPUs, 24GB total)
+- All resources for workloads (no control plane overhead)
 
 ## Key Technologies
 
-- **K3s**: Lightweight Kubernetes distribution for ARM64
+- **OKE Basic**: Free managed Kubernetes control plane from Oracle
 - **Terraform**: Infrastructure as Code for OCI provisioning
 - **ArgoCD**: GitOps continuous deployment (App-of-Apps pattern)
-- **Envoy Gateway**: Gateway API implementation for ingress (no load balancer needed)
+- **Envoy Gateway**: Gateway API implementation with OCI LoadBalancer
 - **Cert Manager**: Automatic TLS certificates from Let's Encrypt
 - **External DNS**: Automatic Cloudflare DNS record management
 - **External Secrets Operator**: OCI Vault to Kubernetes secret synchronization
@@ -64,7 +64,7 @@ Q: Can I run this in other clouds?
 A: The concepts apply, but Terraform code is OCI-specific
 
 Q: How do I access the cluster?
-A: SSH tunnel through the ingress node - see /operation/accessing-cluster
+A: Use OCI CLI to generate kubeconfig - see /operation/accessing-cluster
 
 Q: How do I deploy my own apps?
 A: Add manifests to argocd/apps/ and push to Git - see /operation/adding-apps
@@ -74,9 +74,9 @@ A: Add manifests to argocd/apps/ and push to Git - see /operation/adding-apps
 - Never commit secrets to Git - use OCI Vault
 - All deployments go through ArgoCD - no kubectl apply
 - Terraform state is stored in OCI Object Storage bucket
-- The ingress node has a public IP; server/worker nodes are private
+- Worker nodes are in private subnet; LoadBalancer handles ingress
 
 ## Contact
 
-- GitHub Issues: https://github.com/nsudhanva/k3s-oracle/issues
+- GitHub Issues: https://github.com/nsudhanva/k8s-oracle/issues
 - Author: Sudhanva Narayana

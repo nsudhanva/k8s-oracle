@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k3s-docs
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: k3s-docs
+  template:
+    metadata:
+      labels:
+        app: k3s-docs
+    spec:
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: k3s-docs
+          image: ghcr.io/nsudhanva/k3s-oracle/docs:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80

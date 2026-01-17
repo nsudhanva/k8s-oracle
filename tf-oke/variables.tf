@@ -74,28 +74,40 @@ variable "git_username" {
 }
 
 variable "git_repo_name" {
-  description = "The repository name (e.g. k3s-oracle) to construct GHCR image paths."
+  description = "The repository name (e.g. k8s-oracle) to construct GHCR image paths."
   type        = string
-  default     = "k3s-oracle"
+  default     = "k8s-oracle"
 }
 
-variable "k3s_token" {
-  description = "Shared secret for K3s. If empty, one creates automatically (but passing via var is safer for consistency)."
+variable "kubernetes_version" {
+  description = "Kubernetes version for OKE cluster"
   type        = string
-  default     = "k3s-secret-token-change-me"
+  default     = "1.32.1"
 }
 
-variable "ingress_private_ip" {
-  description = "Static Private IP for the Ingress/NAT node"
-  type        = string
-  default     = "10.0.1.10"
+variable "node_pool_size" {
+  description = "Number of nodes in the OKE node pool"
+  type        = number
+  default     = 2
+}
+
+variable "node_ocpus" {
+  description = "Number of OCPUs per node (total across all nodes must not exceed 4 for free tier)"
+  type        = number
+  default     = 2
+}
+
+variable "node_memory_in_gbs" {
+  description = "Memory in GB per node (total across all nodes must not exceed 24 for free tier)"
+  type        = number
+  default     = 12
 }
 
 variable "common_tags" {
   description = "Tags to be applied to all resources"
   type        = map(string)
   default = {
-    Project     = "k3s-oracle-free"
+    Project     = "oke-oracle-free"
     ManagedBy   = "Terraform"
     Environment = "Production"
   }

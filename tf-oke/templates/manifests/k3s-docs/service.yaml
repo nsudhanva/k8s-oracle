@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: k3s-docs
+  namespace: default
+spec:
+  selector:
+    app: k3s-docs
+  ports:
+    - port: 80
+      targetPort: 80

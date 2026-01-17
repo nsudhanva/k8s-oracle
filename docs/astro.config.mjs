@@ -4,22 +4,22 @@ import sitemap from '@astrojs/sitemap';
 import mermaid from 'astro-mermaid';
 
 export default defineConfig({
-  site: 'https://k3s.sudhanva.me',
+  site: 'https://k8s.sudhanva.me',
   integrations: [
     sitemap(),
     mermaid(),
     starlight({
-      title: 'K3s on OCI Always Free',
-      description: 'Deploy a production-ready K3s Kubernetes cluster on Oracle Cloud Infrastructure Always Free tier using Terraform, ArgoCD GitOps, Envoy Gateway, and automatic TLS certificates.',
+      title: 'OKE on OCI Always Free',
+      description: 'Deploy a production-ready OKE (Oracle Kubernetes Engine) cluster on Oracle Cloud Infrastructure Always Free tier using Terraform, ArgoCD GitOps, Envoy Gateway, and automatic TLS certificates.',
       social: [
-        { icon: 'github', label: 'GitHub', href: 'https://github.com/nsudhanva/k3s-oracle' },
+        { icon: 'github', label: 'GitHub', href: 'https://github.com/nsudhanva/k8s-oracle' },
       ],
       head: [
         {
           tag: 'meta',
           attrs: {
             name: 'keywords',
-            content: 'k3s, kubernetes, oracle cloud, oci, always free, terraform, argocd, gitops, envoy gateway, free kubernetes, arm64, ampere',
+            content: 'oke, kubernetes, oracle cloud, oci, always free, terraform, argocd, gitops, envoy gateway, free kubernetes, arm64, ampere, oracle kubernetes engine',
           },
         },
         {
@@ -33,7 +33,7 @@ export default defineConfig({
           tag: 'meta',
           attrs: {
             property: 'og:image',
-            content: 'https://k3s.sudhanva.me/og-image.svg',
+            content: 'https://k8s.sudhanva.me/og-image.svg',
           },
         },
         {
@@ -54,14 +54,14 @@ export default defineConfig({
           tag: 'meta',
           attrs: {
             name: 'twitter:image',
-            content: 'https://k3s.sudhanva.me/og-image.svg',
+            content: 'https://k8s.sudhanva.me/og-image.svg',
           },
         },
         {
           tag: 'link',
           attrs: {
             rel: 'canonical',
-            href: 'https://k3s.sudhanva.me',
+            href: 'https://k8s.sudhanva.me',
           },
         },
         {
@@ -72,18 +72,18 @@ export default defineConfig({
           content: JSON.stringify({
             '@context': 'https://schema.org',
             '@type': 'TechArticle',
-            'headline': 'K3s on Oracle Cloud Always Free Tier',
-            'description': 'Complete guide to deploying a free Kubernetes cluster on Oracle Cloud using K3s, Terraform, and GitOps.',
+            'headline': 'OKE on Oracle Cloud Always Free Tier',
+            'description': 'Complete guide to deploying a free Kubernetes cluster on Oracle Cloud using OKE, Terraform, and GitOps.',
             'author': {
               '@type': 'Person',
               'name': 'Sudhanva Narayana',
             },
             'publisher': {
               '@type': 'Organization',
-              'name': 'k3s-oracle',
-              'url': 'https://github.com/nsudhanva/k3s-oracle',
+              'name': 'k8s-oracle',
+              'url': 'https://github.com/nsudhanva/k8s-oracle',
             },
-            'mainEntityOfPage': 'https://k3s.sudhanva.me',
+            'mainEntityOfPage': 'https://k8s.sudhanva.me',
           }),
         },
       ],

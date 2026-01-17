@@ -17,12 +17,12 @@
 #
 # 4. Run: terraform init -migrate-state
 #
-# BUCKET: k3s-tfstate (already created)
+# BUCKET: oke-tfstate (already created)
 # NAMESPACE: idlam3ku7ae7
 #
 # terraform {
 #   backend "s3" {
-#     bucket                      = "k3s-tfstate"
+#     bucket                      = "oke-tfstate"
 #     key                         = "terraform.tfstate"
 #     region                      = "us-ashburn-1"
 #     endpoints = {

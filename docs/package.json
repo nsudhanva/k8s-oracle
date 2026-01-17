@@ -1,5 +1,5 @@
 {
-  "name": "k3s-oracle-docs",
+  "name": "k8s-oracle-docs",
   "type": "module",
   "version": "0.0.1",
   "scripts": {

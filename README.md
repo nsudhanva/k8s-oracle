@@ -1,6 +1,6 @@
-# K3s on Oracle Cloud Always Free
+# OKE on Oracle Cloud Always Free
 
-A production-ready K3s cluster on Oracle Cloud Infrastructure using Always Free tier resources. This project provisions infrastructure with Terraform, bootstraps Argo CD for GitOps, and deploys applications via Gateway API with automatic HTTPS.
+A production-ready OKE (Oracle Kubernetes Engine) cluster on Oracle Cloud Infrastructure using Always Free tier resources. This project provisions infrastructure with Terraform, bootstraps Argo CD for GitOps, and deploys applications via Gateway API with automatic HTTPS.
 
 ```mermaid
 graph TB
@@ -10,14 +10,14 @@ graph TB
     end
 
     subgraph OCI["Oracle Cloud (Always Free)"]
-        NLB[Network Load Balancer]
-        subgraph Public["Public Subnet"]
-            Ingress[k3s-ingress<br/>NAT + Envoy]
+        subgraph OKE["OKE Cluster"]
+            CP[Control Plane<br/>Managed by Oracle]
+            subgraph Workers["Worker Nodes (Private Subnet)"]
+                W1[Worker 1<br/>2 OCPU, 12GB]
+                W2[Worker 2<br/>2 OCPU, 12GB]
+            end
         end
-        subgraph Private["Private Subnet"]
-            Server[k3s-server<br/>Control Plane]
-            Worker[k3s-worker<br/>Workloads]
-        end
+        LB[OCI Load Balancer]
     end
 
     subgraph GitHub
@@ -25,30 +25,30 @@ graph TB
     end
 
     User -->|HTTPS| CF
-    CF --> NLB
-    NLB --> Ingress
-    Ingress --> Server
-    Ingress --> Worker
-    Repo -->|GitOps| Server
+    CF --> LB
+    LB --> Workers
+    CP -.->|manages| Workers
+    Repo -->|GitOps| W1
 ```
 
 ## Architecture
 
-The cluster runs on three Ampere A1 ARM64 instances within OCI's Always Free limits (4 OCPUs, 24GB RAM total):
+The cluster uses OKE Basic (free managed control plane) with ARM64 worker nodes within OCI's Always Free limits:
 
-| Node | Resources | Subnet | Role |
-|------|-----------|--------|------|
-| k3s-ingress | 1 OCPU, 6GB | Public (10.0.1.0/24) | NAT gateway, Envoy Gateway |
-| k3s-server | 2 OCPU, 12GB | Private (10.0.2.0/24) | K3s control plane, Argo CD |
-| k3s-worker | 1 OCPU, 6GB | Private (10.0.2.0/24) | Application workloads |
+| Component | Resources | Details |
+|-----------|-----------|---------|
+| Control Plane | Managed by Oracle | Free with OKE Basic cluster |
+| Worker Node 1 | 2 OCPU, 12GB | VM.Standard.A1.Flex (ARM) |
+| Worker Node 2 | 2 OCPU, 12GB | VM.Standard.A1.Flex (ARM) |
+| **Total** | **4 OCPUs, 24GB** | Maximizes Always Free tier |
 
 ## Components
 
 | Component | Purpose |
 |-----------|---------|
-| K3s | Lightweight Kubernetes distribution |
+| OKE Basic | Managed Kubernetes with free control plane |
 | Argo CD | GitOps continuous delivery |
-| Envoy Gateway | Gateway API implementation |
+| Envoy Gateway | Gateway API implementation with OCI LoadBalancer |
 | External DNS | Automatic Cloudflare DNS updates |
 | Cert Manager | Let's Encrypt certificate automation |
 | OCI Vault | Secrets storage (Always Free) |
@@ -58,11 +58,12 @@ The cluster runs on three Ampere A1 ARM64 instances within OCI's Always Free lim
 
 | Resource | Free Limit | Usage |
 |----------|------------|-------|
+| OKE Control Plane | Free (Basic cluster) | 1 cluster |
 | Ampere A1 Compute | 4 OCPUs, 24 GB RAM | 4 OCPUs, 24 GB |
 | Object Storage | 20 GB | ~1 MB (Terraform state) |
 | Vault Secrets | 150 secrets | ~10 secrets |
 | Vault Master Keys | 20 key versions | 1 key |
-| Flexible NLB | 1 instance | 1 instance (ingress) |
+| Load Balancer | Flexible NLB | 1 instance (Envoy Gateway) |
 
 ```mermaid
 flowchart LR
@@ -104,16 +105,16 @@ flowchart LR
 
 ## Prerequisites
 
-- OCI Account with Always Free eligibility
+- OCI Account upgraded to Pay-As-You-Go (required for OKE, but stays within free tier)
 - Cloudflare account with a managed domain
 - GitHub account with a Personal Access Token
-- Terraform installed locally
+- Terraform and OCI CLI installed locally
 
 ## Quick Start
 
 ### Create Configuration
 
-Create `tf-k3s/terraform.tfvars`:
+Create `tf-oke/terraform.tfvars`:
 
 ```hcl
 tenancy_ocid         = "ocid1.tenancy.oc1..."
@@ -126,42 +127,57 @@ compartment_ocid     = "ocid1.compartment.oc1..."
 ssh_public_key_path  = "/path/to/ssh_key.pub"
 cloudflare_api_token = "your-cloudflare-token"
 cloudflare_zone_id   = "your-zone-id"
-domain_name          = "k3s.example.com"
+domain_name          = "k8s.example.com"
 acme_email           = "admin@example.com"
 
-git_repo_url         = "https://github.com/your-user/k3s-oracle.git"
+git_repo_url         = "https://github.com/your-user/k8s-oracle.git"
 git_username         = "your-github-username"
 git_email            = "your-email@example.com"
 git_pat              = "ghp_..."
 
-k3s_token             = "your-random-secure-token"
 argocd_admin_password = "your-secure-password"
 ```
 
-### Deploy
+### Deploy Infrastructure
 
 ```bash
-cd tf-k3s
+cd tf-oke
 terraform init
 terraform apply
 ```
 
-### Push Manifests
+### Configure kubectl
 
-Terraform generates GitOps manifests that must be committed:
+After Terraform completes, configure kubectl:
+
+```bash
+oci ce cluster create-kubeconfig \
+  --cluster-id $(terraform output -raw cluster_id) \
+  --file $HOME/.kube/config \
+  --region $(terraform output -raw region) \
+  --token-version 2.0.0 \
+  --kube-endpoint PUBLIC_ENDPOINT
+```
+
+### Push Manifests & Install ArgoCD
 
 ```bash
 git add argocd/
 git commit -m "Configure cluster manifests"
 git push
+
+kubectl create namespace argocd
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+kubectl apply -f argocd/applications.yaml
 ```
 
 ### Verify
 
-Wait approximately five minutes for bootstrapping, then verify:
+Wait for the LoadBalancer IP to be assigned and applications to sync:
 
 ```bash
-ssh -J ubuntu@<ingress-ip> ubuntu@10.0.2.10 "sudo kubectl get applications -n argocd"
+kubectl get svc -n envoy-gateway-system
+kubectl get applications -n argocd
 ```
 
 ## CI/CD
@@ -171,16 +187,7 @@ GitHub Actions workflows handle linting and deployment:
 | Workflow | Trigger | Purpose |
 |----------|---------|---------|
 | `lint.yml` | Pull requests | Run pre-commit hooks (markdownlint, yamllint, tflint) |
-| `docker-publish.yml` | Push to main (docs/) | Build Docker image, push to GHCR, restart docs pod |
-
-### GitHub Secrets Required
-
-For automatic docs deployment, add these secrets at `Settings > Secrets > Actions`:
-
-| Secret | Value |
-|--------|-------|
-| `SSH_PRIVATE_KEY` | Contents of your SSH private key (same key used in `ssh_public_key_path`) |
-| `INGRESS_IP` | Public IP of ingress node (from `terraform output ingress_public_ip`) |
+| `docker-publish.yml` | Push to main (docs/) | Build Docker image, push to GHCR |
 
 ### Local Development
 
@@ -191,7 +198,7 @@ pre-commit run --all-files
 
 ## Documentation
 
-The full documentation is available at the live cluster site: **[https://k3s.sudhanva.me](https://k3s.sudhanva.me)**.
+The full documentation is available at the live cluster site.
 
 To view and edit the documentation locally:
 
@@ -200,6 +207,16 @@ cd docs
 bun install
 bun start
 ```
+
+## Why OKE over K3s?
+
+| Aspect | K3s | OKE Basic |
+|--------|-----|-----------|
+| Control Plane | Uses 2 OCPU, 12GB of your free tier | Free, managed by Oracle |
+| Worker Capacity | ~2 nodes worth | 4 nodes worth (all resources for workloads) |
+| Management | Self-managed | Oracle-managed control plane |
+| Upgrades | Manual | Simplified through OCI Console |
+| SLA | None | SLO (no financial SLA for Basic) |
 
 ## License
 
