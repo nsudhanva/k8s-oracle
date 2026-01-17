@@ -30,7 +30,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/nsudhanva/k3s-oracle.git
+    repoURL: https://github.com/nsudhanva/k8s-oracle.git
     targetRevision: HEAD
     path: argocd/infrastructure/cert-manager
   destination:
@@ -54,7 +54,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/nsudhanva/k3s-oracle.git
+    repoURL: https://github.com/nsudhanva/k8s-oracle.git
     targetRevision: HEAD
     path: argocd/infrastructure/external-dns
   destination:
@@ -80,7 +80,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/nsudhanva/k3s-oracle.git
+    repoURL: https://github.com/nsudhanva/k8s-oracle.git
     targetRevision: HEAD
     path: argocd/infrastructure/envoy-gateway
   destination:
@@ -110,7 +110,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/nsudhanva/k3s-oracle.git
+    repoURL: https://github.com/nsudhanva/k8s-oracle.git
     targetRevision: HEAD
     path: argocd/apps/docs
   destination:
@@ -133,7 +133,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/nsudhanva/k3s-oracle.git
+    repoURL: https://github.com/nsudhanva/k8s-oracle.git
     targetRevision: HEAD
     path: argocd/infrastructure/argocd-ingress
   destination:
@@ -156,7 +156,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/nsudhanva/k3s-oracle.git
+    repoURL: https://github.com/nsudhanva/k8s-oracle.git
     targetRevision: HEAD
     path: argocd/infrastructure/argocd
   destination:
@@ -179,7 +179,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/nsudhanva/k3s-oracle.git
+    repoURL: https://github.com/nsudhanva/k8s-oracle.git
     targetRevision: HEAD
     path: argocd/infrastructure/external-secrets
   destination:
@@ -205,7 +205,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/nsudhanva/k3s-oracle.git
+    repoURL: https://github.com/nsudhanva/k8s-oracle.git
     targetRevision: HEAD
     path: argocd/infrastructure/managed-secrets
   destination:
@@ -228,7 +228,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/nsudhanva/k3s-oracle.git
+    repoURL: https://github.com/nsudhanva/k8s-oracle.git
     targetRevision: HEAD
     path: argocd/apps/k3s-docs
   destination:
