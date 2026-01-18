@@ -21,7 +21,7 @@ spec:
     kind: ClusterSecretStore
   target:
     name: regcred
-    creationPolicy: Merge
+    creationPolicy: Owner
     template:
       type: kubernetes.io/dockerconfigjson
       data:
