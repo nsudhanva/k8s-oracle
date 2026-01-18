@@ -9,11 +9,10 @@ spec:
     privateKeySecretRef:
       name: cloudflare-issuer-account-key
     solvers:
-      - selector:
-          dnsZones:
-            - sudhanva.me
-        dns01:
-          cloudflare:
-            apiTokenSecretRef:
-              name: cloudflare-api-token-secret
-              key: api-token
+      - http01:
+          gatewayHTTPRoute:
+            parentRefs:
+              - name: public-gateway
+                namespace: envoy-gateway-system
+                kind: Gateway
+                group: gateway.networking.k8s.io

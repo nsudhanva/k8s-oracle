@@ -11,18 +11,18 @@ spec:
         - 193.122.186.40
       providerSpecific:
         - name: cloudflare-proxied
-          value: "true"
+          value: "false"
     - dnsName: cd.k8s.sudhanva.me
       recordType: A
       targets:
         - 193.122.186.40
       providerSpecific:
         - name: cloudflare-proxied
-          value: "true"
+          value: "false"
     - dnsName: k3s.sudhanva.me
       recordType: A
       targets:
         - 193.122.186.40
       providerSpecific:
         - name: cloudflare-proxied
-          value: "true"
+          value: "false"
