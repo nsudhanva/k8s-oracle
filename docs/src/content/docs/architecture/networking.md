@@ -83,4 +83,3 @@ sequenceDiagram
     User->>CF: Resolve Domain
     CF->>User: Return LB IP
 ```
-
