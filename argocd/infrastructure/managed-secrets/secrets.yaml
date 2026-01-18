@@ -106,3 +106,21 @@ spec:
     - secretKey: api-token
       remoteRef:
         key: cloudflare-api-token
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: cloudflare-api-token-sync
+  namespace: cert-manager
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: oci-vault
+    kind: ClusterSecretStore
+  target:
+    name: cloudflare-api-token-secret
+    creationPolicy: Owner
+  data:
+    - secretKey: api-token
+      remoteRef:
+        key: cloudflare-api-token
