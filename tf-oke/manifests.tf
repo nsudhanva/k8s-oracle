@@ -50,11 +50,6 @@ resource "local_file" "argocd_ingress_manifests" {
   })
 }
 
-resource "local_file" "argocd_self_managed" {
-  filename = "../argocd/infrastructure/argocd/kustomization.yaml"
-  content  = file("${path.module}/templates/manifests/argocd/kustomization.yaml")
-}
-
 resource "local_file" "docs_manifests" {
   for_each = fileset("${path.module}/templates/manifests/docs", "*")
   filename = "../argocd/apps/docs/${replace(each.value, ".tpl", "")}"
