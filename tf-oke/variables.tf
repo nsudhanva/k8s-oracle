@@ -129,3 +129,9 @@ variable "git_email" {
   description = "Email address for GitHub container registry authentication"
   type        = string
 }
+
+variable "load_balancer_ip" {
+  description = "LoadBalancer IP for the Envoy Gateway (set after initial deployment)"
+  type        = string
+  default     = ""
+}

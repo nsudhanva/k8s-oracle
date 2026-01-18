@@ -1,0 +1,28 @@
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: gateway-dns
+  namespace: envoy-gateway-system
+spec:
+  endpoints:
+    - dnsName: k8s.sudhanva.me
+      recordType: A
+      targets:
+        - 193.122.186.40
+      providerSpecific:
+        - name: cloudflare-proxied
+          value: "true"
+    - dnsName: cd.k8s.sudhanva.me
+      recordType: A
+      targets:
+        - 193.122.186.40
+      providerSpecific:
+        - name: cloudflare-proxied
+          value: "true"
+    - dnsName: k3s.sudhanva.me
+      recordType: A
+      targets:
+        - 193.122.186.40
+      providerSpecific:
+        - name: cloudflare-proxied
+          value: "true"

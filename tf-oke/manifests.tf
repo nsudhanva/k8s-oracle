@@ -42,6 +42,15 @@ resource "local_file" "envoy_gateway_kustomization" {
   content  = file("${path.module}/templates/manifests/envoy-gateway/kustomization.yaml")
 }
 
+resource "local_file" "envoy_gateway_dnsendpoint" {
+  count    = var.load_balancer_ip != "" ? 1 : 0
+  filename = "../argocd/infrastructure/envoy-gateway/dnsendpoint.yaml"
+  content = templatefile("${path.module}/templates/manifests/envoy-gateway/dnsendpoint.yaml.tpl", {
+    domain_name      = var.domain_name
+    load_balancer_ip = var.load_balancer_ip
+  })
+}
+
 
 resource "local_file" "argocd_ingress_manifests" {
   filename = "../argocd/infrastructure/argocd-ingress/ingress.yaml"
