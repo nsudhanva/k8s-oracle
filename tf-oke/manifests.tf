@@ -33,7 +33,8 @@ resource "local_file" "external_dns_rbac" {
 resource "local_file" "envoy_gateway_config" {
   filename = "../argocd/infrastructure/envoy-gateway/config.yaml"
   content = templatefile("${path.module}/templates/manifests/envoy-gateway/config.yaml.tpl", {
-    domain_name = var.domain_name
+    domain_name      = var.domain_name
+    public_subnet_id = oci_core_subnet.public_subnet.id
   })
 }
 

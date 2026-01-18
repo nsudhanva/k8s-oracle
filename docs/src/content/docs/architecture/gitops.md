@@ -1,6 +1,6 @@
 ---
-title: GitOps with ArgoCD for K3s Kubernetes
-description: Implement GitOps on K3s using ArgoCD App-of-Apps pattern. Automatic sync, self-healing, and declarative infrastructure management for Kubernetes clusters.
+title: GitOps with ArgoCD for OKE Kubernetes
+description: Implement GitOps on OKE using ArgoCD App-of-Apps pattern. Automatic sync, self-healing, and declarative infrastructure management for Kubernetes clusters.
 ---
 
 Argo CD manages all cluster resources using the App-of-Apps pattern.
@@ -19,7 +19,7 @@ flowchart TB
         AppController[Application Controller]
     end
 
-    subgraph Cluster["K3s Cluster"]
+    subgraph Cluster["OKE Cluster"]
         CRDs[Gateway API CRDs]
         CM[Cert Manager]
         EG[Envoy Gateway]
@@ -101,19 +101,18 @@ flowchart LR
 
 ## Secrets
 
-Cloudflare API tokens are injected during cluster bootstrap via cloud-init and stored in the `cert-manager` and `external-dns` namespaces.
+Secrets are managed via **OCI Vault** and synced to the cluster using **External Secrets Operator**.
 
 ```mermaid
 sequenceDiagram
-    participant TF as Terraform
-    participant CI as Cloud-Init
-    participant K3s as K3s Server
+    participant Vault as OCI Vault
+    participant ESO as External Secrets
+    participant K8s as Kubernetes
     participant Argo as Argo CD
 
-    TF->>CI: Pass secrets via cloud-init
-    CI->>K3s: Create Kubernetes Secrets
-    Note over K3s: cloudflare-api-token<br/>in cert-manager & external-dns
-    K3s->>Argo: Secrets available
+    Vault->>ESO: Read Secret (Instance Principal)
+    ESO->>K8s: Create/Update Secret
+    K8s->>Argo: Secrets available
     Argo->>Argo: Deploy apps with secrets
 ```
 
@@ -124,7 +123,7 @@ sequenceDiagram
     participant Dev as Developer
     participant GH as GitHub
     participant Argo as Argo CD
-    participant K8s as K3s Cluster
+    participant K8s as OKE Cluster
 
     Dev->>GH: git push
     Note over Argo: Polling (3 min) or Webhook

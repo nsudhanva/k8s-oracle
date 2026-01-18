@@ -1,6 +1,6 @@
 ---
-title: K3s on OCI Troubleshooting - Common Issues and Solutions
-description: Fix common K3s Kubernetes issues on Oracle Cloud. Solutions for out of capacity errors, DNS resolution, pod networking, ArgoCD sync problems, and Gateway TLS certificates.
+title: OKE on OCI Troubleshooting - Common Issues and Solutions
+description: Fix common OKE Kubernetes issues on Oracle Cloud. Solutions for out of capacity errors, DNS resolution, ArgoCD sync problems, and Gateway TLS certificates.
 ---
 
 ```mermaid
@@ -8,20 +8,17 @@ flowchart TB
     subgraph Issues["Common Issues"]
         OOC[Out of Capacity]
         ARM[ARM64 Images]
-        FW[Firewall Blocking]
         DNS[DNS Not Resolving]
     end
 
     subgraph Solutions["Solutions"]
         AD[Change Availability Domain]
         Multi[Multi-arch Build]
-        IPT[iptables -P ACCEPT]
         Annot[Add DNS Annotation]
     end
 
     OOC --> AD
     ARM --> Multi
-    FW --> IPT
     DNS --> Annot
 ```
 
@@ -53,106 +50,7 @@ Build multi-architecture images using GitHub Actions with `docker/setup-qemu-act
 
 ## Persistent Storage
 
-K3s uses `local-path-provisioner` by default. For block volumes, implement the OCI CSI driver.
-
-## SSH Tunneling
-
-The API server is not publicly accessible. Create an SSH tunnel:
-
-```bash
-ssh -N -L 16443:10.0.2.10:6443 ubuntu@<ingress-ip>
-```
-
-See [Accessing the Cluster](/operation/accessing-cluster/) for complete instructions.
-
-## Firewall Blocking CNI Traffic
-
-OCI Ubuntu images have strict iptables rules that block Flannel VXLAN traffic (UDP 8472).
-
-```mermaid
-flowchart LR
-    subgraph Before["Before Fix"]
-        Pod1[Pod A] -->|VXLAN| FW[iptables<br/>DROP]
-        FW -.->|Blocked| Pod2[Pod B]
-    end
-
-    subgraph After["After Fix"]
-        Pod3[Pod A] -->|VXLAN| FW2[iptables<br/>ACCEPT]
-        FW2 --> Pod4[Pod B]
-    end
-```
-
-Symptom: Pods cannot resolve DNS with `i/o timeout` errors, or pods on the ingress node cannot reach pods on other nodes.
-
-The ingress node requires specific iptables rules because it's in a different subnet (10.0.1.0/24) than the server/worker nodes (10.0.2.0/24):
-
-```bash
-sudo iptables -I INPUT -p udp --dport 8472 -j ACCEPT
-sudo iptables -I INPUT -s 10.0.2.0/24 -j ACCEPT
-sudo iptables -I INPUT -s 10.42.0.0/16 -j ACCEPT
-sudo iptables -I FORWARD -s 10.42.0.0/16 -d 10.42.0.0/16 -j ACCEPT
-sudo netfilter-persistent save
-```
-
-Cloud-init applies these rules automatically.
-
-## Pod-to-Pod Connectivity Issues
-
-If pods on the ingress node (e.g., Envoy) cannot connect to pods on other nodes:
-
-Symptom: Envoy returns `503 Service Unavailable` with `upstream_reset_before_response_started{remote_connection_failure}`.
-
-This occurs when:
-
-- VXLAN traffic (UDP 8472) is blocked by iptables
-- Traffic from the pod network (10.42.0.0/16) is blocked
-
-Verify connectivity:
-
-```bash
-ssh ubuntu@<ingress-ip> "ping -c 2 10.42.0.26"
-```
-
-If ping works but TCP doesn't, check iptables INPUT chain for REJECT rules.
-
-## SSH Host Key Verification Failed
-
-When recreating the cluster, new instances will have different SSH host keys, causing connection errors.
-
-Symptom: `StrictHostKeyChecking` error when running SSH or kubectl commands.
-
-```text
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-```
-
-Fix: Remove the old host keys:
-
-```bash
-ssh-keygen -R <ingress-public-ip>
-ssh-keygen -R 10.0.2.10
-```
-
-Alternative: Use strict checking disable flags for ad-hoc commands:
-
-```bash
-ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@<ip>
-```
-
-## K3s Installation Hung on Cloud-Init
-
-In rare cases, temporary DNS or network issues during boot can cause the K3s installation script to fail silently.
-
-Symptom: `kubectl get nodes` shows connection refused, or `systemctl status k3s` says unit not found after 10+ minutes.
-
-Check logs:
-
-```bash
-ssh ubuntu@<ingress-ip> "tail -n 50 /var/log/cloud-init-output.log"
-```
-
-Fix: If the installation failed, manually rerun the install command found in the logs or in `tf-k3s/cloud-init/server.yaml`.
+OKE uses the OCI CSI driver (Block Volume) for persistent storage. Ensure your StorageClass is configured correctly (default `oci-bv` is usually provided).
 
 ## Argo CD Helm Chart Errors
 
@@ -227,26 +125,7 @@ spec:
 
 The Envoy Gateway config template includes these ReferenceGrants automatically.
 
-## Node Label Namespace Restrictions
-
-Kubernetes 1.28+ restricts labels in the `kubernetes.io` and `k8s.io` namespaces.
-
-Symptom: k3s-agent fails to start with error:
-
-```text
-Error: failed to validate kubelet flags: unknown 'kubernetes.io' or 'k8s.io' labels specified with --node-labels: [node-role.kubernetes.io/ingress]
-```
-
-Fix: Use custom labels without the `kubernetes.io` prefix:
-
-```bash
---node-label role=ingress
---node-label role=worker
-```
-
-The cloud-init templates use `role=ingress` and `role=worker` which are allowed.
-
-## ArgoCD Application Sync Order
+## Argo CD Application Sync Order
 
 Applications may fail to sync if dependencies aren't deployed yet.
 
@@ -373,29 +252,6 @@ Fix: Use `%s` format specifiers instead of escaped quotes:
 # Correct
 "auth": "{{ printf "%s:%s" "${username}" .password | b64enc }}"
 ```
-
-## Worker Node TLS Certificate Mismatch
-
-When a cluster is recreated, worker nodes may fail to rejoin with TLS certificate errors.
-
-Symptom: Worker node shows errors in `journalctl -u k3s-agent`:
-
-```text
-level=error msg="Failed to connect to proxy" error="tls: failed to verify certificate: x509: certificate signed by unknown authority"
-```
-
-This happens because the worker node has cached certificates from the old cluster that don't match the new server's CA.
-
-Fix: Reset the worker node's certificates:
-
-```bash
-ssh -J ubuntu@<ingress-ip> ubuntu@<worker-ip>
-sudo systemctl stop k3s-agent
-sudo rm -rf /var/lib/rancher/k3s/agent/*.kubeconfig /var/lib/rancher/k3s/agent/client*
-sudo systemctl start k3s-agent
-```
-
-The agent will re-download certificates from the server and rejoin the cluster.
 
 ## Let's Encrypt Rate Limiting
 

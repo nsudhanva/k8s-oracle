@@ -1,9 +1,9 @@
 ---
-title: K3s Cluster Architecture on Oracle Cloud
-description: Complete architecture of a 3-node K3s Kubernetes cluster on OCI Always Free tier. Includes Ampere A1 ARM64 instances, GitOps with ArgoCD, and Gateway API ingress.
+title: OKE Cluster Architecture on Oracle Cloud
+description: Complete architecture of OKE Kubernetes cluster on OCI Free tier. Includes Ampere A1 ARM64 instances, GitOps with ArgoCD, and Gateway API ingress.
 ---
 
-This cluster runs on Oracle Cloud Infrastructure's Always Free tier using three Ampere A1 ARM64 instances.
+This cluster runs on Oracle Cloud Infrastructure's Free tier using OKE (Oracle Kubernetes Engine) Basic Cluster.
 
 ```mermaid
 graph TB
@@ -14,108 +14,75 @@ graph TB
 
     subgraph OCI["Oracle Cloud Infrastructure"]
         subgraph Public["Public Subnet (10.0.1.0/24)"]
-            Ingress[k3s-ingress<br/>1 OCPU, 6GB<br/>NAT + Envoy]
+            LB[OCI Load Balancer]
         end
 
         subgraph Private["Private Subnet (10.0.2.0/24)"]
-            Server[k3s-server<br/>2 OCPU, 12GB<br/>Control Plane]
-            Worker[k3s-worker<br/>1 OCPU, 6GB<br/>Workloads]
+            Worker1[Worker Node 1]
+            Worker2[Worker Node 2]
         end
+        
+        CP[OKE Control Plane<br/>Managed]
     end
 
     User -->|HTTPS| DNS
-    DNS -->|A Record| Ingress
-    Ingress -->|hostPort 443| Server
-    Ingress -->|hostPort 443| Worker
-    Server <-->|K3s| Worker
-    Private -->|NAT via iptables| Ingress
-    Ingress -->|Internet Gateway| Internet
+    DNS -->|A Record| LB
+    LB -->|Traffic| Worker1
+    LB -->|Traffic| Worker2
+    CP -.->|Manages| Worker1
+    CP -.->|Manages| Worker2
 ```
 
 ## Node Topology
 
 | Node | OCPUs | RAM | Subnet | Purpose |
 |------|-------|-----|--------|---------|
-| k3s-ingress | 1 | 6GB | Public (10.0.1.0/24) | NAT gateway, ingress controller |
-| k3s-server | 2 | 12GB | Private (10.0.2.0/24) | K3s control plane |
-| k3s-worker | 1 | 6GB | Private (10.0.2.0/24) | Application workloads |
+| Control Plane | - | - | Managed | OKE Basic Control Plane |
+| Worker 1 | 2 | 12GB | Private (10.0.2.0/24) | Application workloads |
+| Worker 2 | 2 | 12GB | Private (10.0.2.0/24) | Application workloads |
 
 ## Infrastructure
 
-Terraform provisions the OCI environment in `tf-k3s/`.
+Terraform provisions the OCI environment in `tf-oke/`.
 
 ### Network
 
 - VCN CIDR: 10.0.0.0/16
-- Public subnet: 10.0.1.0/24
-- Private subnet: 10.0.2.0/24
+- Public subnet: 10.0.1.0/24 (Load Balancers)
+- Private subnet: 10.0.2.0/24 (Worker Nodes)
 - Internet gateway for public subnet
-- Route table directing private subnet traffic through ingress node
+- NAT gateway for private subnet outbound access
 
 ### Security Lists
 
-- Ingress ports 80 and 443 from 0.0.0.0/0
-- NodePort range 30000-32767
+- Load Balancer ports 80 and 443 from 0.0.0.0/0
+- SSH access to bastion (if configured)
 - Full VCN internal communication
 
 ## Bootstrapping
 
-Cloud-init scripts configure each node automatically.
+Terraform provisions the OKE cluster and node pool. Once the cluster is active, you configure `kubectl` and install Argo CD manually.
 
 ```mermaid
 sequenceDiagram
     participant TF as Terraform
     participant OCI as OCI API
-    participant Server as k3s-server
-    participant Ingress as k3s-ingress
-    participant Worker as k3s-worker
+    participant OKE as OKE Cluster
     participant Argo as Argo CD
     participant GH as GitHub
 
-    TF->>OCI: Create VCN, Subnets, Security Lists
-    TF->>OCI: Create Instances with cloud-init
+    TF->>OCI: Create VCN, Subnets, OKE Cluster
+    OCI->>OKE: Provision Control Plane & Nodes
 
-    par Server Bootstrap
-        Server->>Server: Install K3s server
-        Server->>Server: Deploy Argo CD HelmChart
-        Server->>Server: Create secrets (Cloudflare, GitHub)
-        Server->>Server: Create root Application
-    and Ingress Bootstrap
-        Ingress->>Ingress: Enable IP forwarding
-        Ingress->>Ingress: Configure iptables NAT
-        Ingress->>Server: Join cluster as agent
-    and Worker Bootstrap
-        Worker->>Server: Join cluster as agent
-    end
+    Note over OKE: Cluster Active
+
+    User->>OKE: Install Argo CD
+    User->>OKE: Apply Root Application
 
     Argo->>GH: Fetch manifests
-    Argo->>Server: Deploy applications
-    Note over Argo,Server: Continuous sync loop
+    Argo->>OKE: Deploy applications
+    Note over Argo,OKE: Continuous sync loop
 ```
-
-### Ingress Node
-
-Defined in `cloud-init/ingress.yaml`:
-
-- Enables IP forwarding
-- Configures iptables masquerade for NAT
-- Installs K3s agent with `role=ingress` label
-
-### Server Node
-
-Defined in `cloud-init/server.yaml`:
-
-- Installs K3s server with Traefik disabled
-- Deploys Argo CD via HelmChart manifest
-- Creates secrets for Cloudflare, GitHub, and registry credentials
-- Configures root Application for GitOps
-
-### Worker Node
-
-Defined in `cloud-init/worker.yaml`:
-
-- Installs K3s agent
-- Joins cluster using K3s token
 
 ## GitOps
 
@@ -127,7 +94,7 @@ flowchart LR
         Repo[(k3s-oracle<br/>Repository)]
     end
 
-    subgraph Cluster["K3s Cluster"]
+    subgraph Cluster["OKE Cluster"]
         subgraph ArgoCD["Argo CD"]
             Root[Root App]
             Apps[Application<br/>Manifests]
@@ -172,7 +139,7 @@ flowchart LR
 
 ## Ingress
 
-Envoy Gateway implements the Kubernetes Gateway API. The proxy binds to ports 80 and 443 on the ingress node using hostPort, allowing external traffic while maintaining cluster network connectivity for DNS resolution.
+Envoy Gateway implements the Kubernetes Gateway API. It provisions an OCI Load Balancer to handle external traffic.
 
 ```mermaid
 flowchart LR
@@ -180,13 +147,11 @@ flowchart LR
         Browser((Browser))
     end
 
-    subgraph Ingress["Ingress Node"]
-        HP80[hostPort :80]
-        HP443[hostPort :443]
-        Envoy[Envoy Proxy]
+    subgraph OCI["OCI"]
+        LB[Load Balancer]
     end
 
-    subgraph Cluster["K3s Cluster"]
+    subgraph Cluster["OKE Cluster"]
         GW[public-gateway]
         HR1[HTTPRoute<br/>docs]
         HR2[HTTPRoute<br/>argocd]
@@ -196,11 +161,8 @@ flowchart LR
         POD2[argocd Pod]
     end
 
-    Browser -->|HTTP| HP80
-    Browser -->|HTTPS| HP443
-    HP80 --> Envoy
-    HP443 --> Envoy
-    Envoy --> GW
+    Browser -->|HTTPS| LB
+    LB --> GW
     GW --> HR1
     GW --> HR2
     HR1 --> SVC1

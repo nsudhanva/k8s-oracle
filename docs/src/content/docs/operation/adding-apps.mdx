@@ -1,6 +1,6 @@
 ---
-title: Deploy Applications to K3s with ArgoCD GitOps
-description: Step-by-step guide to deploy new applications on K3s using ArgoCD GitOps. Create Kubernetes manifests, HTTPRoutes, and TLS certificates with automatic sync.
+title: Deploy Applications to OKE with ArgoCD GitOps
+description: Step-by-step guide to deploy new applications on OKE using ArgoCD GitOps. Create Kubernetes manifests, HTTPRoutes, and TLS certificates with automatic sync.
 ---
 
 import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
@@ -173,7 +173,7 @@ spec:
           image: ghcr.io/your-username/my-app:latest
 ```
 
-The `regcred` secret is created during cluster bootstrap with GitHub credentials.
+The `regcred` secret is managed by External Secrets Operator and automatically synced from OCI Vault.
 
 ## Application with Secrets
 
@@ -209,8 +209,7 @@ spec:
 
 ```bash
 # Via kubectl
-ssh -J ubuntu@132.226.43.62 ubuntu@10.0.2.10 \
-  "sudo kubectl get applications -n argocd"
+kubectl get applications -n argocd
 
 # Via ArgoCD CLI
 argocd app list
@@ -220,15 +219,13 @@ argocd app get my-app
 ### Check Pod Status
 
 ```bash
-ssh -J ubuntu@132.226.43.62 ubuntu@10.0.2.10 \
-  "sudo kubectl get pods -n my-app"
+kubectl get pods -n my-app
 ```
 
 ### View Logs
 
 ```bash
-ssh -J ubuntu@132.226.43.62 ubuntu@10.0.2.10 \
-  "sudo kubectl logs -n my-app -l app=my-app"
+kubectl logs -n my-app -l app=my-app
 ```
 
 ## Resource Limits

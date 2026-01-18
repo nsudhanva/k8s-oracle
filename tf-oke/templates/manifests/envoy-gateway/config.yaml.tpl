@@ -51,6 +51,7 @@ spec:
         type: LoadBalancer
         annotations:
           oci.oraclecloud.com/load-balancer-type: "nlb"
+          oci-network-load-balancer.oraclecloud.com/subnet-id: "${public_subnet_id}"
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway

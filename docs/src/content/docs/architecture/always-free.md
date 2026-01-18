@@ -1,45 +1,46 @@
 ---
-title: Oracle Cloud Always Free Tier for Kubernetes
-description: Run K3s Kubernetes for free on OCI Always Free tier. Get 4 ARM64 OCPUs, 24GB RAM, 200GB storage, and 10TB egress monthly - perfect for a 3-node cluster.
+title: Oracle Cloud Free Tier for OKE Kubernetes
+description: Run OKE Kubernetes on OCI Free tier. Get 4 ARM64 OCPUs, 24GB RAM, 200GB storage - perfect for a 2-node cluster.
 ---
 
-This cluster runs entirely within Oracle Cloud Infrastructure's Always Free tier limits.
+This cluster maximizes Oracle Cloud Infrastructure's Free tier resources.
 
 ```mermaid
 pie showData
-    title OCI Always Free Resource Allocation
-    "k3s-server (2 OCPU, 12GB)" : 50
-    "k3s-ingress (1 OCPU, 6GB)" : 25
-    "k3s-worker (1 OCPU, 6GB)" : 25
+    title OCI Free Resource Allocation
+    "Worker 1 (2 OCPU, 12GB)" : 50
+    "Worker 2 (2 OCPU, 12GB)" : 50
 ```
 
 ## Resource Allocation
 
-OCI Always Free provides 4 OCPUs and 24GB RAM for Ampere A1 instances. This cluster divides these resources across three nodes:
+OCI Always Free provides 4 OCPUs and 24GB RAM for Ampere A1 instances. This cluster divides these resources across two worker nodes, while the Control Plane is managed by OCI (Free for Basic Cluster).
 
 | Node | OCPUs | RAM | Purpose |
 |------|-------|-----|---------|
-| k3s-ingress | 1 | 6GB | NAT gateway, ingress proxy |
-| k3s-server | 2 | 12GB | Control plane, Argo CD |
-| k3s-worker | 1 | 6GB | Application workloads |
+| Control Plane | - | - | OKE Basic Cluster (Managed) |
+| Worker 1 | 2 | 12GB | Workloads |
+| Worker 2 | 2 | 12GB | Workloads |
 
 Total: 4 OCPUs, 24GB RAM (exactly at the limit)
 
 ```mermaid
 graph LR
-    subgraph Free["Always Free (4 OCPU, 24GB)"]
-        I[Ingress<br/>1 OCPU<br/>6GB]
-        S[Server<br/>2 OCPU<br/>12GB]
-        W[Worker<br/>1 OCPU<br/>6GB]
+    subgraph Free["Free Tier (4 OCPU, 24GB)"]
+        W1[Worker 1<br/>2 OCPU<br/>12GB]
+        W2[Worker 2<br/>2 OCPU<br/>12GB]
+    end
+
+    subgraph Managed["OCI Managed"]
+        CP[Control Plane<br/>Basic Cluster]
     end
 
     subgraph Used["Used: 4 OCPU, 24GB"]
         Total[100% Utilized]
     end
 
-    I --> Total
-    S --> Total
-    W --> Total
+    W1 --> Total
+    W2 --> Total
 ```
 
 ## Always Free Components
@@ -50,17 +51,17 @@ Ampere A1 Flex instances are ARM64-based. Container images must support the `lin
 
 ### Networking
 
-- 1 VCN with up to 2 subnets
+- 1 VCN with public and private subnets
 - 1 Internet Gateway
+- 1 NAT Gateway (for private subnet outbound access)
 - 1 Network Load Balancer (Always Free includes 1 flexible NLB)
-- Security lists and route tables
-- No NAT Gateway (implemented in software on ingress node)
 
 ### Storage
 
 - 200GB total block volume storage
 - Boot volumes count against this limit
-- Each node uses a 50GB boot volume (150GB total)
+- Each node uses a 50GB boot volume (100GB total used)
+- Remaining storage available for Persistent Volumes via OCI CSI
 
 ### Bandwidth
 
@@ -69,24 +70,7 @@ Ampere A1 Flex instances are ARM64-based. Container images must support the `lin
 
 ## Cost Avoidance
 
-This cluster replaces paid OCI services with free alternatives:
-
-```mermaid
-flowchart LR
-    subgraph Paid["Paid Services (Avoided)"]
-        NAT[OCI NAT Gateway<br/>~$32/month]
-        BV[Block Volumes<br/>~$0.02/GB/month]
-    end
-
-    subgraph Free["Free Alternatives (Used)"]
-        NLB[Network Load Balancer<br/>Always Free]
-        IPT[iptables NAT<br/>on Ingress Node]
-        LP[local-path-provisioner<br/>on Boot Volume]
-    end
-
-    NAT -.->|replaced by| IPT
-    BV -.->|replaced by| LP
-```
+This cluster maximizes free resources, but note that **NAT Gateway** incurs a small cost if used heavily (though usually negligible).
 
 ### Network Load Balancer
 
@@ -106,20 +90,9 @@ Benefits of using the NLB:
 - Health checks on backend
 - Can add more ingress nodes later for HA
 
-### No NAT Gateway
+### Block Volumes
 
-OCI NAT Gateways are not included in Always Free. The ingress node runs iptables masquerade to provide outbound internet access for the private subnet.
-
-```mermaid
-flowchart LR
-    Private[Private Subnet<br/>10.0.2.0/24] -->|outbound| Ingress[Ingress Node<br/>iptables MASQUERADE]
-    Ingress -->|SNAT| IGW[Internet Gateway]
-    IGW --> Internet((Internet))
-```
-
-### No Block Volumes
-
-Additional block volumes would consume the 200GB limit. K3s uses local-path-provisioner for persistent storage, storing data on the node's boot volume.
+The OCI CSI driver allows dynamically provisioning Block Volumes for persistent storage, using the remaining free tier storage capacity.
 
 ## Staying Within Limits
 

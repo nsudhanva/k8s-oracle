@@ -1,59 +1,38 @@
 ---
-title: K3s Kubernetes on Oracle Cloud Free Tier - Complete Guide
-description: Deploy a free, production-ready K3s Kubernetes cluster on Oracle Cloud Infrastructure (OCI) Always Free tier. Uses Terraform, ArgoCD GitOps, Envoy Gateway, automatic TLS with Let's Encrypt, and Cloudflare DNS.
-template: splash
-hero:
-  tagline: Deploy a free Kubernetes cluster on Oracle Cloud with GitOps, automatic TLS, and Gateway API - no credit card required
-  actions:
-    - text: Get Started
-      link: /getting-started/prerequisites/
-      icon: right-arrow
-      variant: primary
-    - text: View Architecture
-      link: /architecture/overview/
-      icon: external
+title: OKE Kubernetes on Oracle Cloud Free Tier - Complete Guide
+description: Deploy a free, production-ready OKE Kubernetes cluster on Oracle Cloud Infrastructure (OCI) Free tier. Uses Terraform, ArgoCD GitOps, Envoy Gateway, automatic TLS with Let's Encrypt, and Cloudflare DNS.
 ---
 
 import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
-## Why K3s on Oracle Cloud?
+## Why OKE on Oracle Cloud?
 
-Run a **production-ready Kubernetes cluster completely free** using Oracle Cloud's Always Free tier. This project provides everything you need: infrastructure as code, GitOps automation, secure secrets management, and automatic HTTPS certificates.
+- **Managed Control Plane:** OKE Basic Cluster provides a free, fully managed Kubernetes control plane.
+- **High Performance:** Ampere A1 Compute instances provide up to 4 OCPUs and 24GB RAM for worker nodes.
+- **GitOps Ready:** Complete Argo CD setup with App-of-Apps pattern.
+- **Secure:** OCI Vault integration for secrets and Gateway API for secure ingress.
 
 ## Features
 
-<CardGrid stagger>
-  <Card title="100% Free Forever" icon="rocket">
-    Uses Oracle Cloud Always Free tier: 4 ARM64 OCPUs, 24GB RAM, 200GB storage, 10TB egress/month.
-  </Card>
-  <Card title="GitOps with ArgoCD" icon="github">
-    Declarative cluster management using the App-of-Apps pattern. Push to Git, ArgoCD deploys.
-  </Card>
-  <Card title="Gateway API Ingress" icon="seti:graphql">
-    Modern Kubernetes ingress with Envoy Gateway. No cloud load balancer needed.
-  </Card>
-  <Card title="Automatic TLS Certificates" icon="setting">
-    Let's Encrypt certificates via Cert Manager with Cloudflare DNS validation.
-  </Card>
-  <Card title="Secure Secrets" icon="approve-check">
-    OCI Vault integration with External Secrets Operator. No secrets in Git.
-  </Card>
-  <Card title="Infrastructure as Code" icon="document">
-    One-command deployment with Terraform. Reproducible and version controlled.
-  </Card>
-</CardGrid>
+| Feature | Implementation |
+|---------|----------------|
+| **Kubernetes** | OKE Basic Cluster (Managed) |
+| **Infrastructure** | Terraform (OCI Provider) |
+| **GitOps** | Argo CD |
+| **Ingress** | Envoy Gateway + OCI Load Balancer |
+| **DNS** | External DNS + Cloudflare |
+| **TLS** | Cert Manager + Let's Encrypt |
+| **Secrets** | OCI Vault + External Secrets Operator |
+| **Docs** | Astro + Starlight (This site) |
 
-## What's Included
+## Comparison
 
-| Component | Purpose |
-|-----------|---------|
-| **K3s** | Lightweight Kubernetes distribution optimized for ARM64 |
-| **Terraform** | Infrastructure provisioning on OCI |
-| **ArgoCD** | GitOps continuous deployment |
-| **Envoy Gateway** | Gateway API implementation for ingress |
-| **Cert Manager** | Automatic TLS certificate management |
-| **External DNS** | Automatic Cloudflare DNS record management |
-| **External Secrets** | OCI Vault to Kubernetes secret sync |
+| | **OKE Basic** | **K3s on VM** |
+|---|---|---|
+| **Control Plane** | Managed (Free) | Self-managed on VM |
+| **Worker Resources** | Full 4 OCPU / 24GB | Reduced by Control Plane |
+| **Maintenance** | Oracle Managed | Manual Upgrades |
+| **Storage** | OCI Block Volume (CSI) | Local Path / HostPath |
 
 ## Quick Links
 

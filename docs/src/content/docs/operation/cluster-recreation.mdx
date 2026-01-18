@@ -1,11 +1,11 @@
 ---
-title: Recreate K3s Cluster from Scratch - Disaster Recovery
-description: Complete guide to destroy and recreate K3s cluster on OCI. Terraform state management, data backup, and GitOps recovery procedures.
+title: Recreate OKE Cluster from Scratch - Disaster Recovery
+description: Complete guide to destroy and recreate OKE cluster on OCI. Terraform state management, data backup, and GitOps recovery procedures.
 ---
 
 import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
-This guide walks through recreating the entire K3s cluster from scratch using this repository and secrets stored in OCI Vault.
+This guide walks through recreating the entire OKE cluster from scratch using this repository and secrets stored in OCI Vault.
 
 ## Prerequisites
 
@@ -68,7 +68,7 @@ oci secrets secret-bundle get \
 Create the Terraform variables file with values from Vault:
 
 ```bash
-cd tf-k3s
+cd tf-oke
 
 cat > terraform.tfvars << 'EOF'
 # OCI Authentication (from ~/.oci/config or password manager)
@@ -91,15 +91,14 @@ domain_name          = "<from vault: domain-name>"
 git_repo_url  = "<from vault: git-repo-url>"
 git_pat       = "<from vault: github-pat>"
 git_username  = "<from vault: github-username>"
-
-# K3s (from Vault)
-k3s_token = "<from vault: k3s-token>"
+git_email     = "<your-email>"
 
 # Let's Encrypt (from Vault)
 acme_email = "<from vault: acme-email>"
 
 # ArgoCD (from Vault)
-argocd_admin_password = "<from vault: argocd-admin-password>"
+argocd_admin_password      = "<from vault: argocd-admin-password>"
+argocd_admin_password_hash = "<from vault: argocd-admin-password-hash>"
 EOF
 ```
 
@@ -141,38 +140,34 @@ oci secrets secret-bundle get \
   If the Object Storage bucket with state already exists, Terraform will connect to it automatically. Never run `terraform apply` without reviewing the plan carefully.
 </Aside>
 
-## Step 6: Wait for Bootstrap
+## Step 6: Wait for Provisioning
 
-After Terraform completes, wait approximately 5 minutes for:
+After Terraform completes, the OKE cluster will be active. You need to configure kubectl and install Argo CD manually.
 
-1. Cloud-init to complete on all nodes
-2. K3s cluster to form
-3. ArgoCD to bootstrap
-4. Applications to sync
+1. **Configure kubectl**:
+   ```bash
+   oci ce cluster create-kubeconfig ... (see Accessing Cluster guide)
+   ```
+
+2. **Install Argo CD**:
+   ```bash
+   kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+   kubectl apply -f ../argocd/applications.yaml
+   ```
 
 ## Step 7: Verify Cluster
-
-### Connect via SSH
-
-```bash
-# Get ingress IP from Terraform output
-INGRESS_IP=$(terraform output -raw ingress_public_ip)
-
-# SSH to server via ingress jump host
-ssh -J ubuntu@$INGRESS_IP ubuntu@10.0.2.10
-```
 
 ### Check Kubernetes
 
 ```bash
-sudo kubectl get nodes
-sudo kubectl get pods -A
+kubectl get nodes
+kubectl get pods -A
 ```
 
 ### Check ArgoCD Applications
 
 ```bash
-sudo kubectl get applications -n argocd
+kubectl get applications -n argocd
 ```
 
 ## Step 8: Access ArgoCD UI
@@ -184,8 +179,8 @@ The ArgoCD admin password is synced from OCI Vault via External Secrets Operator
 <Tabs>
   <TabItem label="From Cluster (Recommended)">
     ```bash
-    kubectl -n argocd get secret argocd-initial-admin-secret \
-      -o jsonpath='{.data.password}' | base64 -d
+    kubectl -n argocd get secret argocd-secret \
+      -o jsonpath='{.data.admin\.password}' | base64 -d
     ```
     This retrieves the password that External Secrets synced from Vault.
   </TabItem>
@@ -234,23 +229,6 @@ dig @1.1.1.1 argocd.<your-domain>
 ```
 
 ## Known Issues After Recreation
-
-### Worker Node Certificate Mismatch
-
-After cluster recreation, worker nodes may fail to join with TLS errors:
-
-```text
-level=error msg="Failed to connect to proxy" error="tls: failed to verify certificate: x509: certificate signed by unknown authority"
-```
-
-Fix by resetting the worker's certificates:
-
-```bash
-ssh -J ubuntu@$INGRESS_IP ubuntu@<worker-ip>
-sudo systemctl stop k3s-agent
-sudo rm -rf /var/lib/rancher/k3s/agent/*.kubeconfig /var/lib/rancher/k3s/agent/client*
-sudo systemctl start k3s-agent
-```
 
 ### Let's Encrypt Rate Limiting
 

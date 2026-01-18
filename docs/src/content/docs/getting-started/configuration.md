@@ -5,7 +5,7 @@ description: Complete terraform.tfvars configuration guide for K3s on Oracle Clo
 
 import { Aside } from '@astrojs/starlight/components';
 
-Create `tf-k3s/terraform.tfvars` with your environment-specific values. This file is gitignored and should never be committed.
+Create `tf-oke/terraform.tfvars` with your environment-specific values. This file is gitignored and should never be committed.
 
 <Aside type="tip">
   After initial deployment, all secrets are stored in OCI Vault. See [Secrets Management](/architecture/secrets-management) for retrieval instructions.
@@ -32,7 +32,6 @@ git_username  = "your-username"
 git_email     = "your-email@example.com"
 git_pat       = "ghp_..."
 
-k3s_token                  = "your-random-secure-token"
 argocd_admin_password      = "your-secure-password"
 argocd_admin_password_hash = "$2a$10$..."  # bcrypt hash of argocd_admin_password
 ```
@@ -56,7 +55,6 @@ argocd_admin_password_hash = "$2a$10$..."  # bcrypt hash of argocd_admin_passwor
 | `git_username` | GitHub username | Yes |
 | `git_email` | Email for GHCR authentication | Yes |
 | `git_pat` | GitHub Personal Access Token | Yes |
-| `k3s_token` | Shared secret for K3s node authentication | Yes |
 | `argocd_admin_password` | Password for ArgoCD admin user | Yes |
 | `argocd_admin_password_hash` | Bcrypt hash of the password (for argocd-secret) | Yes |
 
@@ -95,4 +93,4 @@ After `terraform apply`, the following Always Free resources are created:
 
 ## Remote State
 
-Terraform state is stored in OCI Object Storage bucket `k3s-tfstate` with versioning enabled. The bucket is created during the first apply and reused for subsequent runs.
+Terraform state is stored in OCI Object Storage bucket `oke-tfstate` with versioning enabled. The bucket is created during the first apply and reused for subsequent runs.

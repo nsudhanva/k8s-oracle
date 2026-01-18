@@ -1,6 +1,6 @@
 ---
-title: Prerequisites for K3s on Oracle Cloud
-description: Requirements for deploying K3s Kubernetes on OCI Always Free tier - Oracle Cloud account, Cloudflare DNS, GitHub repository, Terraform, and kubectl setup guide.
+title: Prerequisites for OKE on Oracle Cloud
+description: Requirements for deploying OKE Kubernetes on OCI Always Free tier - Oracle Cloud account, Cloudflare DNS, GitHub repository, Terraform, and kubectl setup guide.
 ---
 
 ```mermaid
@@ -17,7 +17,7 @@ flowchart LR
         SSH[SSH Client]
     end
 
-    subgraph Cluster["K3s Cluster"]
+    subgraph Cluster["OKE Cluster"]
         K3s((Deployed<br/>Cluster))
     end
 
@@ -26,14 +26,13 @@ flowchart LR
     GH --> K3s
     TF --> K3s
     KU -.->|manage| K3s
-    SSH -.->|access| K3s
 ```
 
 ## Cloud Accounts
 
 ### Oracle Cloud Infrastructure
 
-An OCI account with Always Free tier eligibility is required. You need availability for Ampere A1 Compute instances in your region. US-Ashburn-1 and EU-Frankfurt-1 typically have better availability.
+An OCI account upgraded to Pay-As-You-Go (required for OKE, but resources stay within free tier limits) is required. You need availability for Ampere A1 Compute instances in your region. US-Ashburn-1 and EU-Frankfurt-1 typically have better availability.
 
 Required credentials:
 

@@ -1,6 +1,6 @@
 ---
-title: Install K3s on Oracle Cloud - Step by Step Guide
-description: Complete installation guide for deploying K3s Kubernetes cluster on OCI Always Free tier using Terraform. Includes provisioning, ArgoCD setup, and verification steps.
+title: Provision OKE on Oracle Cloud - Step by Step Guide
+description: Complete installation guide for deploying OKE Kubernetes cluster on OCI Always Free tier using Terraform. Includes provisioning, ArgoCD setup, and verification steps.
 ---
 
 ```mermaid
@@ -29,7 +29,7 @@ flowchart LR
 After creating `terraform.tfvars`, run Terraform to provision the infrastructure:
 
 ```bash
-cd tf-k3s
+cd tf-oke
 terraform init
 terraform apply
 ```
@@ -39,19 +39,20 @@ sequenceDiagram
     participant You as Developer
     participant TF as Terraform
     participant OCI as OCI API
-    participant Nodes as Compute Instances
+    participant OKE as OKE Cluster
 
     You->>TF: terraform apply
     TF->>OCI: Create VCN
     TF->>OCI: Create Subnets
-    TF->>OCI: Create Security Lists
-    TF->>OCI: Create Instances
-    OCI->>Nodes: Launch with cloud-init
-    TF->>You: Output IPs
-    Note over Nodes: Bootstrapping begins...
+    TF->>OCI: Create OKE Cluster
+    TF->>OCI: Create Node Pool
+    OCI->>OKE: Provision Control Plane
+    OCI->>OKE: Provision Worker Nodes
+    TF->>You: Output Cluster Details
+    Note over OKE: Cluster creation takes ~10-15m
 ```
 
-Terraform creates the OCI networking and compute instances, then generates Kubernetes manifests in the `argocd/` directory.
+Terraform creates the OCI networking, OKE cluster, and node pool, then generates Kubernetes manifests in the `argocd/` directory.
 
 ## Push Manifests
 
@@ -69,64 +70,52 @@ flowchart LR
     TF[Terraform] -->|generates| Manifests[argocd/]
     Manifests -->|git push| GH[GitHub]
     GH -->|syncs| Argo[Argo CD]
-    Argo -->|deploys| Cluster[K3s Cluster]
+    Argo -->|deploys| Cluster[OKE Cluster]
 ```
 
 ## Bootstrapping
 
-Cloud-init scripts automatically configure each node:
+The OKE cluster is fully managed by Oracle. Once Terraform completes, the cluster is active, but we need to configure `kubectl` and install Argo CD.
 
-```mermaid
-gantt
-    title Node Bootstrap Timeline
-    dateFormat X
-    axisFormat %s
+1. **Configure kubectl**:
+   ```bash
+   oci ce cluster create-kubeconfig \
+     --cluster-id $(terraform output -raw cluster_id) \
+     --file $HOME/.kube/config \
+     --region $(terraform output -raw region) \
+     --token-version 2.0.0 \
+     --kube-endpoint PUBLIC_ENDPOINT
+   ```
 
-    section Ingress
-    Enable IP forwarding    :0, 30
-    Configure iptables NAT  :30, 60
-    Install K3s agent       :60, 120
-    Join cluster            :120, 150
+2. **Install Argo CD**:
+   ```bash
+   kubectl create namespace argocd
+   kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+   kubectl apply -f ../argocd/applications.yaml
+   ```
 
-    section Server
-    Install K3s server      :0, 90
-    Deploy Argo CD          :90, 150
-    Create secrets          :150, 180
-    Sync applications       :180, 300
-
-    section Worker
-    Install K3s agent       :0, 90
-    Join cluster            :90, 120
-```
-
-- Ingress node enables IP forwarding and NAT
-- Server node installs K3s and Argo CD
-- Worker node joins the cluster
-
-Allow approximately five minutes for all nodes to initialize and Argo CD to begin syncing.
+Allow approximately five minutes for Argo CD to initialize and begin syncing applications.
 
 ## Verification
 
 ### Check Nodes
 
 ```bash
-terraform output
-ssh -J ubuntu@<ingress-public-ip> ubuntu@10.0.2.10 "sudo kubectl get nodes"
+kubectl get nodes
 ```
 
 Expected output:
 
 ```text
-NAME       STATUS   ROLES           AGE   VERSION
-ingress    Ready    <none>          5m    v1.34.3+k3s1
-server     Ready    control-plane   5m    v1.34.3+k3s1
-worker-1   Ready    <none>          5m    v1.34.3+k3s1
+NAME             STATUS   ROLES   AGE   VERSION
+10.0.10.x        Ready    node    5m    v1.32.1
+10.0.10.y        Ready    node    5m    v1.32.1
 ```
 
 ### Check Applications
 
 ```bash
-ssh -J ubuntu@<ingress-public-ip> ubuntu@10.0.2.10 "sudo kubectl get applications -n argocd"
+kubectl get applications -n argocd
 ```
 
 Expected output:
@@ -148,7 +137,7 @@ root-app              Synced        Healthy
 ### Check Pods
 
 ```bash
-ssh -J ubuntu@<ingress-public-ip> ubuntu@10.0.2.10 "sudo kubectl get pods -A"
+kubectl get pods -A
 ```
 
 All pods should be Running except for completed Job pods.
@@ -192,21 +181,6 @@ for app in gateway-api-crds external-dns cert-manager external-secrets envoy-gat
   kubectl -n argocd patch application $app --type=merge -p '{"operation":{"sync":{}}}'
   sleep 10
 done
-```
-
-### Node Not Joining Cluster
-
-If a node fails to join with label validation errors, SSH to the node and check:
-
-```bash
-sudo journalctl -u k3s-agent -n 50
-```
-
-If you see `unknown 'kubernetes.io' labels`, the cloud-init used a restricted label. Fix by reinstalling:
-
-```bash
-sudo /usr/local/bin/k3s-agent-uninstall.sh
-curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC='agent --node-label role=ingress' K3S_URL=https://10.0.2.10:6443 K3S_TOKEN='<token>' sh -
 ```
 
 ### HTTPS Verification
