@@ -157,18 +157,22 @@ Before running `terraform apply` for the first time:
 
 1. Wait for OKE cluster to be ACTIVE (can take 10-15 minutes)
 2. Generate kubeconfig:
+
    ```bash
    oci ce cluster create-kubeconfig --cluster-id <cluster-ocid> \
      --file $HOME/.kube/config --region <region> \
      --token-version 2.0.0 --kube-endpoint PUBLIC_ENDPOINT
    ```
+
 3. Push generated `argocd/` manifests to Git
 4. Install ArgoCD:
+
    ```bash
    kubectl create namespace argocd
    kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
    kubectl apply -f argocd/applications.yaml
    ```
+
 5. Wait for LoadBalancer IP to be assigned to Envoy Gateway
 6. Verify all ArgoCD applications are Synced/Healthy
 7. Test DNS resolution and HTTPS access
