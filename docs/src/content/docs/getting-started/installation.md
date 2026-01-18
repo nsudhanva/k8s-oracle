@@ -78,6 +78,7 @@ flowchart LR
 The OKE cluster is fully managed by Oracle. Once Terraform completes, the cluster is active, but we need to configure `kubectl` and install Argo CD.
 
 1. **Configure kubectl**:
+
    ```bash
    oci ce cluster create-kubeconfig \
      --cluster-id $(terraform output -raw cluster_id) \
@@ -88,6 +89,7 @@ The OKE cluster is fully managed by Oracle. Once Terraform completes, the cluste
    ```
 
 2. **Install Argo CD**:
+
    ```bash
    kubectl create namespace argocd
    kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml

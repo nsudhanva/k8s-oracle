@@ -61,6 +61,7 @@ Worker nodes are in a private subnet and cannot receive direct connections from 
 ## CNI (Container Network Interface)
 
 The cluster uses **Flannel** in VXLAN overlay mode.
+
 - **Pod CIDR:** 10.244.0.0/16
 - **Service CIDR:** 10.96.0.0/16
 
@@ -82,3 +83,4 @@ sequenceDiagram
     User->>CF: Resolve Domain
     CF->>User: Return LB IP
 ```
+

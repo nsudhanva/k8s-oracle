@@ -37,6 +37,7 @@ kubectl get nodes
 ```
 
 Expected output:
+
 ```text
 NAME          STATUS   ROLES   AGE   VERSION
 10.0.10.x     Ready    node    5m    v1.32.1
@@ -72,6 +73,7 @@ Password:
 ```bash
 kubectl -n argocd get secret argocd-secret -o jsonpath='{.data.admin\.password}' | base64 -d
 ```
+
 Note: The secret name is `argocd-secret` and key is `admin.password` (synced via External Secrets), OR `argocd-initial-admin-secret` if using default install. Since we sync the password hash, Argo CD uses the updated password.
 
 ## Troubleshooting
@@ -83,6 +85,7 @@ Ensure your IP address is allowed if you have restricted the cluster endpoint ac
 ### OCI CLI Errors
 
 Ensure your OCI config is correct:
+
 ```bash
 oci setup repair
 ```
