@@ -155,6 +155,16 @@ resource "oci_core_security_list" "private_sl" {
     protocol = "all"
     source   = "10.244.0.0/16"
   }
+
+  # Allow NodePorts from anywhere (for NLB backend traffic)
+  ingress_security_rules {
+    protocol = "6"
+    source   = "0.0.0.0/0"
+    tcp_options {
+      min = 30000
+      max = 32767
+    }
+  }
 }
 
 resource "oci_core_subnet" "public_subnet" {
