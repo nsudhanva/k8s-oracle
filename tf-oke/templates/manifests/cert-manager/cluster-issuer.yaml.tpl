@@ -9,7 +9,10 @@ spec:
     privateKeySecretRef:
       name: cloudflare-issuer-account-key
     solvers:
-      - dns01:
+      - selector:
+          dnsZones:
+            - sudhanva.me
+        dns01:
           cloudflare:
             apiTokenSecretRef:
               name: cloudflare-api-token-secret
