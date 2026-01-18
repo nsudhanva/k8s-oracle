@@ -1,11 +1,10 @@
 # Stage 1: Build the site
 FROM oven/bun:1 AS builder
 WORKDIR /app
-COPY package.json .
-COPY bun.lock .
+COPY package.json bun.lock ./
 RUN bun install
 COPY . .
-RUN bun run build
+RUN bun ./node_modules/astro/astro.js build
 
 # Stage 2: Serve with Nginx
 FROM nginx:alpine
