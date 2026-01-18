@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: docs
-          image: ghcr.io/nsudhanva/k8s-oracle/docs:latest
+          image: ghcr.io/nsudhanva/k8s-oracle:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 80

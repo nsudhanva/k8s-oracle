@@ -304,3 +304,100 @@ kubectl delete pod -n envoy-gateway-system <old-pod-name> --grace-period=10
 The new pod will then schedule and start.
 
 **Note:** This is expected behavior for hostPort deployments. The deployment strategy could be changed to `Recreate` instead of `RollingUpdate` to avoid this, but that causes brief downtime during updates.
+
+## ACME HTTP-01 Challenges Failing with Cloudflare
+
+When using Cloudflare as your DNS provider with HTTP-01 ACME challenges, certificate issuance may fail if Cloudflare proxy is enabled.
+
+Symptom: Certificate stuck in `Pending` state, cert-manager logs show:
+
+```text
+Waiting for HTTP-01 challenge propagation: wrong status code '403'
+```
+
+This occurs because Cloudflare's proxy intercepts the `/.well-known/acme-challenge/` requests and returns 403 Forbidden.
+
+Fix: Disable Cloudflare proxy for your DNS records. In DNSEndpoint resources:
+
+```yaml
+spec:
+  endpoints:
+    - dnsName: k8s.example.com
+      recordType: A
+      targets:
+        - "1.2.3.4"
+      providerSpecific:
+        - name: cloudflare-proxied
+          value: "false"
+```
+
+The `cloudflare-proxied: "false"` setting creates DNS-only (grey cloud) records instead of proxied (orange cloud) records.
+
+## External DNS Not Creating Records for Gateway API
+
+External DNS supports Gateway API but may not create records if only watching HTTPRoute resources without the Gateway having a routable address.
+
+Symptom: DNS records not created, External DNS logs show no activity for your domains.
+
+Fix: Use DNSEndpoint CRD to explicitly define DNS records:
+
+```yaml
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: gateway-dns
+  namespace: envoy-gateway-system
+spec:
+  endpoints:
+    - dnsName: k8s.example.com
+      recordType: A
+      targets:
+        - "1.2.3.4"  # Your Load Balancer IP
+```
+
+The `envoy-gateway` kustomization includes DNSEndpoint resources that are populated with the Load Balancer IP by Terraform.
+
+## OCI Network Load Balancer Backend Health Check Failures
+
+When using OCI Network Load Balancer (NLB) with NodePort services, health checks may fail if the Network Security List (NSL) doesn't allow traffic on NodePort ranges.
+
+Symptom: NLB backend health shows unhealthy, ACME challenges timeout, services return 503.
+
+The NLB health checks originate from OCI's infrastructure and must reach the NodePort on worker nodes.
+
+Fix: Add an ingress rule to the private subnet's NSL allowing TCP traffic on NodePort range (30000-32767):
+
+```hcl
+# In network.tf - private subnet security list
+ingress_security_rules {
+  protocol    = "6"  # TCP
+  source      = "10.0.0.0/16"  # VCN CIDR
+  source_type = "CIDR_BLOCK"
+  description = "Allow NLB to reach NodePorts"
+
+  tcp_options {
+    min = 30000
+    max = 32767
+  }
+}
+```
+
+The Terraform configuration includes this rule automatically.
+
+## GHCR Package ImagePullBackOff
+
+GitHub Container Registry packages are **private by default**, even for public repositories.
+
+Symptom: Pods show `ImagePullBackOff` with error:
+
+```text
+Failed to pull image "ghcr.io/username/repo/image:tag": unauthorized
+```
+
+Fix: Make the GHCR package public:
+
+1. Go to `https://github.com/users/<username>/packages/container/<repo>%2F<image>/settings`
+2. Scroll to "Danger Zone"
+3. Click "Change visibility" → Select "Public"
+
+Alternatively, create an imagePullSecret with a GitHub PAT that has `read:packages` scope.
