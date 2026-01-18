@@ -8,7 +8,7 @@ Argo CD manages all cluster resources using the App-of-Apps pattern.
 ```mermaid
 flowchart TB
     subgraph GitHub["GitHub Repository"]
-        Repo[(k3s-oracle)]
+        Repo[(k8s-oracle)]
         AppYAML[applications.yaml]
         Infra[infrastructure/]
         Apps[apps/]
@@ -95,9 +95,9 @@ flowchart LR
 | external-secrets | OCI Vault secret sync | external-secrets |
 | managed-secrets | ExternalSecret CRs for Vault | external-secrets |
 | envoy-gateway | Gateway API controller | envoy-gateway-system |
-| argocd-self-managed | Self-managed Argo CD | argocd |
 | argocd-ingress | Argo CD UI ingress | argocd |
-| docs-app | Documentation website | default |
+| docs-app | Documentation website (k8s.sudhanva.me) | default |
+| k3s-docs-app | Legacy docs (k3s.sudhanva.me) | default |
 
 ## Secrets
 

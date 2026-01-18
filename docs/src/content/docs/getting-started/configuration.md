@@ -27,7 +27,7 @@ cloudflare_zone_id   = "your-zone-id"
 domain_name          = "k3s.yourdomain.com"
 acme_email           = "admin@yourdomain.com"
 
-git_repo_url  = "https://github.com/your-username/k3s-oracle.git"
+git_repo_url  = "https://github.com/your-username/k8s-oracle.git"
 git_username  = "your-username"
 git_email     = "your-email@example.com"
 git_pat       = "ghp_..."

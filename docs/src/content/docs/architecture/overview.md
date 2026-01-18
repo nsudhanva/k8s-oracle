@@ -91,7 +91,7 @@ Argo CD manages all cluster resources using the App-of-Apps pattern.
 ```mermaid
 flowchart LR
     subgraph GitHub
-        Repo[(k3s-oracle<br/>Repository)]
+        Repo[(k8s-oracle<br/>Repository)]
     end
 
     subgraph Cluster["OKE Cluster"]

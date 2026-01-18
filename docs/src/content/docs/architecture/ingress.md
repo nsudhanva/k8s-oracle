@@ -1,87 +1,71 @@
 ---
 title: Kubernetes Ingress with OCI Network Load Balancer
-description: Expose K3s services using OCI's free Network Load Balancer and Envoy Gateway. Gateway API ingress with automatic TLS via Let's Encrypt and Cloudflare DNS.
+description: Expose OKE services using OCI's free Network Load Balancer and Envoy Gateway. Gateway API ingress with automatic TLS via Let's Encrypt and Cloudflare DNS.
 ---
 
 This cluster uses OCI's Always Free Network Load Balancer combined with Envoy Gateway for ingress.
 
-## Traditional Cloud Setup
-
-In a typical cloud Kubernetes deployment:
-
-```mermaid
-flowchart LR
-    User((User)) --> LB[Cloud Load Balancer<br/>$$$/month]
-    LB --> NP[NodePort Service<br/>:30000-32767]
-    NP --> Pod[Application Pod]
-```
-
-1. A cloud load balancer receives traffic on ports 80/443
-2. The load balancer forwards traffic to NodePort services
-3. Kubernetes routes traffic to the appropriate pods
-
-This requires a paid load balancer resource.
-
-## This Cluster's Approach
-
-This cluster uses the OCI Always Free Network Load Balancer for a stable ingress IP:
+## Architecture Overview
 
 ```mermaid
 flowchart LR
     User((User)) --> DNS[Cloudflare DNS]
     DNS --> NLB[OCI Network<br/>Load Balancer]
-    NLB --> Ingress[Ingress Node<br/>hostPort :80/:443]
-    Ingress --> Envoy[Envoy Pod]
+    NLB --> Envoy[Envoy Gateway<br/>LoadBalancer Service]
     Envoy --> Pod[Application Pod]
 
     style NLB fill:#FFD700
-    style Ingress fill:#90EE90
+    style Envoy fill:#90EE90
     style DNS fill:#87CEEB
 ```
 
-1. DNS points to the Network Load Balancer's public IP
-2. NLB forwards TCP traffic to the ingress node
-3. Envoy Gateway binds ports 80/443 on the host via hostPort
-4. Envoy routes traffic to backend services
+1. DNS (managed by External DNS) points to the Network Load Balancer's public IP
+2. OCI NLB forwards TCP traffic on ports 80/443 to NodePort backends
+3. Envoy Gateway receives traffic via its LoadBalancer service
+4. Envoy routes traffic to backend services based on HTTPRoutes
 
-The NLB provides a stable IP that doesn't change if the ingress node is replaced.
+The NLB provides a stable public IP that persists across pod restarts.
 
 ## How It Works
 
+### LoadBalancer Service
+
+Envoy Gateway creates a LoadBalancer service that provisions an OCI Network Load Balancer:
+
+```yaml
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: custom-proxy-config
+  namespace: envoy-gateway-system
+spec:
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyService:
+        type: LoadBalancer
+        annotations:
+          oci.oraclecloud.com/load-balancer-type: "nlb"
+```
+
+The NLB receives traffic on ports 80/443 and forwards to NodePort backends on the worker nodes.
+
 ### DNS Configuration
 
-External DNS creates A records in Cloudflare pointing your domain to the ingress node's public IP:
-
-```text
-k3s.example.com -> 132.226.43.62
-```
-
-### hostPort Binding
-
-The Envoy proxy runs as a Kubernetes pod but binds directly to the host's network ports using hostPort:
+External DNS watches DNSEndpoint resources and creates A records in Cloudflare:
 
 ```yaml
-containers:
-  - name: envoy
-    ports:
-      - containerPort: 80
-        hostPort: 80
-      - containerPort: 443
-        hostPort: 443
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: gateway-dns
+spec:
+  endpoints:
+    - dnsName: k8s.sudhanva.me
+      recordType: A
+      targets:
+        - "193.122.186.40"  # NLB public IP
 ```
-
-When traffic arrives at the ingress node on port 80 or 443, it goes directly to the Envoy container.
-
-### Node Selector
-
-The Envoy proxy only runs on the ingress node via nodeSelector:
-
-```yaml
-nodeSelector:
-  role: ingress
-```
-
-The ingress node is labeled during K3s installation with `--node-label role=ingress`.
 
 ### Traffic Flow
 
@@ -89,62 +73,35 @@ The ingress node is labeled during K3s installation with `--node-label role=ingr
 flowchart TB
     subgraph Internet
         User((User))
-        DNS[DNS: k3s.example.com<br/>→ 132.226.43.62]
+        DNS[DNS: k8s.sudhanva.me<br/>→ 193.122.186.40]
     end
 
-    subgraph Ingress["Ingress Node (132.226.43.62)"]
-        HP[hostPort :443]
-        Envoy[Envoy Container]
+    subgraph OCI["OCI Infrastructure"]
+        NLB[Network Load Balancer<br/>193.122.186.40]
     end
 
-    subgraph Cluster["K3s Cluster Network"]
+    subgraph Cluster["OKE Cluster"]
+        SVC[LoadBalancer Service<br/>NodePort backend]
+        Envoy[Envoy Pod]
         GW[Gateway API<br/>public-gateway]
         HR[HTTPRoute]
-        SVC[Backend Service<br/>ClusterIP]
+        Backend[Backend Service]
         Pod[Application Pod]
     end
 
     User -->|HTTPS| DNS
-    DNS -->|TCP :443| HP
-    HP --> Envoy
+    DNS -->|TCP :443| NLB
+    NLB -->|NodePort| SVC
+    SVC --> Envoy
     Envoy --> GW
     GW --> HR
-    HR --> SVC
-    SVC --> Pod
+    HR --> Backend
+    Backend --> Pod
 ```
-
-## Why hostPort Instead of hostNetwork
-
-```mermaid
-flowchart TB
-    subgraph HostNetwork["hostNetwork: true - Not Used"]
-        HN_Pod[Pod]
-        HN_Host[Host Network Namespace]
-        HN_DNS["resolv.conf - Host DNS"]
-        HN_Pod --> HN_Host
-        HN_Host --> HN_DNS
-        HN_DNS -.->|Cannot resolve| K8S_SVC[kubernetes.default]
-    end
-
-    subgraph HostPort["hostPort - Used"]
-        HP_Pod[Pod]
-        HP_Cluster[Cluster Network Namespace]
-        HP_CoreDNS[CoreDNS]
-        HP_Ports["Host Ports 80/443"]
-        HP_Pod --> HP_Cluster
-        HP_Cluster --> HP_CoreDNS
-        HP_Pod -.-> HP_Ports
-        HP_CoreDNS -->|Resolves| K8S_SVC2[kubernetes.default]
-    end
-```
-
-Using `hostNetwork: true` would give the pod the host's network namespace. This causes DNS resolution issues because the host's `/etc/resolv.conf` does not know about Kubernetes services.
-
-Using `hostPort` keeps the pod in the cluster network namespace while still binding to host ports. The pod can resolve Kubernetes services via CoreDNS.
 
 ## Single Public Gateway
 
-All public applications share a single Gateway resource (`public-gateway` in the `default` namespace). This is required because only one Envoy deployment can bind to hostPort 80/443 on the ingress node.
+All public applications share a single Gateway resource (`public-gateway` in the `envoy-gateway-system` namespace).
 
 The Gateway defines multiple HTTPS listeners, one per hostname:
 
@@ -159,14 +116,15 @@ listeners:
 - name: https-docs
   port: 443
   protocol: HTTPS
-  hostname: "k3s.sudhanva.me"
+  hostname: "k8s.sudhanva.me"
   tls:
     certificateRefs:
     - name: docs-tls
+      namespace: default
 - name: https-argocd
   port: 443
   protocol: HTTPS
-  hostname: "cd.k3s.sudhanva.me"
+  hostname: "cd.k8s.sudhanva.me"
   tls:
     certificateRefs:
     - name: argocd-tls
@@ -215,7 +173,7 @@ spec:
   - name: public-gateway
     sectionName: http
   hostnames:
-  - "k3s.sudhanva.me"
+  - "k8s.sudhanva.me"
   rules:
   - filters:
     - type: RequestRedirect
@@ -248,16 +206,16 @@ This allows the public-gateway in the envoy-gateway-system namespace to access T
 
 ## Security Considerations
 
-### Single Point of Entry
+### High Availability
 
-All traffic enters through one node. If this node fails, the cluster is unreachable. For production workloads, consider:
+The OCI Network Load Balancer distributes traffic across all healthy backend nodes. If one worker node fails, traffic is routed to the remaining healthy nodes.
 
-- Multiple ingress nodes with round-robin DNS
-- A cloud load balancer (not free)
+### Network Security Lists
 
-### Firewall Rules
+OCI security lists control traffic:
 
-OCI security lists must allow inbound traffic on ports 80 and 443 from 0.0.0.0/0. The ingress node's iptables must also accept this traffic.
+- **Public subnet**: Allow inbound 80, 443 from 0.0.0.0/0
+- **Private subnet**: Allow NodePort range (30000-32767) from VCN CIDR for NLB health checks
 
 ### TLS Termination
 
@@ -268,8 +226,7 @@ Envoy terminates TLS using certificates issued by Cert Manager. Traffic between 
 | Approach | Cost | Complexity | Availability |
 |----------|------|------------|--------------|
 | Paid Cloud Load Balancer | ~$12/month | Low | High |
-| OCI Free NLB + hostPort (this cluster) | Free | Medium | Single node (expandable) |
-| hostPort only | Free | Low | Single node, IP tied to instance |
+| OCI Free NLB + LoadBalancer Service (this cluster) | Free | Medium | Multi-node HA |
 | NodePort + DNS | Free | Low | Single node |
 
-This cluster uses the free OCI Network Load Balancer with hostPort for a stable IP and Gateway API compatibility.
+This cluster uses the free OCI Network Load Balancer with a LoadBalancer service type for a stable IP, health checks, and Gateway API compatibility.

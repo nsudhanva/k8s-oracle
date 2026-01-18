@@ -58,7 +58,7 @@ argocd/
    spec:
      project: default
      source:
-       repoURL: https://github.com/nsudhanva/k3s-oracle.git
+       repoURL: https://github.com/nsudhanva/k8s-oracle.git
        targetRevision: HEAD
        path: argocd/apps/my-app
      destination:
@@ -145,9 +145,9 @@ metadata:
 spec:
   parentRefs:
     - name: public-gateway
-      namespace: default
+      namespace: envoy-gateway-system
   hostnames:
-    - "my-app.k3s.sudhanva.me"
+    - "my-app.k8s.sudhanva.me"
   rules:
     - backendRefs:
         - name: my-app
