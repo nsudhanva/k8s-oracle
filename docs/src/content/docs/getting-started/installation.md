@@ -149,8 +149,8 @@ All pods should be Running except for completed Job pods.
 After a few minutes, test the deployed application:
 
 ```bash
-dig +short k3s.yourdomain.com
-curl -I https://k3s.yourdomain.com
+dig +short k8s.yourdomain.com
+curl -I https://k8s.yourdomain.com
 ```
 
 :::caution[Rate Limiting]
@@ -190,14 +190,14 @@ done
 After all applications are synced, verify HTTPS works:
 
 ```bash
-curl -I https://k3s.yourdomain.com
-curl -I https://cd.k3s.yourdomain.com
+curl -I https://k8s.yourdomain.com
+curl -I https://cd.k8s.yourdomain.com
 ```
 
 Both should return `HTTP/2 200`. HTTP requests should redirect with `301`:
 
 ```bash
-curl -I http://k3s.yourdomain.com
+curl -I http://k8s.yourdomain.com
 ```
 
 See [Common Issues](/troubleshooting/common-issues/) for more solutions.

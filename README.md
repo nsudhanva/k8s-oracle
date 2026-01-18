@@ -71,7 +71,7 @@ flowchart LR
         TF[Terraform]
     end
 
-    subgraph Cluster["K3s Cluster"]
+    subgraph Cluster["OKE Cluster"]
         Argo[Argo CD]
         EG[Envoy Gateway]
         CM[Cert Manager]

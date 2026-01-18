@@ -48,7 +48,7 @@ The VCN uses CIDR 10.0.0.0/16.
 
 Ingress traffic is managed by Envoy Gateway, which provisions an OCI Network Load Balancer (NLB) or Load Balancer.
 
-1. **User** requests `https://k3s.yourdomain.com`.
+1. **User** requests `https://k8s.yourdomain.com`.
 2. **Cloudflare** resolves DNS to the OCI Load Balancer IP.
 3. **OCI Load Balancer** receives traffic on port 443.
 4. **Load Balancer** forwards traffic to the Envoy Gateway Envoy Proxy running on Worker Nodes.

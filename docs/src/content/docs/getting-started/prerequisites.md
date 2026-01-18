@@ -18,14 +18,14 @@ flowchart LR
     end
 
     subgraph Cluster["OKE Cluster"]
-        K3s((Deployed<br/>Cluster))
+        OKE((Deployed<br/>Cluster))
     end
 
-    OCI --> K3s
-    CF --> K3s
-    GH --> K3s
-    TF --> K3s
-    KU -.->|manage| K3s
+    OCI --> OKE
+    CF --> OKE
+    GH --> OKE
+    TF --> OKE
+    KU -.->|manage| OKE
 ```
 
 ## Cloud Accounts

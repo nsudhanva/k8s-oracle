@@ -1,6 +1,6 @@
 ---
-title: Terraform Configuration for K3s on OCI
-description: Complete terraform.tfvars configuration guide for K3s on Oracle Cloud. Includes OCI credentials, Cloudflare API tokens, GitHub PAT, and cluster settings.
+title: Terraform Configuration for OKE on OCI
+description: Complete terraform.tfvars configuration guide for OKE on Oracle Cloud. Includes OCI credentials, Cloudflare API tokens, GitHub PAT, and cluster settings.
 ---
 
 import { Aside } from '@astrojs/starlight/components';
@@ -24,7 +24,7 @@ region           = "us-ashburn-1"
 ssh_public_key_path  = "/path/to/ssh_key.pub"
 cloudflare_api_token = "your-cloudflare-token"
 cloudflare_zone_id   = "your-zone-id"
-domain_name          = "k3s.yourdomain.com"
+domain_name          = "k8s.yourdomain.com"
 acme_email           = "admin@yourdomain.com"
 
 git_repo_url  = "https://github.com/your-username/k8s-oracle.git"
