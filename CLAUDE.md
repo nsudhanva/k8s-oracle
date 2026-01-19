@@ -128,6 +128,10 @@ git_email     = "user@example.com"
 # Cluster Config (stored in Vault)
 argocd_admin_password = "..."
 acme_email            = "admin@example.com"
+
+# LLM Config (stored in Vault)
+gemma_api_key     = "your-api-key"
+huggingface_token = "hf_..."
 ```
 
 ## OKE Cluster Configuration

@@ -1,9 +1,9 @@
 ---
 title: Gemma 3 LLM - Self-Hosted AI on OKE
-description: Deploy Gemma 3 1B language model on your OKE cluster using Ollama. OpenAI-compatible API at gemma.sudhanva.me with Bearer token authentication.
+description: Deploy Gemma 3 1B language model on your OKE cluster using vLLM. OpenAI-compatible API at gemma.sudhanva.me with Bearer token authentication.
 ---
 
-This cluster runs **Gemma 3 1B**, a lightweight text-only LLM from Google, using [Ollama](https://ollama.com) for CPU inference on ARM64 nodes.
+This cluster runs **Gemma 3 1B IT**, Google's lightweight instruction-tuned language model, using [vLLM](https://docs.vllm.ai/) for optimized CPU inference on ARM64 nodes.
 
 ## Endpoint
 
@@ -12,7 +12,7 @@ https://gemma.k8s.sudhanva.me
 ```
 
 :::tip
-The API is OpenAI-compatible. Use `/v1/chat/completions` for chat and `/api/generate` for raw generation.
+The API is OpenAI-compatible. Use `/v1/chat/completions` for chat and `/v1/completions` for text completion.
 :::
 
 ## Authentication
@@ -24,14 +24,14 @@ curl https://gemma.k8s.sudhanva.me/v1/chat/completions \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "gemma3:1b",
+    "model": "google/gemma-3-1b-it",
     "messages": [{"role": "user", "content": "Hello!"}]
   }'
 ```
 
 ## Streaming
 
-For longer generations, it is highly recommended to use **streaming**. This prevents "Gateway Timeout" errors from the OCI Load Balancer or Cloudflare by sending tokens as they are generated.
+For longer generations, use **streaming** to prevent timeout errors:
 
 ### Using curl
 
@@ -42,7 +42,7 @@ curl -N https://gemma.k8s.sudhanva.me/v1/chat/completions \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "gemma3:1b",
+    "model": "google/gemma-3-1b-it",
     "messages": [{"role": "user", "content": "Tell me about Bengaluru"}],
     "stream": true
   }'
@@ -59,7 +59,7 @@ client = openai.OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="gemma3:1b",
+    model="google/gemma-3-4b-it",
     messages=[{"role": "user", "content": "Tell me about Bengaluru"}],
     stream=True
 )
@@ -69,32 +69,33 @@ for chunk in response:
         print(chunk.choices[0].delta.content, end="", flush=True)
 ```
 
-The API key is stored in OCI Vault (`gemma-api-key`) and synced to the cluster via ExternalSecret.
-
 ## Architecture
 
 ```mermaid
 flowchart LR
     User((User)) --> Gateway[Envoy Gateway]
     Gateway --> Auth[OpenResty\nAuth Proxy]
-    Auth --> Ollama[Ollama\nGemma 3 1B]
+    Auth --> vLLM[vLLM\nGemma 3 1B]
 
     subgraph Pod["gemma pod"]
         Auth
-        Ollama
+        vLLM
     end
 
+    HF[(HuggingFace)] --> vLLM
     Vault[(OCI Vault)] --> ES[ExternalSecret]
-    ES --> Secret[K8s Secret]
+    ES --> Secret[K8s Secrets]
     Secret --> Auth
+    Secret --> vLLM
 ```
 
 | Component | Purpose |
 |-----------|---------|
 | OpenResty sidecar | Validates `Authorization: Bearer` header |
-| Ollama container | Runs Gemma 3 1B inference |
-| OCI Vault | Stores API key securely |
-| ExternalSecret | Syncs API key to cluster |
+| vLLM container | Runs Gemma 3 1B inference with OpenAI-compatible API |
+| OCI Vault | Stores API key and HuggingFace token |
+| ExternalSecret | Syncs secrets to cluster |
+| PVC | Caches model weights (no manual download needed) |
 
 ## Resource Usage
 
@@ -102,15 +103,16 @@ flowchart LR
 |----------|-----------|
 | Memory | 2-4 GB |
 | CPU | 1-2 cores |
-| Model | ~700 MB (Q4 quantized) |
+| Model | ~2 GB (BF16) |
+| Storage | 10 GB PVC for model cache |
 
 :::caution
-First request after pod startup may be slow while Ollama loads the model.
-
-**Important**: If generation takes too long (e.g., complex queries), the connection might timeout before the model finishes. Use **streaming** to avoid this.
+First request after pod startup may take several minutes while vLLM downloads and loads the model from HuggingFace. Subsequent restarts use the cached model from the PVC.
 :::
 
 ## Configuration
+
+### API Key
 
 The API key is configured in `terraform.tfvars`:
 
@@ -118,19 +120,62 @@ The API key is configured in `terraform.tfvars`:
 gemma_api_key = "your-secret-key"
 ```
 
-After setting, run `terraform apply` to create the vault secret, then sync `managed-secrets` in ArgoCD.
+### HuggingFace Token
 
-## Pulling the Model
+Gemma 3 is a gated model requiring license acceptance:
 
-The model is pulled on first request. To pre-pull:
+1. Visit [google/gemma-3-1b-it](https://huggingface.co/google/gemma-3-1b-it) and accept Google's license
+2. Generate a token at [HuggingFace Settings](https://huggingface.co/settings/tokens)
+3. Add to `terraform.tfvars`:
 
-```bash
-kubectl exec -it deploy/gemma -c ollama -- ollama pull gemma3:1b
+```hcl
+huggingface_token = "hf_..."
 ```
 
-## Available Models
+After setting both, run `terraform apply` to create the vault secrets, then sync `managed-secrets` in ArgoCD.
 
-| Model | Size | Use Case |
-|-------|------|----------|
-| `gemma3:1b` | ~700 MB | Fast, general text |
-| `gemma3:1b-it-qat` | ~500 MB | QAT optimized |
+## vLLM Configuration
+
+The deployment uses the official vLLM ARM64 CPU image with the following settings:
+
+| Setting | Value | Description |
+|---------|-------|-------------|
+| `--model` | `google/gemma-3-1b-it` | HuggingFace model ID |
+| `--dtype` | `bfloat16` | Data type for inference |
+| `--max-model-len` | `4096` | Maximum context length |
+| `--enable-chunked-prefill` | enabled | Better latency for long prompts |
+| `VLLM_CPU_KVCACHE_SPACE` | `2` | 2GB KV cache for conversations |
+
+## Monitoring
+
+Check vLLM server status:
+
+```bash
+kubectl logs -f deploy/gemma -c vllm
+```
+
+Check model loading progress:
+
+```bash
+kubectl exec -it deploy/gemma -c vllm -- curl localhost:8000/health
+```
+
+## Available Endpoints
+
+| Endpoint | Description |
+|----------|-------------|
+| `/v1/chat/completions` | Chat completions (recommended) |
+| `/v1/completions` | Text completions |
+| `/v1/models` | List available models |
+| `/health` | Health check |
+
+## Why vLLM over Ollama?
+
+| Feature | vLLM | Ollama |
+|---------|------|--------|
+| OpenAI API | Native support | Wrapper |
+| Model source | HuggingFace (auto-download) | Manual `docker pull` |
+| Batching | Continuous batching | Sequential |
+| Production ready | Yes | Hobby/development |
+| Memory efficiency | PagedAttention | Basic |
+| ARM64 CPU support | Official images | Limited |

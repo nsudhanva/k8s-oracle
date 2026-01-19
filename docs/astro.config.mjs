@@ -105,6 +105,7 @@ export default defineConfig({
             { label: 'Ingress With Load Balancer', slug: 'architecture/ingress' },
             { label: 'Networking', slug: 'architecture/networking' },
             { label: 'GitOps', slug: 'architecture/gitops' },
+            { label: 'Gemma LLM', slug: 'architecture/gemma-llm' },
           ],
         },
         {
