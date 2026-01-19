@@ -101,8 +101,8 @@ flowchart LR
 
 | Resource | Allocated |
 |----------|-----------|
-| Memory | 4-6 GB |
-| CPU | 1-2 cores |
+| Memory | 10-11 GB (dedicated node) |
+| CPU | 1.5-2 cores |
 | Model | ~2 GB (BF16) |
 | Storage | 10 GB PVC for model cache |
 
@@ -144,7 +144,7 @@ The deployment uses the official vLLM ARM64 CPU image with the following setting
 | `--dtype` | `bfloat16` | Data type for inference |
 | `--max-model-len` | `4096` | Maximum context length |
 | `--enable-chunked-prefill` | enabled | Better latency for long prompts |
-| `VLLM_CPU_KVCACHE_SPACE` | `2` | 2GB KV cache for conversations |
+| `VLLM_CPU_KVCACHE_SPACE` | `4` | 4GB KV cache for conversations |
 
 ## Monitoring
 
