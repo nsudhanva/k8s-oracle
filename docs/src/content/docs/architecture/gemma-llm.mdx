@@ -3,8 +3,6 @@ title: Gemma 3 LLM - Self-Hosted AI on OKE
 description: Deploy Gemma 3 1B language model on your OKE cluster using Ollama. OpenAI-compatible API at gemma.sudhanva.me with Bearer token authentication.
 ---
 
-import { Aside } from '@astrojs/starlight/components';
-
 This cluster runs **Gemma 3 1B**, a lightweight text-only LLM from Google, using [Ollama](https://ollama.com) for CPU inference on ARM64 nodes.
 
 ## Endpoint
@@ -13,9 +11,9 @@ This cluster runs **Gemma 3 1B**, a lightweight text-only LLM from Google, using
 https://gemma.k8s.sudhanva.me
 ```
 
-<Aside type="tip">
-  The API is OpenAI-compatible. Use `/v1/chat/completions` for chat and `/api/generate` for raw generation.
-</Aside>
+:::tip
+The API is OpenAI-compatible. Use `/v1/chat/completions` for chat and `/api/generate` for raw generation.
+:::
 
 ## Authentication
 
@@ -106,11 +104,11 @@ flowchart LR
 | CPU | 1-2 cores |
 | Model | ~700 MB (Q4 quantized) |
 
-<Aside type="caution">
-  First request after pod startup may be slow while Ollama loads the model.
-  
-  **Important**: If generation takes too long (e.g., complex queries), the connection might timeout before the model finishes. Use **streaming** to avoid this.
-</Aside>
+:::caution
+First request after pod startup may be slow while Ollama loads the model.
+
+**Important**: If generation takes too long (e.g., complex queries), the connection might timeout before the model finishes. Use **streaming** to avoid this.
+:::
 
 ## Configuration
 

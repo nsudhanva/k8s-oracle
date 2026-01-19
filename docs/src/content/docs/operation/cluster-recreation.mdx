@@ -3,7 +3,7 @@ title: Recreate OKE Cluster from Scratch - Disaster Recovery
 description: Complete guide to destroy and recreate OKE cluster on OCI. Terraform state management, data backup, and GitOps recovery procedures.
 ---
 
-import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
 This guide walks through recreating the entire OKE cluster from scratch using this repository and secrets stored in OCI Vault.
 
@@ -59,9 +59,9 @@ oci secrets secret-bundle get \
   --raw-output | base64 -d
 ```
 
-<Aside type="note">
+:::note
   OCI authentication values (tenancy_ocid, user_ocid, fingerprint) are NOT stored in Vault since they're needed to access Vault. Keep these in a secure password manager.
-</Aside>
+:::
 
 ## Step 3: Create terraform.tfvars
 
@@ -136,9 +136,9 @@ oci secrets secret-bundle get \
   </TabItem>
 </Tabs>
 
-<Aside type="caution">
+:::caution
   If the Object Storage bucket with state already exists, Terraform will connect to it automatically. Never run `terraform apply` without reviewing the plan carefully.
-</Aside>
+:::
 
 ## Step 6: Wait for Provisioning
 
@@ -232,9 +232,9 @@ dig @1.1.1.1 argocd.<your-domain>
 
 ### Let's Encrypt Rate Limiting
 
-<Aside type="caution">
+:::caution
   If you've recreated the cluster multiple times, Let's Encrypt may rate limit certificate issuance (max 5 certificates per domain per 7 days).
-</Aside>
+:::
 
 If certificates fail with `429 rateLimited` error, you can:
 1. Wait for the rate limit to reset (7 days)
