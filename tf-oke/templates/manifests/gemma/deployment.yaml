@@ -32,6 +32,8 @@ spec:
         app: gemma
         runtime: vllm
     spec:
+      nodeSelector:
+        workload: llm
       securityContext:
         fsGroup: 1000
       containers:
@@ -78,10 +80,8 @@ spec:
             - containerPort: 8000
               name: http
           env:
-            - name: VLLM_USE_V1
-              value: "0"
             - name: VLLM_CPU_KVCACHE_SPACE
-              value: "2"
+              value: "4"
             - name: HF_TOKEN
               valueFrom:
                 secretKeyRef:
@@ -93,10 +93,10 @@ spec:
               value: "/model-cache/transformers"
           resources:
             requests:
-              memory: "4Gi"
-              cpu: "1"
+              memory: "10Gi"
+              cpu: "1500m"
             limits:
-              memory: "6Gi"
+              memory: "11Gi"
               cpu: "2"
           volumeMounts:
             - name: model-cache
@@ -134,7 +134,7 @@ spec:
         - name: shm
           emptyDir:
             medium: Memory
-            sizeLimit: 1Gi
+            sizeLimit: 2Gi
         - name: nginx-config
           configMap:
             name: gemma-nginx-config
