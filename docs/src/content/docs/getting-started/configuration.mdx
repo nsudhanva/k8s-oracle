@@ -3,13 +3,11 @@ title: Terraform Configuration for OKE on OCI
 description: Complete terraform.tfvars configuration guide for OKE on Oracle Cloud. Includes OCI credentials, Cloudflare API tokens, GitHub PAT, and cluster settings.
 ---
 
-import { Aside } from '@astrojs/starlight/components';
-
 Create `tf-oke/terraform.tfvars` with your environment-specific values. This file is gitignored and should never be committed.
 
-<Aside type="tip">
+:::tip
   After initial deployment, all secrets are stored in OCI Vault. See [Secrets Management](/architecture/secrets-management) for retrieval instructions.
-</Aside>
+:::
 
 ## Required Variables
 
@@ -61,9 +59,9 @@ gemma_api_key = "secure-random-key" # API key for Gemma LLM authentication
 | `argocd_admin_password_hash` | Bcrypt hash of the password (for argocd-secret) | Yes |
 | `gemma_api_key` | API Key for Gemma LLM authentication | Yes |
 
-<Aside type="note">
+:::note
   OCI authentication variables are not stored in Vault since they're needed to access Vault. Keep them in a password manager.
-</Aside>
+:::
 
 ## ArgoCD Password Hash
 
