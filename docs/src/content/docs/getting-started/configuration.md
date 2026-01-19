@@ -34,6 +34,8 @@ git_pat       = "ghp_..."
 
 argocd_admin_password      = "your-secure-password"
 argocd_admin_password_hash = "$2a$10$..."  # bcrypt hash of argocd_admin_password
+
+gemma_api_key = "secure-random-key" # API key for Gemma LLM authentication
 ```
 
 ## Variable Reference
@@ -57,6 +59,7 @@ argocd_admin_password_hash = "$2a$10$..."  # bcrypt hash of argocd_admin_passwor
 | `git_pat` | GitHub Personal Access Token | Yes |
 | `argocd_admin_password` | Password for ArgoCD admin user | Yes |
 | `argocd_admin_password_hash` | Bcrypt hash of the password (for argocd-secret) | Yes |
+| `gemma_api_key` | API Key for Gemma LLM authentication | Yes |
 
 <Aside type="note">
   OCI authentication variables are not stored in Vault since they're needed to access Vault. Keep them in a password manager.
