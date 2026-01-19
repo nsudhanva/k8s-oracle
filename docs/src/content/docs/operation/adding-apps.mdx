@@ -3,7 +3,7 @@ title: Deploy Applications to OKE with ArgoCD GitOps
 description: Step-by-step guide to deploy new applications on OKE using ArgoCD GitOps. Create Kubernetes manifests, HTTPRoutes, and TLS certificates with automatic sync.
 ---
 
-import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
 This guide explains how to add new applications to the cluster using the GitOps workflow.
 
@@ -154,9 +154,9 @@ spec:
           port: 80
 ```
 
-<Aside type="note">
+:::note
   The `public-gateway` in the `default` namespace handles TLS termination. External DNS will automatically create DNS records for hostnames in HTTPRoutes.
-</Aside>
+:::
 
 ## Using Private Container Images
 
@@ -199,9 +199,9 @@ spec:
         key: my-app-api-key
 ```
 
-<Aside type="caution">
+:::caution
   You must first configure the ClusterSecretStore for OCI Vault. See [Secrets Management](/architecture/secrets-management).
-</Aside>
+:::
 
 ## Monitoring Deployments
 
