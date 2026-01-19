@@ -26,3 +26,10 @@ spec:
       providerSpecific:
         - name: cloudflare-proxied
           value: "false"
+    - dnsName: gemma.${domain_name}
+      recordType: A
+      targets:
+        - "${load_balancer_ip}"
+      providerSpecific:
+        - name: cloudflare-proxied
+          value: "false"

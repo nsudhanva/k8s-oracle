@@ -106,3 +106,21 @@ spec:
     - secretKey: api-token
       remoteRef:
         key: cloudflare-api-token
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: gemma-api-key-sync
+  namespace: default
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: oci-vault
+    kind: ClusterSecretStore
+  target:
+    name: gemma-api-key
+    creationPolicy: Owner
+  data:
+    - secretKey: api-key
+      remoteRef:
+        key: gemma-api-key

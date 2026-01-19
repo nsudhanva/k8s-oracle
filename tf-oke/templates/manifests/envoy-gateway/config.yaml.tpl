@@ -103,3 +103,15 @@ spec:
         certificateRefs:
           - name: k3s-docs-tls
             namespace: default
+    - name: https-gemma
+      port: 443
+      protocol: HTTPS
+      hostname: "gemma.${domain_name}"
+      allowedRoutes:
+        namespaces:
+          from: All
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: gemma-tls
+            namespace: default

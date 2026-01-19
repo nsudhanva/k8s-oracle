@@ -26,3 +26,10 @@ spec:
       providerSpecific:
         - name: cloudflare-proxied
           value: "false"
+    - dnsName: gemma.k8s.sudhanva.me
+      recordType: A
+      targets:
+        - "193.122.186.40"
+      providerSpecific:
+        - name: cloudflare-proxied
+          value: "false"

@@ -135,3 +135,10 @@ variable "load_balancer_ip" {
   type        = string
   default     = ""
 }
+
+variable "gemma_api_key" {
+  description = "API key for authenticating Gemma/Ollama API requests"
+  type        = string
+  sensitive   = true
+  default     = ""
+}

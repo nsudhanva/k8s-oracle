@@ -109,3 +109,21 @@ resource "local_file" "k3s_docs_httproute" {
   filename = "../argocd/apps/k3s-docs/httproute.yaml"
   content  = file("${path.module}/templates/manifests/k3s-docs/httproute.yaml.tpl")
 }
+
+# Gemma LLM App (Ollama with Gemma 3 1B at gemma.sudhanva.me)
+resource "local_file" "gemma_deployment" {
+  filename = "../argocd/apps/gemma/deployment.yaml"
+  content  = file("${path.module}/templates/manifests/gemma/deployment.yaml")
+}
+
+resource "local_file" "gemma_service" {
+  filename = "../argocd/apps/gemma/service.yaml"
+  content  = file("${path.module}/templates/manifests/gemma/service.yaml")
+}
+
+resource "local_file" "gemma_httproute" {
+  filename = "../argocd/apps/gemma/httproute.yaml"
+  content = templatefile("${path.module}/templates/manifests/gemma/httproute.yaml.tpl", {
+    domain_name = var.domain_name
+  })
+}
