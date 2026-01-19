@@ -137,8 +137,14 @@ variable "load_balancer_ip" {
 }
 
 variable "gemma_api_key" {
-  description = "API key for authenticating Gemma/Ollama API requests"
+  description = "API key for authenticating Gemma LLM API requests"
   type        = string
   sensitive   = true
   default     = ""
+}
+
+variable "huggingface_token" {
+  description = "HuggingFace API token for downloading gated models (e.g., Gemma 3)"
+  type        = string
+  sensitive   = true
 }

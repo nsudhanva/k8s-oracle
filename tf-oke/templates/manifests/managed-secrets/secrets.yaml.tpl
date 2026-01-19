@@ -142,3 +142,21 @@ spec:
     - secretKey: api-key
       remoteRef:
         key: gemma-api-key
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: huggingface-token-sync
+  namespace: default
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: oci-vault
+    kind: ClusterSecretStore
+  target:
+    name: huggingface-token
+    creationPolicy: Owner
+  data:
+    - secretKey: token
+      remoteRef:
+        key: huggingface-token
