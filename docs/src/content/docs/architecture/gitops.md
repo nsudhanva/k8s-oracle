@@ -98,6 +98,7 @@ flowchart LR
 | argocd-ingress | Argo CD UI ingress | argocd |
 | docs-app | Documentation website (k8s.sudhanva.me) | default |
 | k3s-docs-app | Legacy docs (k3s.sudhanva.me) | default |
+| gemma-app | Gemma 3 1B LLM (gemma.k8s.sudhanva.me) | default |
 
 ## Secrets
 

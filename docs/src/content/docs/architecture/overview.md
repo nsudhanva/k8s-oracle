@@ -136,6 +136,7 @@ flowchart LR
 | argocd-self-managed | Self-managed Argo CD |
 | argocd-ingress | Argo CD UI ingress |
 | docs-app | Documentation website |
+| gemma-app | Self-hosted LLM (Gemma 3 1B) |
 
 ## Ingress
 

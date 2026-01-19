@@ -23,6 +23,7 @@ import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
 | **DNS** | External DNS + Cloudflare |
 | **TLS** | Cert Manager + Let's Encrypt |
 | **Secrets** | OCI Vault + External Secrets Operator |
+| **LLM** | Gemma 3 1B via Ollama |
 | **Docs** | Astro + Starlight (This site) |
 
 ## Comparison
@@ -39,6 +40,6 @@ import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
 <CardGrid>
   <LinkCard title="Get Started" href="/getting-started/prerequisites/" description="Prerequisites, installation, and configuration" />
   <LinkCard title="Architecture" href="/architecture/overview/" description="Understand how the cluster works" />
+  <LinkCard title="Gemma LLM" href="/architecture/gemma-llm/" description="Self-hosted AI with OpenAI-compatible API" />
   <LinkCard title="Troubleshooting" href="/troubleshooting/common-issues/" description="Solutions to common problems" />
-  <LinkCard title="GitHub Repository" href="https://github.com/nsudhanva/k8s-oracle" description="Source code and issue tracker" />
 </CardGrid>
