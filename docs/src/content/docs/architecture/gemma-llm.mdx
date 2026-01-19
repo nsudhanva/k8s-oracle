@@ -101,13 +101,20 @@ flowchart LR
 
 | Resource | Allocated |
 |----------|-----------|
-| Memory | 8-10 GB (dedicated node) |
-| CPU | 1-2 cores |
+| Memory | 6-8 GB (dedicated node) |
+| CPU | 1-1.8 cores |
 | Model | ~2 GB (BF16) |
 | Storage | 10 GB PVC for model cache |
 
 :::caution
 First request after pod startup may take several minutes while vLLM downloads and loads the model from HuggingFace. Subsequent restarts use the cached model from the PVC.
+:::
+
+:::note[Free Tier Limitations]
+The OCI Always Free tier provides ~9.4GB allocatable memory per node. vLLM v0.13 on ARM64 CPU with Gemma 3 1B requires careful resource tuning. If you experience OOM issues during inference, consider:
+- Reducing `VLLM_CPU_KVCACHE_SPACE` to 2
+- Using `--max-model-len 2048` instead of 4096
+- Switching to Ollama for more memory-efficient inference on constrained hardware
 :::
 
 ## Configuration
