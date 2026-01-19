@@ -31,6 +31,46 @@ curl https://gemma.k8s.sudhanva.me/v1/chat/completions \
   }'
 ```
 
+## Streaming
+
+For longer generations, it is highly recommended to use **streaming**. This prevents "Gateway Timeout" errors from the OCI Load Balancer or Cloudflare by sending tokens as they are generated.
+
+### Using curl
+
+Add `"stream": true` and use the `-N` (no-buffer) flag:
+
+```bash
+curl -N https://gemma.k8s.sudhanva.me/v1/chat/completions \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gemma3:1b",
+    "messages": [{"role": "user", "content": "Tell me about Bengaluru"}],
+    "stream": true
+  }'
+```
+
+### Using Python
+
+```python
+import openai
+
+client = openai.OpenAI(
+    base_url="https://gemma.k8s.sudhanva.me/v1",
+    api_key="YOUR_API_KEY"
+)
+
+response = client.chat.completions.create(
+    model="gemma3:1b",
+    messages=[{"role": "user", "content": "Tell me about Bengaluru"}],
+    stream=True
+)
+
+for chunk in response:
+    if chunk.choices[0].delta.content:
+        print(chunk.choices[0].delta.content, end="", flush=True)
+```
+
 The API key is stored in OCI Vault (`gemma-api-key`) and synced to the cluster via ExternalSecret.
 
 ## Architecture
@@ -67,7 +107,9 @@ flowchart LR
 | Model | ~700 MB (Q4 quantized) |
 
 <Aside type="caution">
-  First request after pod startup may be slow (~30s) while Ollama loads the model into memory.
+  First request after pod startup may be slow while Ollama loads the model.
+  
+  **Important**: If generation takes too long (e.g., complex queries), the connection might timeout before the model finishes. Use **streaming** to avoid this.
 </Aside>
 
 ## Configuration
