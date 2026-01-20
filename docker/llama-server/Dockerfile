@@ -3,7 +3,7 @@ ARG UBUNTU_VERSION=22.04
 FROM ubuntu:$UBUNTU_VERSION AS build
 
 RUN apt-get update && \
-    apt-get install -y build-essential git cmake curl libcurl4-openssl-dev && \
+    apt-get install -y build-essential git cmake libssl-dev libcurl4-openssl-dev && \
     rm -rf /var/lib/apt/lists/*
 
 ARG LLAMA_CPP_VERSION=b7779
@@ -12,13 +12,14 @@ WORKDIR /build
 
 RUN git clone --depth 1 --branch $LLAMA_CPP_VERSION https://github.com/ggml-org/llama.cpp.git .
 
-RUN cmake -B build \
+RUN cmake -S . -B build \
+    -DCMAKE_BUILD_TYPE=Release \
     -DGGML_NATIVE=OFF \
+    -DLLAMA_BUILD_TESTS=OFF \
     -DGGML_BACKEND_DL=ON \
     -DGGML_CPU_ALL_VARIANTS=ON \
-    -DLLAMA_CURL=ON \
-    -DCMAKE_BUILD_TYPE=Release && \
-    cmake --build build --target llama-server -j$(nproc)
+    -DLLAMA_CURL=ON && \
+    cmake --build build -j $(nproc)
 
 FROM ubuntu:$UBUNTU_VERSION AS runtime
 
