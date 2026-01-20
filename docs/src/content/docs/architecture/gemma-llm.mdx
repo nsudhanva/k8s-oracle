@@ -3,6 +3,8 @@ title: Gemma 3 LLM - Self-Hosted AI on OKE
 description: Deploy Gemma 3 1B language model on your OKE cluster using llama.cpp. OpenAI-compatible API with Bearer token authentication.
 ---
 
+import { Tabs, TabItem, Card, CardGrid, Aside } from '@astrojs/starlight/components';
+
 This cluster runs **Gemma 3 1B IT**, Google's lightweight instruction-tuned language model, using [llama.cpp](https://github.com/ggml-org/llama.cpp) for efficient CPU inference on ARM64 nodes.
 
 ## Endpoint
@@ -11,14 +13,99 @@ This cluster runs **Gemma 3 1B IT**, Google's lightweight instruction-tuned lang
 https://gemma.k8s.sudhanva.me
 ```
 
-:::tip
+<Aside type="tip">
 The API is OpenAI-compatible. Use `/v1/chat/completions` for chat and `/v1/completions` for text completion.
-:::
+</Aside>
+
+## High-Level Architecture
+
+The Gemma deployment follows a sidecar pattern with authentication handled at the proxy level:
+
+```mermaid
+flowchart TB
+    subgraph Internet
+        User((User))
+    end
+
+    subgraph OCI["Oracle Cloud Infrastructure"]
+        LB[OCI Load Balancer<br/>10 Mbps Free Tier]
+
+        subgraph OKE["OKE Cluster"]
+            subgraph Gateway["Envoy Gateway"]
+                EG[Gateway API<br/>TLS Termination]
+            end
+
+            subgraph GemmaPod["Gemma Pod"]
+                Auth[OpenResty<br/>Auth Proxy<br/>:8080]
+                LLM[llama-server<br/>Gemma 3 1B<br/>:8000]
+            end
+
+            subgraph Storage["Persistent Storage"]
+                PVC[(Model Cache<br/>5GB PVC)]
+            end
+        end
+
+        subgraph Vault["OCI Vault"]
+            Secret[API Key Secret]
+        end
+    end
+
+    subgraph HuggingFace["HuggingFace Hub"]
+        GGUF[(GGUF Model<br/>806 MB)]
+    end
+
+    User -->|HTTPS| LB
+    LB --> EG
+    EG -->|HTTP| Auth
+    Auth -->|Validated| LLM
+    LLM --> PVC
+    GGUF -.->|First Run| LLM
+    Secret -.->|ExternalSecret| Auth
+```
+
+## Request Flow
+
+Every API request goes through multiple layers of processing:
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant LB as OCI LB
+    participant EG as Envoy Gateway
+    participant AP as Auth Proxy
+    participant LS as llama-server
+    participant HF as HuggingFace
+
+    U->>+LB: HTTPS Request
+    LB->>+EG: TLS Terminated
+    EG->>+AP: HTTP Forward
+
+    Note over AP: Validate Bearer Token
+
+    alt Invalid/Missing Token
+        AP-->>U: 401 Unauthorized
+    else Valid Token
+        AP->>+LS: Proxy Request
+
+        alt Model Not Cached
+            LS->>HF: Download GGUF
+            HF-->>LS: Model Weights
+        end
+
+        LS->>LS: Run Inference
+        LS-->>-AP: Response
+        AP-->>-EG: Response
+        EG-->>-LB: Response
+        LB-->>-U: HTTPS Response
+    end
+```
 
 ## Authentication
 
-All requests require a Bearer token:
+All requests require a Bearer token in the `Authorization` header:
 
+<Tabs>
+  <TabItem label="curl">
 ```bash
 curl https://gemma.k8s.sudhanva.me/v1/chat/completions \
   -H "Authorization: Bearer YOUR_API_KEY" \
@@ -28,28 +115,8 @@ curl https://gemma.k8s.sudhanva.me/v1/chat/completions \
     "messages": [{"role": "user", "content": "Hello!"}]
   }'
 ```
-
-## Streaming
-
-For longer generations, use **streaming** to prevent timeout errors:
-
-### Using curl
-
-Add `"stream": true` and use the `-N` (no-buffer) flag:
-
-```bash
-curl -N https://gemma.k8s.sudhanva.me/v1/chat/completions \
-  -H "Authorization: Bearer YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "gemma-3-1b-it",
-    "messages": [{"role": "user", "content": "Tell me about Bengaluru"}],
-    "stream": true
-  }'
-```
-
-### Using Python
-
+  </TabItem>
+  <TabItem label="Python">
 ```python
 import openai
 
@@ -60,7 +127,59 @@ client = openai.OpenAI(
 
 response = client.chat.completions.create(
     model="gemma-3-1b-it",
-    messages=[{"role": "user", "content": "Tell me about Bengaluru"}],
+    messages=[{"role": "user", "content": "Hello!"}]
+)
+print(response.choices[0].message.content)
+```
+  </TabItem>
+  <TabItem label="JavaScript">
+```javascript
+const response = await fetch('https://gemma.k8s.sudhanva.me/v1/chat/completions', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_KEY',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    model: 'gemma-3-1b-it',
+    messages: [{ role: 'user', content: 'Hello!' }]
+  })
+});
+const data = await response.json();
+console.log(data.choices[0].message.content);
+```
+  </TabItem>
+</Tabs>
+
+## Streaming
+
+For longer generations, use **streaming** to prevent timeout errors and get real-time output:
+
+<Tabs>
+  <TabItem label="curl">
+```bash
+curl -N https://gemma.k8s.sudhanva.me/v1/chat/completions \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gemma-3-1b-it",
+    "messages": [{"role": "user", "content": "Explain quantum computing"}],
+    "stream": true
+  }'
+```
+  </TabItem>
+  <TabItem label="Python">
+```python
+import openai
+
+client = openai.OpenAI(
+    base_url="https://gemma.k8s.sudhanva.me/v1",
+    api_key="YOUR_API_KEY"
+)
+
+response = client.chat.completions.create(
+    model="gemma-3-1b-it",
+    messages=[{"role": "user", "content": "Explain quantum computing"}],
     stream=True
 )
 
@@ -68,62 +187,73 @@ for chunk in response:
     if chunk.choices[0].delta.content:
         print(chunk.choices[0].delta.content, end="", flush=True)
 ```
+  </TabItem>
+</Tabs>
 
-## Architecture
+## Pod Architecture
+
+The Gemma deployment uses a sidecar pattern with two containers:
 
 ```mermaid
 flowchart LR
-    User((User)) --> Gateway[Envoy Gateway]
-    Gateway --> Auth[OpenResty\nAuth Proxy]
-    Auth --> LLM[llama.cpp\nGemma 3 1B]
-
     subgraph Pod["gemma pod"]
-        Auth
-        LLM
+        direction TB
+
+        subgraph AuthContainer["auth-proxy container"]
+            OpenResty[OpenResty/nginx<br/>Port 8080]
+            Lua[Lua Auth Script]
+        end
+
+        subgraph LLMContainer["llama-server container"]
+            Server[llama-server<br/>Port 8000]
+            Model[Gemma 3 1B<br/>Q4_K_M]
+        end
+
+        OpenResty --> Lua
+        Lua -->|localhost:8000| Server
+        Server --> Model
     end
 
-    HF[(HuggingFace\nGGUF)] --> LLM
-    Vault[(OCI Vault)] --> ES[ExternalSecret]
-    ES --> Secret[K8s Secrets]
-    Secret --> Auth
+    subgraph Volumes
+        ConfigMap[nginx ConfigMap]
+        SecretVol[API Key Secret]
+        PVC[(Model PVC)]
+    end
+
+    ConfigMap --> OpenResty
+    SecretVol --> Lua
+    PVC --> Model
+
+    Ingress[Envoy Gateway] -->|:8080| OpenResty
 ```
 
-| Component | Purpose |
-|-----------|---------|
-| OpenResty sidecar | Validates `Authorization: Bearer` header |
-| llama-server | Runs Gemma 3 1B inference with OpenAI-compatible API |
-| OCI Vault | Stores API key |
-| ExternalSecret | Syncs secrets to cluster |
-| PVC | Caches GGUF model weights |
+### Container Details
 
-## Resource Usage
+| Container | Image | Purpose | Resources |
+|-----------|-------|---------|-----------|
+| `auth-proxy` | `openresty/openresty:alpine` | Bearer token validation | 32-64 MB, 10-50m CPU |
+| `llama-server` | `ghcr.io/nsudhanva/llama-server:latest` | LLM inference | 2-4 GB, 1-1.8 CPU |
 
-| Resource | Allocated |
-|----------|-----------|
-| Memory | 2-4 GB |
-| CPU | 1-1.8 cores |
-| Model | ~806 MB (Q4_K_M quantized) |
-| Storage | 5 GB PVC for model cache |
+## Model Configuration
 
-:::tip[Efficient Quantization]
-Using Q4_K_M quantization reduces the model from 2GB (FP16) to just 806MB while maintaining good quality. This is ideal for CPU inference on constrained hardware.
-:::
+```mermaid
+flowchart LR
+    subgraph Config["llama-server Configuration"]
+        HFRepo["--hf-repo<br/>ggml-org/gemma-3-1b-it-GGUF"]
+        HFFile["--hf-file<br/>gemma-3-1b-it-Q4_K_M.gguf"]
+        Context["-c 4096<br/>Context Length"]
+        GPU["-ngl 0<br/>CPU Only"]
+    end
 
-## Configuration
-
-### API Key
-
-The API key is configured in `terraform.tfvars`:
-
-```hcl
-gemma_api_key = "your-secret-key"
+    HFRepo --> Download[Auto Download]
+    HFFile --> Download
+    Download --> Cache[(HF_HOME<br/>/models PVC)]
+    Cache --> Inference[Inference Engine]
+    Context --> Inference
+    GPU --> Inference
 ```
 
-After setting, run `terraform apply` to create the vault secret, then sync `managed-secrets` in ArgoCD.
-
-## llama.cpp Configuration
-
-The deployment uses the official llama.cpp server with the following settings:
+### Settings
 
 | Setting | Value | Description |
 |---------|-------|-------------|
@@ -131,37 +261,165 @@ The deployment uses the official llama.cpp server with the following settings:
 | `--hf-file` | `gemma-3-1b-it-Q4_K_M.gguf` | Q4 quantized model file |
 | `-c` | `4096` | Context length (tokens) |
 | `-ngl` | `0` | GPU layers (0 = CPU only) |
+| `HF_HOME` | `/models` | Model cache directory (PVC mounted) |
+
+## Resource Allocation
+
+The deployment is optimized for OCI Always Free tier constraints:
+
+```mermaid
+pie showData
+    title Memory Usage (4GB Limit)
+    "Model Weights (Q4)" : 806
+    "KV Cache" : 1500
+    "Runtime Overhead" : 500
+    "Available Buffer" : 1194
+```
+
+| Resource | Allocated | Notes |
+|----------|-----------|-------|
+| Memory Request | 2 GB | Minimum for model loading |
+| Memory Limit | 4 GB | Allows KV cache growth |
+| CPU Request | 1 core | Dedicated compute |
+| CPU Limit | 1.8 cores | Burst capacity |
+| Storage | 5 GB PVC | Model cache persistence |
+
+<Aside type="tip" title="Efficient Quantization">
+Using Q4_K_M quantization reduces the model from 2GB (FP16) to just 806MB while maintaining good quality. This is ideal for CPU inference on constrained hardware.
+</Aside>
+
+## Secrets Management
+
+The API key flows from OCI Vault to the cluster via External Secrets Operator:
+
+```mermaid
+flowchart LR
+    subgraph Terraform
+        TF[terraform.tfvars<br/>gemma_api_key]
+    end
+
+    subgraph OCI["OCI Vault"]
+        VaultSecret[Vault Secret<br/>gemma-api-key]
+    end
+
+    subgraph Kubernetes
+        ESO[External Secrets<br/>Operator]
+        ExtSecret[ExternalSecret CR]
+        K8sSecret[K8s Secret<br/>gemma-api-key]
+        Pod[Auth Proxy]
+    end
+
+    TF -->|terraform apply| VaultSecret
+    VaultSecret -->|Sync| ESO
+    ESO -->|Reads| ExtSecret
+    ExtSecret -->|Creates| K8sSecret
+    K8sSecret -->|Volume Mount| Pod
+```
+
+### Configuration
+
+Set the API key in `terraform.tfvars`:
+
+```hcl
+gemma_api_key = "your-secret-key"
+```
+
+After setting, run `terraform apply` to create the vault secret, then sync `managed-secrets` in ArgoCD.
+
+## Available Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/v1/chat/completions` | POST | Chat completions (recommended) |
+| `/v1/completions` | POST | Text completions |
+| `/v1/models` | GET | List available models |
+| `/v1/embeddings` | POST | Text embeddings |
+| `/health` | GET | Health check |
+| `/slots` | GET | View inference slots status |
 
 ## Monitoring
 
-Check llama-server status:
+### Check Pod Status
+
+```bash
+kubectl get pods -l app=gemma
+```
+
+### View Logs
 
 ```bash
 kubectl logs -f deploy/gemma -c llama-server
 ```
 
-Check model loading progress:
+### Check Model Loading
 
 ```bash
-kubectl exec -it deploy/gemma -c llama-server -- curl localhost:8000/health
+kubectl exec deploy/gemma -c llama-server -- curl -s localhost:8000/health
 ```
 
-## Available Endpoints
+### View Inference Slots
 
-| Endpoint | Description |
-|----------|-------------|
-| `/v1/chat/completions` | Chat completions (recommended) |
-| `/v1/completions` | Text completions |
-| `/v1/models` | List available models |
-| `/health` | Health check |
-| `/slots` | View inference slots status |
+```bash
+kubectl exec deploy/gemma -c llama-server -- curl -s localhost:8000/slots
+```
 
 ## Why llama.cpp?
 
+We evaluated multiple inference engines for running LLMs on the free tier:
+
+```mermaid
+quadrantChart
+    title LLM Inference Engines Comparison
+    x-axis Low Memory --> High Memory
+    y-axis Poor ARM64 --> Great ARM64
+    quadrant-1 Ideal for Free Tier
+    quadrant-2 Good but Memory Heavy
+    quadrant-3 Not Recommended
+    quadrant-4 Limited ARM Support
+    llama.cpp: [0.2, 0.9]
+    Ollama: [0.4, 0.6]
+    vLLM: [0.85, 0.3]
+    TGI: [0.75, 0.4]
+```
+
+### Comparison
+
 | Feature | llama.cpp | vLLM | Ollama |
 |---------|-----------|------|--------|
-| Memory usage | ⭐⭐⭐ Best | ⭐ Heavy | ⭐⭐ Good |
-| ARM64 CPU | ⭐⭐⭐ Native | ⚠️ New | ⭐⭐ Good |
-| OpenAI API | ✅ Native | ✅ Native | ⚠️ Wrapper |
-| Quantization | GGUF (Q4=806MB) | BF16 (2GB) | GGUF |
-| Production ready | ✅ Yes | ✅ Yes | ⚠️ Dev-focused |
+| Memory usage | Best | Heavy | Good |
+| ARM64 CPU | Native NEON | Experimental | Good |
+| OpenAI API | Native | Native | Wrapper |
+| Quantization | GGUF (Q4=806MB) | BF16 (2GB+) | GGUF |
+| Production ready | Yes | Yes | Dev-focused |
+| Auto model download | Yes | Yes | Manual pull |
+
+<Aside type="note">
+llama.cpp was chosen because it offers the best memory efficiency with native ARM64 support, critical for running on the constrained free tier resources.
+</Aside>
+
+## Troubleshooting
+
+### Pod in CrashLoopBackOff
+
+Check logs for the specific error:
+```bash
+kubectl logs deploy/gemma -c llama-server --previous
+```
+
+Common causes:
+- **OOMKilled**: Reduce context size (`-c`) or use smaller quantization
+- **Model download failed**: Check HuggingFace token if using gated models
+
+### 401 Unauthorized
+
+Verify your API key:
+```bash
+kubectl get secret gemma-api-key -o jsonpath='{.data.api-key}' | base64 -d
+```
+
+### Slow Inference
+
+This is expected on CPU. For better performance:
+- Use streaming to get incremental responses
+- Keep prompts concise
+- Reduce `max_tokens` in requests

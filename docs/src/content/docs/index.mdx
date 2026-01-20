@@ -1,45 +1,156 @@
 ---
-title: OKE Kubernetes on Oracle Cloud Free Tier - Complete Guide
+title: OKE Kubernetes on Oracle Cloud Free Tier
 description: Deploy a free, production-ready OKE Kubernetes cluster on Oracle Cloud Infrastructure (OCI) Free tier. Uses Terraform, ArgoCD GitOps, Envoy Gateway, automatic TLS with Let's Encrypt, and Cloudflare DNS.
+template: splash
+hero:
+  tagline: Production-ready Kubernetes on Oracle Cloud Always Free tier. Zero cost, fully managed control plane, GitOps-driven.
+  actions:
+    - text: Get Started
+      link: /getting-started/prerequisites/
+      icon: right-arrow
+      variant: primary
+    - text: View on GitHub
+      link: https://github.com/nsudhanva/k8s-oracle
+      icon: external
 ---
 
-import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { Card, CardGrid, LinkCard, Tabs, TabItem } from '@astrojs/starlight/components';
 
-## Why OKE on Oracle Cloud?
+## What You Get
 
-- **Managed Control Plane:** OKE Basic Cluster provides a free, fully managed Kubernetes control plane.
-- **High Performance:** Ampere A1 Compute instances provide up to 4 OCPUs and 24GB RAM for worker nodes.
-- **GitOps Ready:** Complete Argo CD setup with App-of-Apps pattern.
-- **Secure:** OCI Vault integration for secrets and Gateway API for secure ingress.
+<CardGrid>
+  <Card title="Free Managed Kubernetes" icon="seti:kubernetes">
+    OKE Basic Cluster provides a fully managed control plane at no cost. Focus on your apps, not infrastructure.
+  </Card>
+  <Card title="4 OCPUs + 24GB RAM" icon="rocket">
+    Ampere A1 ARM instances deliver high performance. Two worker nodes with 2 OCPU and 12GB RAM each.
+  </Card>
+  <Card title="GitOps with ArgoCD" icon="github">
+    Everything deployed via Git. App-of-Apps pattern for organized, scalable deployments.
+  </Card>
+  <Card title="Production Security" icon="approve-check-circle">
+    OCI Vault for secrets, Let's Encrypt TLS, Bearer token auth for APIs.
+  </Card>
+</CardGrid>
 
-## Features
+## Architecture Overview
 
-| Feature | Implementation |
-|---------|----------------|
-| **Kubernetes** | OKE Basic Cluster (Managed) |
-| **Infrastructure** | Terraform (OCI Provider) |
-| **GitOps** | Argo CD |
-| **Ingress** | Envoy Gateway + OCI Load Balancer |
-| **DNS** | External DNS + Cloudflare |
-| **TLS** | Cert Manager + Let's Encrypt |
-| **Secrets** | OCI Vault + External Secrets Operator |
-| **LLM** | Gemma 3 1B via llama.cpp |
-| **Docs** | Astro + Starlight (This site) |
+```mermaid
+flowchart TB
+    subgraph Internet
+        User((Users))
+        GitHub[(GitHub<br/>GitOps Repo)]
+    end
 
-## Comparison
+    subgraph OCI["Oracle Cloud Infrastructure (Always Free)"]
+        LB[Load Balancer<br/>10 Mbps]
+
+        subgraph OKE["OKE Basic Cluster"]
+            subgraph CP["Control Plane (Managed)"]
+                API[Kubernetes API]
+            end
+
+            subgraph Workers["Worker Nodes (2x ARM)"]
+                subgraph Node1["Node 1: 2 OCPU / 12GB"]
+                    ArgoCD[ArgoCD]
+                    Envoy[Envoy Gateway]
+                    ESO[External Secrets]
+                    CertMgr[Cert Manager]
+                end
+
+                subgraph Node2["Node 2: 2 OCPU / 12GB"]
+                    Gemma[Gemma LLM]
+                    Docs[Documentation]
+                    Apps[Your Apps]
+                end
+            end
+        end
+
+        Vault[(OCI Vault)]
+        DNS[External DNS]
+    end
+
+    subgraph External
+        CF[Cloudflare DNS]
+        LE[Let's Encrypt]
+        HF[HuggingFace]
+    end
+
+    User -->|HTTPS| LB
+    LB --> Envoy
+    GitHub -->|Sync| ArgoCD
+    ArgoCD --> Workers
+    Vault --> ESO
+    DNS --> CF
+    CertMgr --> LE
+    Gemma -.-> HF
+```
+
+## Stack
+
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| **Infrastructure** | Terraform | Declarative OCI resource provisioning |
+| **Kubernetes** | OKE Basic | Free managed control plane |
+| **GitOps** | ArgoCD | Continuous deployment from Git |
+| **Ingress** | Envoy Gateway | Gateway API with load balancing |
+| **DNS** | External DNS + Cloudflare | Automatic DNS record management |
+| **TLS** | Cert Manager + Let's Encrypt | Automatic certificate issuance |
+| **Secrets** | External Secrets + OCI Vault | Secure secret synchronization |
+| **LLM** | llama.cpp + Gemma 3 1B | Self-hosted AI with OpenAI API |
+
+## Quick Start
+
+<Tabs>
+  <TabItem label="1. Clone">
+```bash
+git clone https://github.com/nsudhanva/k8s-oracle.git
+cd k8s-oracle/tf-oke
+```
+  </TabItem>
+  <TabItem label="2. Configure">
+```bash
+cp terraform.tfvars.example terraform.tfvars
+# Edit terraform.tfvars with your OCI credentials
+```
+  </TabItem>
+  <TabItem label="3. Deploy">
+```bash
+terraform init
+terraform plan
+terraform apply
+```
+  </TabItem>
+</Tabs>
+
+## Why OKE over K3s?
 
 | | **OKE Basic** | **K3s on VM** |
 |---|---|---|
 | **Control Plane** | Managed (Free) | Self-managed on VM |
-| **Worker Resources** | Full 4 OCPU / 24GB | Reduced by Control Plane |
-| **Maintenance** | Oracle Managed | Manual Upgrades |
-| **Storage** | OCI Block Volume (CSI) | Local Path / HostPath |
+| **Worker Resources** | Full 4 OCPU / 24GB | Reduced by control plane overhead |
+| **Maintenance** | Oracle handles upgrades | Manual upgrades required |
+| **Storage** | OCI Block Volume CSI | Local path provisioner |
+| **Networking** | OCI VCN integration | Manual CNI setup |
 
-## Quick Links
-{/* Trigger CI */}
+## Live Demo
+
+This documentation site runs on the cluster. Try the self-hosted LLM:
+
+```bash
+curl https://gemma.k8s.sudhanva.me/v1/chat/completions \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"gemma","messages":[{"role":"user","content":"Hello!"}]}'
+```
+
+## Explore
+
 <CardGrid>
-  <LinkCard title="Get Started" href="/getting-started/prerequisites/" description="Prerequisites, installation, and configuration" />
-  <LinkCard title="Architecture" href="/architecture/overview/" description="Understand how the cluster works" />
+  <LinkCard title="Prerequisites" href="/getting-started/prerequisites/" description="What you need before starting" />
+  <LinkCard title="Installation" href="/getting-started/installation/" description="Step-by-step deployment guide" />
+  <LinkCard title="Architecture" href="/architecture/overview/" description="How all components work together" />
   <LinkCard title="Gemma LLM" href="/architecture/gemma-llm/" description="Self-hosted AI with OpenAI-compatible API" />
-  <LinkCard title="Troubleshooting" href="/troubleshooting/common-issues/" description="Solutions to common problems" />
+  <LinkCard title="Secrets Management" href="/architecture/secrets-management/" description="OCI Vault integration" />
+  <LinkCard title="Adding Apps" href="/operation/adding-apps/" description="Deploy your own applications" />
 </CardGrid>
