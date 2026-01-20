@@ -2,7 +2,7 @@
 
 An OKE (Oracle Kubernetes Engine) cluster on Oracle Cloud Infrastructure using Always Free tier resources. This project provisions infrastructure with Terraform, bootstraps Argo CD for GitOps, and deploys applications via Gateway API with automatic HTTPS.
 
-**Documentation:** https://k8s.sudhanva.me/
+**Documentation:** <https://k8s.sudhanva.me/>
 
 ```mermaid
 graph TB
