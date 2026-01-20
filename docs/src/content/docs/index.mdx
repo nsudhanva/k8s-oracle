@@ -1,9 +1,9 @@
 ---
 title: OKE Kubernetes on Oracle Cloud Free Tier
-description: Deploy a free, production-ready OKE Kubernetes cluster on Oracle Cloud Infrastructure (OCI) Free tier. Uses Terraform, ArgoCD GitOps, Envoy Gateway, automatic TLS with Let's Encrypt, and Cloudflare DNS.
+description: Deploy an OKE Kubernetes cluster on Oracle Cloud Infrastructure (OCI) Free tier. Uses Terraform, ArgoCD GitOps, Envoy Gateway, automatic TLS with Let's Encrypt, and Cloudflare DNS.
 template: splash
 hero:
-  tagline: Production-ready Kubernetes on Oracle Cloud Always Free tier. Zero cost, fully managed control plane, GitOps-driven.
+  tagline: Kubernetes on Oracle Cloud Always Free tier using managed control plane and GitOps.
   actions:
     - text: Get Started
       link: /getting-started/prerequisites/
@@ -16,20 +16,20 @@ hero:
 
 import { Card, CardGrid, LinkCard, Tabs, TabItem } from '@astrojs/starlight/components';
 
-## What You Get
+## Components
 
 <CardGrid>
-  <Card title="Free Managed Kubernetes" icon="seti:kubernetes">
-    OKE Basic Cluster provides a fully managed control plane at no cost. Focus on your apps, not infrastructure.
+  <Card title="OKE Basic Cluster" icon="kubernetes">
+    Managed Kubernetes control plane. Two ARM-based worker nodes.
   </Card>
   <Card title="4 OCPUs + 24GB RAM" icon="rocket">
-    Ampere A1 ARM instances deliver high performance. Two worker nodes with 2 OCPU and 12GB RAM each.
+    Ampere A1 ARM instances. Two worker nodes with 2 OCPU and 12GB RAM each.
   </Card>
   <Card title="GitOps with ArgoCD" icon="github">
-    Everything deployed via Git. App-of-Apps pattern for organized, scalable deployments.
+    All resources deployed via Git. App-of-Apps pattern for managing applications.
   </Card>
-  <Card title="Production Security" icon="approve-check-circle">
-    OCI Vault for secrets, Let's Encrypt TLS, Bearer token auth for APIs.
+  <Card title="Security" icon="approve-check-circle">
+    OCI Vault for secrets, Let's Encrypt TLS certificates, Bearer token authentication.
   </Card>
 </CardGrid>
 
