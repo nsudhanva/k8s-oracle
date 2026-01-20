@@ -62,7 +62,7 @@ spec:
             initialDelaySeconds: 5
             periodSeconds: 5
         - name: llama-server
-          image: ghcr.io/ggml-org/llama.cpp:server
+          image: ghcr.io/nsudhanva/llama-server:b7779
           args:
             - "--hf-repo"
             - "ggml-org/gemma-3-1b-it-GGUF"
@@ -76,7 +76,7 @@ spec:
             - "4096"
             - "-ngl"
             - "0"
-            - "--cache-dir"
+            - "--hf-cache"
             - "/models"
           ports:
             - containerPort: 8000
