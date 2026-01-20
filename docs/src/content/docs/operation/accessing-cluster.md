@@ -7,7 +7,7 @@ The OKE control plane is managed by Oracle and accessible via the public endpoin
 
 ## Kubectl Access
 
-The easiest way to access the cluster is using the OCI CLI to generate a kubeconfig file.
+The standard way to access the cluster is using the OCI CLI to generate a kubeconfig file.
 
 ### Prerequisites
 
