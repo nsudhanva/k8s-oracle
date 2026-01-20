@@ -148,3 +148,24 @@ variable "huggingface_token" {
   type        = string
   sensitive   = true
 }
+
+variable "oidc_client_id" {
+  description = "OCI Identity Domain OIDC client ID for Open WebUI (from OCI Console after app creation)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "oidc_client_secret" {
+  description = "OCI Identity Domain OIDC client secret for Open WebUI (from OCI Console after app creation)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "oidc_provider_url" {
+  description = "OCI Identity Domain OIDC provider URL (e.g., https://idcs-xxx.identity.oraclecloud.com)"
+  type        = string
+  default     = ""
+}
+

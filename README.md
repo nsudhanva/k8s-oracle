@@ -56,6 +56,7 @@ The cluster uses OKE Basic (free managed control plane) with ARM64 worker nodes 
 | OCI Vault | Secrets storage (Always Free) |
 | External Secrets | Sync Vault secrets to Kubernetes |
 | Gemma LLM | Gemma 3 1B via llama.cpp with OpenAI-compatible API |
+| Open WebUI | Chat interface with OCI Identity OIDC authentication |
 
 ## OCI Always Free Resources
 
@@ -64,9 +65,10 @@ The cluster uses OKE Basic (free managed control plane) with ARM64 worker nodes 
 | OKE Control Plane | Free (Basic cluster) | 1 cluster |
 | Ampere A1 Compute | 4 OCPUs, 24 GB RAM | 4 OCPUs, 24 GB |
 | Object Storage | 20 GB | ~1 MB (Terraform state) |
-| Vault Secrets | 150 secrets | ~10 secrets |
+| Vault Secrets | 150 secrets | ~15 secrets |
 | Vault Master Keys | 20 key versions | 1 key |
 | Load Balancer | Flexible NLB | 1 instance (Envoy Gateway) |
+| Identity Domain | 2 apps, 2000 users | 1 app (Open WebUI OIDC) |
 
 ```mermaid
 flowchart LR

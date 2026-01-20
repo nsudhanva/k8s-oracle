@@ -1,0 +1,187 @@
+---
+title: Open WebUI - AI Chat Interface
+description: Open WebUI provides a ChatGPT-like interface for your self-hosted Gemma LLM with OCI Identity Domain authentication.
+---
+
+import { Tabs, TabItem, Card, CardGrid, Aside } from '@astrojs/starlight/components';
+
+This cluster runs **Open WebUI**, providing a modern chat interface for the self-hosted Gemma LLM.
+
+## Endpoint
+
+```text
+https://chat.k8s.sudhanva.me
+```
+
+<Aside type="tip">
+Login with your OCI Identity Domain credentials. Only assigned users can access.
+</Aside>
+
+## Architecture
+
+Open WebUI connects to Gemma via the OpenAI-compatible API:
+
+```mermaid
+flowchart TB
+    subgraph Internet
+        User((User))
+    end
+
+    subgraph OCI["Oracle Cloud Infrastructure"]
+        subgraph Identity["OCI Identity Domain"]
+            OIDC[OIDC Provider]
+        end
+
+        LB[Load Balancer]
+
+        subgraph OKE["OKE Cluster"]
+            subgraph Gateway["Envoy Gateway"]
+                EG[HTTPS Listeners]
+            end
+
+            subgraph OpenWebUI["Open WebUI Pod"]
+                UI[Web Interface<br/>:8080]
+            end
+
+            subgraph GemmaPod["Gemma Pod"]
+                LLM[llama-server<br/>Gemma 3 1B]
+            end
+        end
+
+        Vault[(OCI Vault)]
+    end
+
+    User -->|1. Access| LB
+    LB --> EG
+    EG -->|2. Redirect| OIDC
+    User -->|3. Login| OIDC
+    OIDC -->|4. Token| UI
+    UI -->|5. Chat| LLM
+    Vault -->|Secrets| UI
+```
+
+## Authentication Flow
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant OW as Open WebUI
+    participant OCI as OCI Identity
+
+    U->>OW: Visit chat.k8s.sudhanva.me
+    OW->>U: Redirect to OCI login
+    U->>OCI: Enter credentials
+    OCI->>OCI: Validate user
+    OCI->>OW: Return OIDC token
+    OW->>U: Access granted
+    U->>OW: Start chatting!
+```
+
+## Features
+
+| Feature | Description |
+|---------|-------------|
+| **Chat Interface** | Modern, responsive ChatGPT-like UI |
+| **OCI Authentication** | Secure login via OCI Identity Domain |
+| **Gemma Integration** | Pre-configured to use Gemma 3 1B |
+| **Conversation History** | Persistent chat storage |
+| **Model Selection** | Switch between available models |
+
+## Resource Allocation
+
+Open WebUI is configured with generous resources within free tier limits:
+
+| Resource | Request | Limit | Notes |
+|----------|---------|-------|-------|
+| Memory | 1 GB | 4 GB | Ample headroom for UI operations |
+| CPU | 0.5 core | 2 cores | Burst capacity for responsiveness |
+| Storage | 2 GB PVC | - | Persistent user data and chats |
+
+<Aside type="note" title="Free Tier Budget">
+Total cluster: 4 OCPUs, 24 GB RAM. Open WebUI uses up to ~4 GB RAM and 2 CPUs (burst), leaving plenty for Gemma (4 GB) and system components.
+</Aside>
+
+## Configuration
+
+Open WebUI connects to Gemma via environment variables:
+
+| Variable | Value | Description |
+|----------|-------|-------------|
+| `OPENAI_API_BASE_URL` | `http://gemma.default.svc.cluster.local/v1` | Internal Gemma API |
+| `ENABLE_OLLAMA_API` | `false` | Disable Ollama integration |
+| `ENABLE_OAUTH_SIGNUP` | `true` | Allow OIDC user creation |
+| `ENABLE_LOGIN_FORM` | `false` | Force OIDC-only login |
+| `OAUTH_PROVIDER_NAME` | `Oracle` | Display name on login button |
+
+## User Management
+
+### Adding Users
+
+Only users assigned to the Open WebUI app in OCI Identity can login:
+
+1. Go to **OCI Console → Identity & Security → Domains → Default**
+2. Click **Applications → open-webui**
+3. Under **Users**, click **Assign**
+4. Select users to grant access
+
+### Removing Users
+
+1. Same path as above
+2. Under **Users**, click the user
+3. Click **Revoke**
+
+## Secrets Management
+
+OIDC credentials flow from OCI Vault:
+
+```mermaid
+flowchart LR
+    subgraph Terraform
+        TF[identity.tf]
+    end
+
+    subgraph OCI["OCI"]
+        App[Identity Domain App]
+        Vault[(Vault)]
+    end
+
+    subgraph Kubernetes
+        ESO[External Secrets]
+        Secret[K8s Secret<br/>oidc-credentials]
+        Pod[Open WebUI]
+    end
+
+    TF -->|Creates| App
+    TF -->|Stores| Vault
+    Vault -->|Syncs| ESO
+    ESO -->|Creates| Secret
+    Secret -->|Mounts| Pod
+```
+
+## Troubleshooting
+
+### Login Redirect Loop
+
+Check that the redirect URI matches exactly:
+```bash
+# Expected redirect URI in OCI Identity app:
+https://chat.k8s.sudhanva.me/oauth/oidc/callback
+```
+
+### "User Not Assigned" Error
+
+Ensure you've assigned your user to the app in OCI Identity Console.
+
+### Connection to Gemma Failed
+
+Check Gemma pod is healthy:
+```bash
+kubectl get pods -l app=gemma
+kubectl logs -f deploy/gemma -c llama-server
+```
+
+### View Open WebUI Logs
+
+```bash
+kubectl logs -f deploy/open-webui
+```

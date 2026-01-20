@@ -163,6 +163,45 @@ resource "oci_vault_secret" "huggingface_token" {
   }
 }
 
+resource "oci_vault_secret" "oidc_client_id" {
+  count          = var.oidc_client_id != "" ? 1 : 0
+  compartment_id = var.compartment_ocid
+  vault_id       = oci_kms_vault.oke_vault.id
+  key_id         = oci_kms_key.master_key.id
+  secret_name    = "oidc-client-id"
+
+  secret_content {
+    content_type = "BASE64"
+    content      = base64encode(var.oidc_client_id)
+  }
+}
+
+resource "oci_vault_secret" "oidc_client_secret" {
+  count          = var.oidc_client_secret != "" ? 1 : 0
+  compartment_id = var.compartment_ocid
+  vault_id       = oci_kms_vault.oke_vault.id
+  key_id         = oci_kms_key.master_key.id
+  secret_name    = "oidc-client-secret"
+
+  secret_content {
+    content_type = "BASE64"
+    content      = base64encode(var.oidc_client_secret)
+  }
+}
+
+resource "oci_vault_secret" "oidc_provider_url" {
+  count          = var.oidc_provider_url != "" ? 1 : 0
+  compartment_id = var.compartment_ocid
+  vault_id       = oci_kms_vault.oke_vault.id
+  key_id         = oci_kms_key.master_key.id
+  secret_name    = "oidc-provider-url"
+
+  secret_content {
+    content_type = "BASE64"
+    content      = base64encode(var.oidc_provider_url)
+  }
+}
+
 output "vault_ocid" {
   value       = oci_kms_vault.oke_vault.id
   description = "OCI Vault OCID for secret retrieval"
