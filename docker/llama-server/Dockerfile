@@ -16,8 +16,6 @@ RUN cmake -S . -B build \
     -DCMAKE_BUILD_TYPE=Release \
     -DGGML_NATIVE=OFF \
     -DLLAMA_BUILD_TESTS=OFF \
-    -DGGML_BACKEND_DL=ON \
-    -DGGML_CPU_ALL_VARIANTS=ON \
     -DLLAMA_CURL=ON && \
     cmake --build build -j $(nproc)
 
