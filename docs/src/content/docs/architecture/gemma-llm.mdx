@@ -1,9 +1,9 @@
 ---
 title: Gemma 3 LLM - Self-Hosted AI on OKE
-description: Deploy Gemma 3 1B language model on your OKE cluster using vLLM. OpenAI-compatible API at gemma.sudhanva.me with Bearer token authentication.
+description: Deploy Gemma 3 1B language model on your OKE cluster using llama.cpp. OpenAI-compatible API with Bearer token authentication.
 ---
 
-This cluster runs **Gemma 3 1B IT**, Google's lightweight instruction-tuned language model, using [vLLM](https://docs.vllm.ai/) for optimized CPU inference on ARM64 nodes.
+This cluster runs **Gemma 3 1B IT**, Google's lightweight instruction-tuned language model, using [llama.cpp](https://github.com/ggml-org/llama.cpp) for efficient CPU inference on ARM64 nodes.
 
 ## Endpoint
 
@@ -24,7 +24,7 @@ curl https://gemma.k8s.sudhanva.me/v1/chat/completions \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "google/gemma-3-1b-it",
+    "model": "gemma-3-1b-it",
     "messages": [{"role": "user", "content": "Hello!"}]
   }'
 ```
@@ -42,7 +42,7 @@ curl -N https://gemma.k8s.sudhanva.me/v1/chat/completions \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "google/gemma-3-1b-it",
+    "model": "gemma-3-1b-it",
     "messages": [{"role": "user", "content": "Tell me about Bengaluru"}],
     "stream": true
   }'
@@ -59,7 +59,7 @@ client = openai.OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="google/gemma-3-4b-it",
+    model="gemma-3-1b-it",
     messages=[{"role": "user", "content": "Tell me about Bengaluru"}],
     stream=True
 )
@@ -75,46 +75,38 @@ for chunk in response:
 flowchart LR
     User((User)) --> Gateway[Envoy Gateway]
     Gateway --> Auth[OpenResty\nAuth Proxy]
-    Auth --> vLLM[vLLM\nGemma 3 1B]
+    Auth --> LLM[llama.cpp\nGemma 3 1B]
 
     subgraph Pod["gemma pod"]
         Auth
-        vLLM
+        LLM
     end
 
-    HF[(HuggingFace)] --> vLLM
+    HF[(HuggingFace\nGGUF)] --> LLM
     Vault[(OCI Vault)] --> ES[ExternalSecret]
     ES --> Secret[K8s Secrets]
     Secret --> Auth
-    Secret --> vLLM
 ```
 
 | Component | Purpose |
 |-----------|---------|
 | OpenResty sidecar | Validates `Authorization: Bearer` header |
-| vLLM container | Runs Gemma 3 1B inference with OpenAI-compatible API |
-| OCI Vault | Stores API key and HuggingFace token |
+| llama-server | Runs Gemma 3 1B inference with OpenAI-compatible API |
+| OCI Vault | Stores API key |
 | ExternalSecret | Syncs secrets to cluster |
-| PVC | Caches model weights (no manual download needed) |
+| PVC | Caches GGUF model weights |
 
 ## Resource Usage
 
 | Resource | Allocated |
 |----------|-----------|
-| Memory | 6-8 GB (dedicated node) |
+| Memory | 2-4 GB |
 | CPU | 1-1.8 cores |
-| Model | ~2 GB (BF16) |
-| Storage | 10 GB PVC for model cache |
+| Model | ~806 MB (Q4_K_M quantized) |
+| Storage | 5 GB PVC for model cache |
 
-:::caution
-First request after pod startup may take several minutes while vLLM downloads and loads the model from HuggingFace. Subsequent restarts use the cached model from the PVC.
-:::
-
-:::note[Free Tier Limitations]
-The OCI Always Free tier provides ~9.4GB allocatable memory per node. vLLM v0.13 on ARM64 CPU with Gemma 3 1B requires careful resource tuning. If you experience OOM issues during inference, consider:
-- Reducing `VLLM_CPU_KVCACHE_SPACE` to 2
-- Using `--max-model-len 2048` instead of 4096
-- Switching to Ollama for more memory-efficient inference on constrained hardware
+:::tip[Efficient Quantization]
+Using Q4_K_M quantization reduces the model from 2GB (FP16) to just 806MB while maintaining good quality. This is ideal for CPU inference on constrained hardware.
 :::
 
 ## Configuration
@@ -127,44 +119,31 @@ The API key is configured in `terraform.tfvars`:
 gemma_api_key = "your-secret-key"
 ```
 
-### HuggingFace Token
+After setting, run `terraform apply` to create the vault secret, then sync `managed-secrets` in ArgoCD.
 
-Gemma 3 is a gated model requiring license acceptance:
+## llama.cpp Configuration
 
-1. Visit [google/gemma-3-1b-it](https://huggingface.co/google/gemma-3-1b-it) and accept Google's license
-2. Generate a token at [HuggingFace Settings](https://huggingface.co/settings/tokens)
-3. Add to `terraform.tfvars`:
-
-```hcl
-huggingface_token = "hf_..."
-```
-
-After setting both, run `terraform apply` to create the vault secrets, then sync `managed-secrets` in ArgoCD.
-
-## vLLM Configuration
-
-The deployment uses the official vLLM ARM64 CPU image with the following settings:
+The deployment uses the official llama.cpp server with the following settings:
 
 | Setting | Value | Description |
 |---------|-------|-------------|
-| `--model` | `google/gemma-3-1b-it` | HuggingFace model ID |
-| `--dtype` | `bfloat16` | Data type for inference |
-| `--max-model-len` | `4096` | Maximum context length |
-| `--enable-chunked-prefill` | enabled | Better latency for long prompts |
-| `VLLM_CPU_KVCACHE_SPACE` | `4` | 4GB KV cache for conversations |
+| `--hf-repo` | `ggml-org/gemma-3-1b-it-GGUF` | HuggingFace GGUF repository |
+| `--hf-file` | `gemma-3-1b-it-Q4_K_M.gguf` | Q4 quantized model file |
+| `-c` | `4096` | Context length (tokens) |
+| `-ngl` | `0` | GPU layers (0 = CPU only) |
 
 ## Monitoring
 
-Check vLLM server status:
+Check llama-server status:
 
 ```bash
-kubectl logs -f deploy/gemma -c vllm
+kubectl logs -f deploy/gemma -c llama-server
 ```
 
 Check model loading progress:
 
 ```bash
-kubectl exec -it deploy/gemma -c vllm -- curl localhost:8000/health
+kubectl exec -it deploy/gemma -c llama-server -- curl localhost:8000/health
 ```
 
 ## Available Endpoints
@@ -175,14 +154,14 @@ kubectl exec -it deploy/gemma -c vllm -- curl localhost:8000/health
 | `/v1/completions` | Text completions |
 | `/v1/models` | List available models |
 | `/health` | Health check |
+| `/slots` | View inference slots status |
 
-## Why vLLM over Ollama?
+## Why llama.cpp?
 
-| Feature | vLLM | Ollama |
-|---------|------|--------|
-| OpenAI API | Native support | Wrapper |
-| Model source | HuggingFace (auto-download) | Manual `docker pull` |
-| Batching | Continuous batching | Sequential |
-| Production ready | Yes | Hobby/development |
-| Memory efficiency | PagedAttention | Basic |
-| ARM64 CPU support | Official images | Limited |
+| Feature | llama.cpp | vLLM | Ollama |
+|---------|-----------|------|--------|
+| Memory usage | ⭐⭐⭐ Best | ⭐ Heavy | ⭐⭐ Good |
+| ARM64 CPU | ⭐⭐⭐ Native | ⚠️ New | ⭐⭐ Good |
+| OpenAI API | ✅ Native | ✅ Native | ⚠️ Wrapper |
+| Quantization | GGUF (Q4=806MB) | BF16 (2GB) | GGUF |
+| Production ready | ✅ Yes | ✅ Yes | ⚠️ Dev-focused |

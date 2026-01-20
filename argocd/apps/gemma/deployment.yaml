@@ -1,14 +1,14 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: vllm-model-cache
+  name: llama-model-cache
   namespace: default
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 10Gi
+      storage: 5Gi
   storageClassName: oci-bv
 ---
 apiVersion: apps/v1
@@ -18,7 +18,7 @@ metadata:
   namespace: default
   labels:
     app: gemma
-    runtime: vllm
+    runtime: llama-cpp
 spec:
   replicas: 1
   strategy:
@@ -30,7 +30,7 @@ spec:
     metadata:
       labels:
         app: gemma
-        runtime: vllm
+        runtime: llama-cpp
     spec:
       nodeSelector:
         workload: llm
@@ -61,61 +61,56 @@ spec:
               port: 8080
             initialDelaySeconds: 5
             periodSeconds: 5
-        - name: vllm
-          image: public.ecr.aws/q9t5s3a7/vllm-arm64-cpu-release-repo:v0.13.0
+        - name: llama-server
+          image: ghcr.io/ggml-org/llama.cpp:server-b7779
           args:
-            - "--model"
-            - "google/gemma-3-1b-it"
-            - "--dtype"
-            - "bfloat16"
-            - "--max-model-len"
-            - "4096"
-            - "--host"
-            - "0.0.0.0"
+            - "--hf-repo"
+            - "ggml-org/gemma-3-1b-it-GGUF"
+            - "--hf-file"
+            - "gemma-3-1b-it-Q4_K_M.gguf"
             - "--port"
             - "8000"
-            - "--trust-remote-code"
-            - "--enable-chunked-prefill"
+            - "--host"
+            - "0.0.0.0"
+            - "-c"
+            - "4096"
+            - "-ngl"
+            - "0"
+            - "--cache-dir"
+            - "/models"
           ports:
             - containerPort: 8000
               name: http
           env:
-            - name: VLLM_CPU_KVCACHE_SPACE
-              value: "4"
             - name: HF_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: huggingface-token
                   key: token
-            - name: HF_HOME
-              value: "/model-cache/huggingface"
-            - name: TRANSFORMERS_CACHE
-              value: "/model-cache/transformers"
+                  optional: true
           resources:
             requests:
-              memory: "6Gi"
+              memory: "2Gi"
               cpu: "1"
             limits:
-              memory: "8Gi"
+              memory: "4Gi"
               cpu: "1800m"
           volumeMounts:
             - name: model-cache
-              mountPath: /model-cache
-            - name: shm
-              mountPath: /dev/shm
+              mountPath: /models
           startupProbe:
             httpGet:
               path: /health
               port: 8000
-            initialDelaySeconds: 60
-            periodSeconds: 30
-            failureThreshold: 20
-            timeoutSeconds: 10
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 30
+            timeoutSeconds: 5
           readinessProbe:
             httpGet:
               path: /health
               port: 8000
-            initialDelaySeconds: 10
+            initialDelaySeconds: 5
             periodSeconds: 10
             failureThreshold: 3
             timeoutSeconds: 5
@@ -123,18 +118,14 @@ spec:
             httpGet:
               path: /health
               port: 8000
-            initialDelaySeconds: 120
+            initialDelaySeconds: 60
             periodSeconds: 30
             failureThreshold: 3
             timeoutSeconds: 10
       volumes:
         - name: model-cache
           persistentVolumeClaim:
-            claimName: vllm-model-cache
-        - name: shm
-          emptyDir:
-            medium: Memory
-            sizeLimit: 1Gi
+            claimName: llama-model-cache
         - name: nginx-config
           configMap:
             name: gemma-nginx-config
