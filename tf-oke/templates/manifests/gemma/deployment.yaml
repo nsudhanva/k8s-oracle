@@ -76,12 +76,12 @@ spec:
             - "4096"
             - "-ngl"
             - "0"
-            - "--hf-cache"
-            - "/models"
           ports:
             - containerPort: 8000
               name: http
           env:
+            - name: HF_HOME
+              value: "/models"
             - name: HF_TOKEN
               valueFrom:
                 secretKeyRef:
