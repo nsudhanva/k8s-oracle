@@ -26,8 +26,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 COPY --from=build /build/build/bin/llama-server /app/llama-server
-COPY --from=build /build/build/src/libllama.so /app/lib/
-COPY --from=build /build/build/ggml/src/libggml*.so /app/lib/
+COPY --from=build /build/build/bin/*.so* /app/lib/
 
 ENV LD_LIBRARY_PATH=/app/lib
 ENV LLAMA_ARG_HOST=0.0.0.0
