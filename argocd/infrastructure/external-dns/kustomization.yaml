@@ -29,11 +29,20 @@ helmCharts:
         create: true
         extraRules:
           - apiGroups: ["gateway.networking.k8s.io"]
-            resources: ["gateways","httproutes","grpcroutes","tlsroutes","tcproutes","udproutes","gatewayclasses"]
-            verbs: ["get","watch","list"]
+            resources:
+              [
+                "gateways",
+                "httproutes",
+                "grpcroutes",
+                "tlsroutes",
+                "tcproutes",
+                "udproutes",
+                "gatewayclasses",
+              ]
+            verbs: ["get", "watch", "list"]
           - apiGroups: ["externaldns.k8s.io"]
             resources: ["dnsendpoints"]
-            verbs: ["get","watch","list"]
+            verbs: ["get", "watch", "list"]
           - apiGroups: ["externaldns.k8s.io"]
             resources: ["dnsendpoints/status"]
             verbs: ["update"]
