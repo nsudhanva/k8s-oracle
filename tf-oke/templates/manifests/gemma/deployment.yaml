@@ -62,7 +62,8 @@ spec:
             initialDelaySeconds: 5
             periodSeconds: 5
         - name: llama-server
-          image: ghcr.io/ggml-org/llama.cpp:server-b7779
+          image: ghcr.io/ggml-org/llama.cpp:full
+          command: ["llama-server"]
           args:
             - "--hf-repo"
             - "ggml-org/gemma-3-1b-it-GGUF"
