@@ -385,6 +385,132 @@ ingress_security_rules {
 
 The Terraform configuration includes this rule automatically.
 
+## Open WebUI OIDC Authentication Errors
+
+When setting up OCI Identity Domain OIDC authentication for Open WebUI, several configuration issues can cause login failures.
+
+```mermaid
+flowchart TB
+    subgraph Errors["Common OIDC Errors"]
+        E1[401 on JWK Fetch]
+        E2[401 on Metadata]
+        E3[invalid_scope]
+        E4[Redirect Loop]
+    end
+
+    subgraph Fixes["Solutions"]
+        F1[Enable Access<br/>Signing Certificate]
+        F2[Fix Provider URL<br/>Format]
+        F3[Add Scopes in<br/>OCI Console]
+        F4[Match Redirect URI<br/>Exactly]
+    end
+
+    E1 --> F1
+    E2 --> F2
+    E3 --> F3
+    E4 --> F4
+```
+
+### 401 Unauthorized on JWK Endpoint
+
+Symptom: Login fails with error in logs:
+
+```text
+httpx.HTTPStatusError: Client error '401 Unauthorized' for url 
+'https://idcs-xxx.identity.oraclecloud.com/admin/v1/SigningCert/jwk'
+```
+
+This occurs because the JWK endpoint requires authentication by default in OCI Identity Domain.
+
+Fix:
+1. Navigate to **OCI Console → Identity & Security → Domains → Default**
+2. Go to **Settings → Domain settings**
+3. Click **Edit domain settings**
+4. Under "Access signing certificate", enable **Configure client access**
+5. Save changes
+6. Restart Open WebUI: `kubectl rollout restart deploy/open-webui`
+
+### 401 Unauthorized on Metadata Discovery
+
+Symptom: Login fails immediately with:
+
+```text
+httpx.HTTPStatusError: Client error '401 Unauthorized' for url 
+'https://idcs-xxx.identity.oraclecloud.com/.well-known/openid-configuration'
+```
+
+This occurs when the OIDC provider URL is incorrectly formatted (e.g., includes `:443` port or is missing the discovery path).
+
+Fix: Ensure the provider URL in `terraform.tfvars` includes the full discovery endpoint:
+
+```hcl
+# Correct format
+oidc_provider_url = "https://idcs-xxxxx.identity.oraclecloud.com/.well-known/openid-configuration"
+
+# Wrong formats (will cause 401)
+oidc_provider_url = "https://idcs-xxxxx.identity.oraclecloud.com:443"
+oidc_provider_url = "https://idcs-xxxxx.identity.oraclecloud.com"
+```
+
+After fixing, run `terraform apply` to update the vault secret, then restart Open WebUI.
+
+### invalid_scope Error
+
+Symptom: OAuth flow fails with scope error:
+
+```text
+Error: invalid_scope - Scope 'openid' is not configured for the application
+```
+
+This occurs when required OIDC scopes are not enabled in the OCI Identity Domain application.
+
+Fix:
+1. Navigate to **OCI Console → Identity & Security → Domains → Default**
+2. Go to **Applications → open-webui**
+3. Under **Resources**, click **Token Issuance Policy**
+4. Add these scopes:
+   - `openid` (required for OIDC)
+   - `profile` (user name)
+   - `email` (user email)
+5. Save changes
+
+### OIDC Redirect Loop
+
+Symptom: After clicking "Continue with Oracle", the browser loops between Open WebUI and OCI Identity.
+
+This occurs when the redirect URI in the OCI application doesn't match the callback URL exactly.
+
+Fix: Verify the redirect URI in the OCI application matches:
+
+```text
+https://chat.k8s.sudhanva.me/oauth/oidc/callback
+```
+
+Note: The protocol must be `https`, and there should be no trailing slash.
+
+### Check OIDC Secret Configuration
+
+Verify the External Secret is syncing correctly:
+
+```bash
+# Check ExternalSecret status
+kubectl get externalsecret oidc-credentials-sync
+
+# Verify secret exists
+kubectl get secret oidc-credentials
+
+# View provider URL (should include /.well-known/openid-configuration)
+kubectl get secret oidc-credentials -o jsonpath='{.data.provider-url}' | base64 -d
+```
+
+### Missing Grant Types
+
+Symptom: OAuth flow fails after entering credentials.
+
+Ensure the OCI application has these grant types enabled:
+- **Authorization code** - Required for the OIDC authorization code flow
+- **Refresh token** - Required for session refresh
+
 ## GHCR Package ImagePullBackOff
 
 GitHub Container Registry packages are **private by default**, even for public repositories.
