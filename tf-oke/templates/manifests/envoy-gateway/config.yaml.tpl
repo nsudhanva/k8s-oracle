@@ -115,3 +115,15 @@ spec:
         certificateRefs:
           - name: gemma-tls
             namespace: default
+    - name: https-chat
+      port: 443
+      protocol: HTTPS
+      hostname: "chat.${domain_name}"
+      allowedRoutes:
+        namespaces:
+          from: All
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: chat-tls
+            namespace: default
