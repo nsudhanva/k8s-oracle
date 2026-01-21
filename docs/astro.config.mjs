@@ -106,6 +106,7 @@ export default defineConfig({
             { label: 'Networking', slug: 'architecture/networking' },
             { label: 'GitOps', slug: 'architecture/gitops' },
             { label: 'Gemma LLM', slug: 'architecture/gemma-llm' },
+            { label: 'Open WebUI', slug: 'architecture/open-webui' },
           ],
         },
         {
