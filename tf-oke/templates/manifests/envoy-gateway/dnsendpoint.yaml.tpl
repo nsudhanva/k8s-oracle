@@ -33,3 +33,10 @@ spec:
       providerSpecific:
         - name: cloudflare-proxied
           value: "false"
+    - dnsName: chat.${domain_name}
+      recordType: A
+      targets:
+        - "${load_balancer_ip}"
+      providerSpecific:
+        - name: cloudflare-proxied
+          value: "false"
