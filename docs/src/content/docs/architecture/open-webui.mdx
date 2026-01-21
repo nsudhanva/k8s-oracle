@@ -266,7 +266,7 @@ oidc_client_secret = "your-client-secret-from-oci"
 oidc_provider_url  = "https://idcs-xxxxx.identity.oraclecloud.com/.well-known/openid-configuration"
 ```
 
-<Aside type="warning" title="Provider URL Format">
+<Aside type="caution" title="Provider URL Format">
 The `oidc_provider_url` **must** include the full discovery endpoint path (`/.well-known/openid-configuration`). Some OIDC libraries require this for proper metadata discovery.
 </Aside>
 
