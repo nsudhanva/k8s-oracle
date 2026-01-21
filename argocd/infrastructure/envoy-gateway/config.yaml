@@ -125,5 +125,5 @@ spec:
       tls:
         mode: Terminate
         certificateRefs:
-          - name: open-webui-tls
+          - name: chat-tls
             namespace: default
