@@ -23,7 +23,7 @@ spec:
               name: http
           env:
             - name: INIT_ASSETS
-              value: "0"
+              value: "1"
           resources:
             requests:
               memory: "32Mi"
