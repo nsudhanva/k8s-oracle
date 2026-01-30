@@ -1,11 +1,11 @@
 ---
 title: Open WebUI - AI Chat Interface
-description: Open WebUI provides a ChatGPT-like interface for your self-hosted Gemma LLM.
+description: Open WebUI provides a ChatGPT-like interface for your self-hosted Gemma LLM with OCI Identity Domain OIDC authentication.
 ---
 
 import { Tabs, TabItem, Card, CardGrid, Aside } from '@astrojs/starlight/components';
 
-This cluster runs **Open WebUI**, providing a modern chat interface for the self-hosted Gemma LLM.
+This cluster runs **Open WebUI**, providing a modern chat interface for the self-hosted Gemma LLM with enterprise-grade authentication via OCI Identity Domain.
 
 ## Endpoint
 
@@ -14,12 +14,12 @@ https://chat.k8s.sudhanva.me
 ```
 
 <Aside type="tip">
-Create an account using the local signup form to start chatting with Gemma.
+Login with your OCI Identity Domain credentials. Only users assigned to the Open WebUI application can access.
 </Aside>
 
 ## High-Level Architecture
 
-Open WebUI connects to Gemma via the OpenAI-compatible API:
+Open WebUI connects to Gemma via the OpenAI-compatible API, with authentication handled by OCI Identity Domain:
 
 ```mermaid
 flowchart TB
@@ -28,6 +28,11 @@ flowchart TB
     end
 
     subgraph OCI["Oracle Cloud Infrastructure"]
+        subgraph Identity["OCI Identity Domain"]
+            OIDC[OIDC Provider<br/>OAuth 2.0 + OpenID Connect]
+            JWK[JWK Signing Keys]
+        end
+
         LB[Network Load Balancer]
 
         subgraph OKE["OKE Cluster"]
@@ -37,64 +42,373 @@ flowchart TB
 
             subgraph OpenWebUI["Open WebUI Pod"]
                 UI[Web Interface<br/>:8080]
+                OAuth[authlib<br/>OIDC Client]
             end
 
             subgraph GemmaPod["Gemma Pod"]
                 LLM[llama-server<br/>Gemma 3 1B]
             end
 
-            PVC[(2GB PVC<br/>User Data)]
+            ESO[External Secrets<br/>Operator]
+            Secret[K8s Secret<br/>oidc-credentials]
         end
+
+        Vault[(OCI Vault<br/>Client ID/Secret)]
     end
 
-    User -->|HTTPS| LB
+    User -->|1. Access| LB
     LB --> EG
     EG --> UI
-    UI -->|OpenAI API| LLM
-    UI --> PVC
+    UI -->|2. Redirect| OIDC
+    User -->|3. Login| OIDC
+    OIDC -->|4. Auth Code| UI
+    OAuth -->|5. Token Exchange| OIDC
+    OAuth -->|6. Fetch JWK| JWK
+    UI -->|7. Chat| LLM
+    Vault -->|Sync| ESO
+    ESO --> Secret
+    Secret --> UI
 ```
+
+## OIDC Authentication Flow
+
+The complete OpenID Connect authentication flow:
+
+```mermaid
+sequenceDiagram
+    participant U as User Browser
+    participant OW as Open WebUI
+    participant OIDC as OCI Identity Domain
+    participant JWK as JWK Endpoint
+
+    U->>OW: 1. Visit chat.k8s.sudhanva.me
+    OW->>U: 2. Show login page
+
+    U->>OW: 3. Click "Continue with Oracle"
+    OW->>U: 4. Redirect to OCI Identity
+
+    U->>OIDC: 5. Enter credentials
+    OIDC->>OIDC: 6. Validate user
+    OIDC->>U: 7. Redirect with auth code
+
+    U->>OW: 8. Callback with code
+    OW->>OIDC: 9. Exchange code for tokens
+
+    Note over OW,JWK: Token Validation
+    OW->>JWK: 10. Fetch public keys
+    JWK-->>OW: 11. Return JWK set
+    OW->>OW: 12. Validate ID token
+
+    OW->>U: 13. Session created
+    U->>OW: 14. Start chatting!
+```
+
+<Aside type="note" title="JWK Public Access Required">
+Step 10-11 requires public access to the signing certificate. This is configured in OCI Identity Domain settings (see OCI Configuration below).
+</Aside>
 
 ## Features
 
 | Feature | Description |
 |---------|-------------|
 | **Chat Interface** | Modern, responsive ChatGPT-like UI |
-| **Local Authentication** | Email/password signup and login |
+| **OCI OIDC Authentication** | Secure SSO via OCI Identity Domain |
 | **Gemma Integration** | Pre-configured to use Gemma 3 1B |
 | **Conversation History** | Persistent chat storage (2GB PVC) |
 | **Model Selection** | Switch between available models |
+| **OAuth User Signup** | Auto-create users on first OIDC login |
 
 ## Resource Allocation
 
-Open WebUI is configured with optimized resources:
+Open WebUI is configured with generous resources within free tier limits:
 
 | Resource | Request | Limit | Notes |
 |----------|---------|-------|-------|
-| Memory | 768 MB | 2 GB | Optimized for actual usage |
-| CPU | 250m | 1.5 cores | Burst capacity for responsiveness |
+| Memory | 1 GB | 4 GB | Ample headroom for UI operations |
+| CPU | 0.5 core | 2 cores | Burst capacity for responsiveness |
 | Storage | 2 GB PVC | - | Persistent user data and chats |
 
-## Configuration
+<Aside type="note" title="Free Tier Budget">
+Total cluster: 4 OCPUs, 24 GB RAM. Open WebUI uses up to ~4 GB RAM and 2 CPUs (burst), leaving plenty for Gemma (4 GB) and system components.
+</Aside>
 
-Open WebUI is configured via environment variables in the deployment:
+## OCI Identity Domain Configuration
 
-| Variable | Value | Description |
-|----------|-------|-------------|
-| `OPENAI_API_BASE_URL` | `http://gemma.default.svc.cluster.local/v1` | Internal Gemma API endpoint |
-| `OPENAI_API_KEY` | From secret | Gemma API key |
-| `ENABLE_LOGIN_FORM` | `true` | Enable local authentication |
-| `WEBUI_URL` | `https://chat.k8s.sudhanva.me` | Public URL |
-| `WEBUI_NAME` | `Gemma Chat` | UI branding |
-| `DEFAULT_MODELS` | `gemma-3-1b-it` | Pre-selected model |
+### Application Setup
 
-## First-Time Setup
+The OIDC application is created via Terraform in `tf-oke/identity.tf`:
 
-1. Visit https://chat.k8s.sudhanva.me
-2. Click "Sign up" to create an account
-3. The first user to sign up becomes the admin
-4. Start chatting with Gemma!
+```mermaid
+flowchart LR
+    subgraph Terraform
+        TF[identity.tf]
+        Vars[terraform.tfvars]
+    end
+
+    subgraph OCI["OCI Identity Domain"]
+        App[OIDC Application<br/>open-webui]
+        Scopes[Allowed Scopes<br/>openid, profile, email]
+        Grants[Grant Types<br/>Authorization Code<br/>Refresh Token]
+        Redirect[Redirect URI<br/>chat.k8s.sudhanva.me<br/>/oauth/oidc/callback]
+    end
+
+    subgraph Vault["OCI Vault"]
+        ClientID[client-id]
+        ClientSecret[client-secret]
+        ProviderURL[provider-url]
+    end
+
+    TF -->|Creates| App
+    Vars -->|Provides| TF
+    App --> Scopes
+    App --> Grants
+    App --> Redirect
+    TF -->|Stores| Vault
+```
+
+### Required OCI Console Settings
+
+<Aside type="caution" title="Manual Configuration Required">
+After Terraform creates the application, you **must** configure these settings manually in the OCI Console.
+</Aside>
+
+Navigate to **OCI Console → Identity & Security → Domains → Default → Applications → open-webui**:
+
+#### 1. OAuth Configuration
+
+| Setting | Required Value | Location |
+|---------|---------------|----------|
+| **Authorization Code** | ✅ Enabled | OAuth configuration |
+| **Refresh Token** | ✅ Enabled | OAuth configuration |
+| **Redirect URL** | `https://chat.k8s.sudhanva.me/oauth/oidc/callback` | OAuth configuration |
+
+#### 2. Token Issuance Policy (Scopes)
+
+Under **Resources → Token Issuance Policy**, add these scopes:
+
+| Scope | Purpose |
+|-------|---------|
+| `openid` | Required for OIDC (ID token) |
+| `profile` | Access user's name |
+| `email` | Access user's email |
+
+#### 3. Access Signing Certificate
+
+Navigate to **Settings → Domain settings → Edit domain settings**:
+
+| Setting | Required Value | Purpose |
+|---------|---------------|---------|
+| **Configure client access** | ✅ Enabled | Allows public access to JWK endpoint |
+
+```mermaid
+flowchart TB
+    subgraph Problem["Without Public JWK Access"]
+        App1[Open WebUI] -->|GET /admin/v1/SigningCert/jwk| JWK1[JWK Endpoint]
+        JWK1 -->|401 Unauthorized| App1
+        App1 -->|Cannot validate ID token| Fail[Login Failed]
+    end
+
+    subgraph Solution["With Public JWK Access Enabled"]
+        App2[Open WebUI] -->|GET /admin/v1/SigningCert/jwk| JWK2[JWK Endpoint]
+        JWK2 -->|200 OK + Keys| App2
+        App2 -->|Validate ID token| Success[Login Success]
+    end
+```
+
+<Aside type="caution" title="Critical Setting">
+The "Configure client access" toggle under "Access signing certificate" **must** be enabled. Without this, the JWK endpoint returns 401 Unauthorized, preventing token validation.
+</Aside>
+
+## Secrets Management
+
+OIDC credentials flow from OCI Vault to the cluster:
+
+```mermaid
+flowchart LR
+    subgraph Terraform
+        TF[identity.tf<br/>vault.tf]
+        TFVARS[terraform.tfvars]
+    end
+
+    subgraph OCI["OCI Vault"]
+        CID[Secret: client-id]
+        SEC[Secret: client-secret]
+        URL[Secret: provider-url]
+    end
+
+    subgraph Kubernetes
+        ESO[External Secrets<br/>Operator]
+        ExtSec[ExternalSecret<br/>oidc-credentials-sync]
+        K8sSec[Secret<br/>oidc-credentials]
+        Pod[Open WebUI Pod]
+    end
+
+    TFVARS -->|Variables| TF
+    TF -->|Creates| CID
+    TF -->|Creates| SEC
+    TF -->|Creates| URL
+    CID --> ESO
+    SEC --> ESO
+    URL --> ESO
+    ESO -->|Watches| ExtSec
+    ExtSec -->|Creates| K8sSec
+    K8sSec -->|Env Vars| Pod
+```
+
+### Terraform Variables
+
+Set in `tf-oke/terraform.tfvars`:
+
+```hcl
+# OIDC Configuration for Open WebUI
+oidc_client_id     = "your-client-id-from-oci"
+oidc_client_secret = "your-client-secret-from-oci"
+oidc_provider_url  = "https://idcs-xxxxx.identity.oraclecloud.com/.well-known/openid-configuration"
+```
+
+<Aside type="caution" title="Provider URL Format">
+The `oidc_provider_url` **must** include the full discovery endpoint path (`/.well-known/openid-configuration`). Some OIDC libraries require this for proper metadata discovery.
+</Aside>
+
+### Environment Variables
+
+Open WebUI receives these environment variables from the `oidc-credentials` secret:
+
+| Variable | Source | Description |
+|----------|--------|-------------|
+| `OAUTH_CLIENT_ID` | Vault secret | Application client ID |
+| `OAUTH_CLIENT_SECRET` | Vault secret | Application client secret |
+| `OPENID_PROVIDER_URL` | Vault secret | OIDC discovery endpoint |
+| `ENABLE_OAUTH_SIGNUP` | Deployment | `true` - Create users on first login |
+| `ENABLE_LOGIN_FORM` | Deployment | `false` - OIDC only, no password login |
+| `OAUTH_PROVIDER_NAME` | Deployment | `Oracle` - Button text |
+| `OAUTH_SCOPES` | Deployment | `openid profile email` |
+
+## User Management
+
+### Adding Users
+
+Only users assigned to the Open WebUI application in OCI Identity can login:
+
+1. Go to **OCI Console → Identity & Security → Domains → Default**
+2. Click **Applications → open-webui**
+3. Under **Users**, click **Assign**
+4. Select users to grant access
+
+### Removing Users
+
+1. Same path as above
+2. Under **Users**, find the user
+3. Click **Revoke**
+
+### First-Time Login
+
+When a user logs in for the first time:
+1. They are redirected to OCI Identity Domain
+2. After authentication, redirected back to Open WebUI
+3. Open WebUI creates a local user account (ENABLE_OAUTH_SIGNUP=true)
+4. User can start chatting immediately
 
 ## Troubleshooting
+
+### Common OIDC Errors
+
+#### 401 Unauthorized on JWK Fetch
+
+```text
+httpx.HTTPStatusError: Client error '401 Unauthorized' for url 
+'https://idcs-xxx.identity.oraclecloud.com/admin/v1/SigningCert/jwk'
+```
+
+**Cause:** The "Access signing certificate" setting is disabled in OCI Identity Domain.
+
+**Fix:**
+1. Navigate to **OCI Console → Identity & Security → Domains → Default**
+2. Go to **Settings → Domain settings**
+3. Click **Edit domain settings**
+4. Enable **Configure client access** under "Access signing certificate"
+5. Save changes
+6. Restart Open WebUI: `kubectl rollout restart deploy/open-webui`
+
+#### 401 Unauthorized on Metadata Fetch
+
+```text
+httpx.HTTPStatusError: Client error '401 Unauthorized' for url 
+'https://idcs-xxx.identity.oraclecloud.com/.well-known/openid-configuration'
+```
+
+**Cause:** The `OPENID_PROVIDER_URL` is incorrectly formatted (e.g., includes `:443` port or missing discovery path).
+
+**Fix:** Ensure the provider URL in `terraform.tfvars` follows this format:
+```hcl
+oidc_provider_url = "https://idcs-xxxxx.identity.oraclecloud.com/.well-known/openid-configuration"
+```
+
+Then run `terraform apply` and restart Open WebUI.
+
+#### invalid_scope Error
+
+```text
+Error: invalid_scope - Scope 'openid' is not configured for the application
+```
+
+**Cause:** Required OIDC scopes not enabled in OCI Identity Domain.
+
+**Fix:**
+1. Navigate to **Applications → open-webui → Resources → Token Issuance Policy**
+2. Add scopes: `openid`, `profile`, `email`
+3. Save changes
+
+#### Login Redirect Loop
+
+**Cause:** Redirect URI mismatch between OCI application config and actual callback URL.
+
+**Fix:** Verify the redirect URI matches exactly:
+```text
+https://chat.k8s.sudhanva.me/oauth/oidc/callback
+```
+
+#### "User Not Assigned" Error
+
+**Cause:** User not assigned to the Open WebUI application in OCI Identity Domain.
+
+**Fix:** Assign the user (see User Management section above).
+
+#### 405 Method Not Allowed on Callback
+
+```text
+POST /oauth/oidc/callback HTTP/1.1" 405
+```
+
+**Cause:** OCI Identity Domain is using `response_mode=form_post` which sends the callback via POST, but Open WebUI expects GET.
+
+**Fix:** In OCI Console, configure the application to use `response_mode=query`:
+1. Navigate to **Applications → open-webui → OAuth configuration**
+2. Ensure the response mode is set to query (not form_post)
+3. Or verify the redirect URL is exactly: `https://chat.k8s.sudhanva.me/oauth/oidc/callback`
+
+### Check OIDC Configuration
+
+Verify the secret is synced correctly:
+
+```bash
+# Check ExternalSecret status
+kubectl get externalsecret oidc-credentials-sync
+
+# View secret contents (base64 decoded)
+kubectl get secret oidc-credentials -o jsonpath='{.data.client-id}' | base64 -d
+kubectl get secret oidc-credentials -o jsonpath='{.data.provider-url}' | base64 -d
+```
+
+### View Open WebUI Logs
+
+```bash
+# Follow logs
+kubectl logs -f deploy/open-webui
+
+# Check for OIDC errors
+kubectl logs deploy/open-webui | grep -i "oauth\|oidc\|401\|error"
+```
 
 ### Connection to Gemma Failed
 
@@ -105,22 +419,28 @@ kubectl get pods -l app=gemma
 kubectl logs -f deploy/gemma -c llama-server
 ```
 
-### Check Open WebUI Logs
-
-```bash
-kubectl logs -f deploy/open-webui
-```
-
-### Restart Open WebUI
-
-```bash
-kubectl rollout restart deploy/open-webui
-```
-
 ## Kubernetes Manifests
 
 | File | Purpose |
 |------|---------|
-| `argocd/apps/open-webui/deployment.yaml` | Pod specification with env vars |
-| `argocd/apps/open-webui/service.yaml` | ClusterIP service on port 80 |
-| `argocd/apps/open-webui/httproute.yaml` | Gateway routing + TLS certificate |
+| `argocd/apps/open-webui/deployment.yaml` | Pod specification with OIDC env vars |
+| `argocd/apps/open-webui/service.yaml` | ClusterIP service on port 8080 |
+| `argocd/apps/open-webui/httproute.yaml` | Gateway routing for chat.k8s.sudhanva.me |
+| `argocd/infrastructure/managed-secrets/secrets.yaml` | ExternalSecret for oidc-credentials |
+| `argocd/infrastructure/envoy-gateway/config.yaml` | HTTPS listener for chat subdomain |
+| `argocd/infrastructure/envoy-gateway/dnsendpoint.yaml` | DNS record for chat.k8s.sudhanva.me |
+
+## Configuration Checklist
+
+Use this checklist when setting up Open WebUI with OIDC:
+
+- [ ] Terraform creates OCI Identity Domain application
+- [ ] Terraform stores credentials in OCI Vault
+- [ ] Enable **Authorization Code** grant type in OCI Console
+- [ ] Enable **Refresh Token** grant type in OCI Console
+- [ ] Add **openid**, **profile**, **email** scopes
+- [ ] Enable **Configure client access** for signing certificate
+- [ ] Assign users to the application
+- [ ] ExternalSecret syncs to `oidc-credentials` secret
+- [ ] Open WebUI pod starts without errors
+- [ ] OIDC login works end-to-end
