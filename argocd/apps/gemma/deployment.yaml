@@ -76,6 +76,10 @@ spec:
             - "4096"
             - "-ngl"
             - "0"
+            - "--threads"
+            - "2"
+            - "--batch-size"
+            - "512"
           ports:
             - containerPort: 8000
               name: http
@@ -91,10 +95,10 @@ spec:
           resources:
             requests:
               memory: "2Gi"
-              cpu: "1"
+              cpu: "1200m"
             limits:
               memory: "4Gi"
-              cpu: "1800m"
+              cpu: "2000m"
           volumeMounts:
             - name: model-cache
               mountPath: /models
