@@ -69,8 +69,6 @@ spec:
                 secretKeyRef:
                   name: oidc-credentials
                   key: client-secret
-            - name: OAUTH_SCOPES
-              value: "openid profile email"
             - name: WEBUI_URL
               value: "https://chat.k8s.sudhanva.me"
             - name: WEBUI_NAME
