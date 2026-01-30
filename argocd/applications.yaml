@@ -1,6 +1,32 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
+  name: metrics-server
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/nsudhanva/k8s-oracle.git
+    targetRevision: HEAD
+    path: argocd/infrastructure/metrics-server
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
   name: gateway-api-crds
   namespace: argocd
   finalizers:
@@ -231,6 +257,29 @@ spec:
     repoURL: https://github.com/nsudhanva/k8s-oracle.git
     targetRevision: HEAD
     path: argocd/apps/gemma
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: open-webui-app
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/nsudhanva/k8s-oracle.git
+    targetRevision: HEAD
+    path: argocd/apps/open-webui
   destination:
     server: https://kubernetes.default.svc
     namespace: default
