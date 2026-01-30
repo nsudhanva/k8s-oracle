@@ -9,7 +9,7 @@ spec:
     namespace: envoy-gateway-system
     sectionName: https-homer
   hostnames:
-  - "home.sudhanva.me"
+  - "hub.sudhanva.me"
   rules:
   - matches:
     - path:
@@ -30,7 +30,7 @@ spec:
     namespace: envoy-gateway-system
     sectionName: http
   hostnames:
-  - "home.sudhanva.me"
+  - "hub.sudhanva.me"
   rules:
   - filters:
     - type: RequestRedirect
@@ -48,6 +48,6 @@ spec:
   issuerRef:
     name: cloudflare-issuer
     kind: ClusterIssuer
-  commonName: "home.sudhanva.me"
+  commonName: "hub.sudhanva.me"
   dnsNames:
-  - "home.sudhanva.me"
+  - "hub.sudhanva.me"

@@ -40,7 +40,7 @@ spec:
       providerSpecific:
         - name: cloudflare-proxied
           value: "false"
-    - dnsName: home.sudhanva.me
+    - dnsName: hub.sudhanva.me
       recordType: A
       targets:
         - "193.122.186.40"
