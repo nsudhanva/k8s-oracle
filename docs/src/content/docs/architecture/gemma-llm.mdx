@@ -232,7 +232,7 @@ flowchart LR
 | Container | Image | Purpose | Resources |
 |-----------|-------|---------|-----------|
 | `auth-proxy` | `openresty/openresty:alpine` | Bearer token validation | 32-64 MB, 10-50m CPU |
-| `llama-server` | `ghcr.io/nsudhanva/llama-server:latest` | LLM inference | 2-4 GB, 1-1.8 CPU |
+| `llama-server` | `ghcr.io/nsudhanva/llama-server:latest` | LLM inference | 2-4 GB, 1.2-2 CPU |
 
 ## Model Configuration
 
@@ -261,6 +261,8 @@ flowchart LR
 | `--hf-file` | `gemma-3-1b-it-Q4_K_M.gguf` | Q4 quantized model file |
 | `-c` | `4096` | Context length (tokens) |
 | `-ngl` | `0` | GPU layers (0 = CPU only) |
+| `--threads` | `2` | Parallel inference threads |
+| `--batch-size` | `512` | Batch size for prompt processing |
 | `HF_HOME` | `/models` | Model cache directory (PVC mounted) |
 
 ## Resource Allocation
@@ -280,8 +282,8 @@ pie showData
 |----------|-----------|-------|
 | Memory Request | 2 GB | Minimum for model loading |
 | Memory Limit | 4 GB | Allows KV cache growth |
-| CPU Request | 1 core | Dedicated compute |
-| CPU Limit | 1.8 cores | Burst capacity |
+| CPU Request | 1.2 cores | Dedicated compute |
+| CPU Limit | 2 cores | Burst capacity for inference |
 | Storage | 5 GB PVC | Model cache persistence |
 
 <Aside type="tip" title="Efficient Quantization">
