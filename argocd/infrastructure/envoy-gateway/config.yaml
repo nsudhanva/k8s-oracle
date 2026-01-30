@@ -127,3 +127,15 @@ spec:
         certificateRefs:
           - name: chat-tls
             namespace: default
+    - name: https-homer
+      port: 443
+      protocol: HTTPS
+      hostname: "home.sudhanva.me"
+      allowedRoutes:
+        namespaces:
+          from: All
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: homer-tls
+            namespace: default
