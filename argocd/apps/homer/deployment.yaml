@@ -59,7 +59,7 @@ metadata:
   namespace: default
 data:
   config.yml: |
-    title: "Homelab"
+    title: "Sudhanva's Homelab"
     subtitle: "Sudhanva's Self Hosted Stuff!"
     header: true
     footer: ''
