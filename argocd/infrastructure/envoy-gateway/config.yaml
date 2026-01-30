@@ -130,7 +130,7 @@ spec:
     - name: https-homer
       port: 443
       protocol: HTTPS
-      hostname: "home.sudhanva.me"
+      hostname: "hub.sudhanva.me"
       allowedRoutes:
         namespaces:
           from: All
