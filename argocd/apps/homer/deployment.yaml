@@ -59,10 +59,10 @@ metadata:
   namespace: default
 data:
   config.yml: |
-    title: "Sudhanva's Homelab"
-    subtitle: "Self-hosted services"
+    title: "Homelab"
+    subtitle: "Sudhanva's Self Hosted Stuff!"
     header: true
-    footer: '<p>Running on Oracle Cloud</p>'
+    footer: ''
 
     defaults:
       layout: list
