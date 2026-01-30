@@ -48,27 +48,8 @@ spec:
                 secretKeyRef:
                   name: gemma-api-key
                   key: api-key
-            - name: ENABLE_OAUTH_SIGNUP
-              value: "true"
             - name: ENABLE_LOGIN_FORM
-              value: "false"
-            - name: OAUTH_PROVIDER_NAME
-              value: "Oracle"
-            - name: OPENID_PROVIDER_URL
-              valueFrom:
-                secretKeyRef:
-                  name: oidc-credentials
-                  key: provider-url
-            - name: OAUTH_CLIENT_ID
-              valueFrom:
-                secretKeyRef:
-                  name: oidc-credentials
-                  key: client-id
-            - name: OAUTH_CLIENT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: oidc-credentials
-                  key: client-secret
+              value: "true"
             - name: WEBUI_URL
               value: "https://chat.k8s.sudhanva.me"
             - name: WEBUI_NAME
