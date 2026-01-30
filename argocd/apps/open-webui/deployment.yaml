@@ -48,8 +48,27 @@ spec:
                 secretKeyRef:
                   name: gemma-api-key
                   key: api-key
-            - name: ENABLE_LOGIN_FORM
+            - name: ENABLE_OAUTH_SIGNUP
               value: "true"
+            - name: ENABLE_LOGIN_FORM
+              value: "false"
+            - name: OAUTH_PROVIDER_NAME
+              value: "Oracle"
+            - name: OPENID_PROVIDER_URL
+              valueFrom:
+                secretKeyRef:
+                  name: oidc-credentials
+                  key: provider-url
+            - name: OAUTH_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: oidc-credentials
+                  key: client-id
+            - name: OAUTH_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: oidc-credentials
+                  key: client-secret
             - name: WEBUI_URL
               value: "https://chat.k8s.sudhanva.me"
             - name: WEBUI_NAME
@@ -58,11 +77,11 @@ spec:
               value: "gemma-3-1b-it"
           resources:
             requests:
-              memory: "768Mi"
-              cpu: "250m"
+              memory: "1Gi"
+              cpu: "500m"
             limits:
-              memory: "2Gi"
-              cpu: "1500m"
+              memory: "4Gi"
+              cpu: "2000m"
           volumeMounts:
             - name: data
               mountPath: /app/backend/data
