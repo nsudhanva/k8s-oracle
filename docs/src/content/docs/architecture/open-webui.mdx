@@ -380,12 +380,18 @@ https://chat.k8s.sudhanva.me/oauth/oidc/callback
 POST /oauth/oidc/callback HTTP/1.1" 405
 ```
 
-**Cause:** OCI Identity Domain is using `response_mode=form_post` which sends the callback via POST, but Open WebUI expects GET.
+**Cause:** OCI Identity Domain uses `response_mode=form_post` which sends the callback via POST. Older versions of Open WebUI only accepted GET requests.
 
-**Fix:** In OCI Console, configure the application to use `response_mode=query`:
-1. Navigate to **Applications → open-webui → OAuth configuration**
-2. Ensure the response mode is set to query (not form_post)
-3. Or verify the redirect URL is exactly: `https://chat.k8s.sudhanva.me/oauth/oidc/callback`
+**Fix:** Ensure you're running Open WebUI version with `form_post` support (added September 2025):
+```bash
+# Restart to pull latest image
+kubectl rollout restart deploy/open-webui
+
+# Wait for pod to be ready
+kubectl get pods -l app=open-webui -w
+```
+
+The `:main` tag includes this fix. If using a pinned version, ensure it's from after September 2025.
 
 ### Check OIDC Configuration
 
