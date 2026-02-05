@@ -251,6 +251,13 @@ data:
             tag: "web"
             tagstyle: "is-light"
             target: "_blank"
+          - name: "Shopping"
+            subtitle: "Shopping List"
+            url: "https://shopping.sudhanva.me"
+            icon: "fas fa-cart-arrow-down"
+            tag: "web"
+            tagstyle: "is-light"
+            target: "_blank"
       - name: "Tools"
         icon: "fas fa-tools"
         items:
