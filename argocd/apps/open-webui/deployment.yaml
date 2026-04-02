@@ -35,20 +35,6 @@ spec:
       containers:
         - name: open-webui
           image: ghcr.io/open-webui/open-webui:v0.8.12
-          command: ["bash", "-c"]
-          args:
-            - |
-              python3 -c "
-              import re
-              p='/app/backend/open_webui/main.py'
-              t=open(p).read()
-              t=t.replace(
-                \"@app.get('/oauth/{provider}/login/callback')\",
-                \"@app.post('/oauth/{provider}/login/callback')\n@app.post('/oauth/{provider}/callback')\n@app.get('/oauth/{provider}/login/callback')\"
-              )
-              open(p,'w').write(t)
-              "
-              exec bash start.sh
           ports:
             - containerPort: 8080
               name: http
@@ -62,27 +48,8 @@ spec:
                 secretKeyRef:
                   name: gemma-api-key
                   key: api-key
-            - name: ENABLE_OAUTH_SIGNUP
+            - name: ENABLE_SIGNUP
               value: "true"
-            - name: ENABLE_LOGIN_FORM
-              value: "false"
-            - name: OAUTH_PROVIDER_NAME
-              value: "Oracle"
-            - name: OPENID_PROVIDER_URL
-              valueFrom:
-                secretKeyRef:
-                  name: oidc-credentials
-                  key: provider-url
-            - name: OAUTH_CLIENT_ID
-              valueFrom:
-                secretKeyRef:
-                  name: oidc-credentials
-                  key: client-id
-            - name: OAUTH_CLIENT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: oidc-credentials
-                  key: client-secret
             - name: WEBUI_URL
               value: "https://chat.k8s.sudhanva.me"
             - name: WEBUI_NAME
