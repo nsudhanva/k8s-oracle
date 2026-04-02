@@ -39,11 +39,12 @@ spec:
           args:
             - |
               python3 -c "
-              p='/app/backend/open_webui/utils/oauth.py'
+              import re
+              p='/app/backend/open_webui/main.py'
               t=open(p).read()
               t=t.replace(
-                'return await client.authorize_redirect(request, redirect_uri, **kwargs)',
-                'kwargs[\"response_mode\"] = \"query\"\n        return await client.authorize_redirect(request, redirect_uri, **kwargs)'
+                \"@app.get('/oauth/{provider}/login/callback')\",
+                \"@app.post('/oauth/{provider}/login/callback')\n@app.post('/oauth/{provider}/callback')\n@app.get('/oauth/{provider}/login/callback')\"
               )
               open(p,'w').write(t)
               "
