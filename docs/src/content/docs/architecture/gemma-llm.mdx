@@ -1,11 +1,11 @@
 ---
-title: Gemma 3 LLM - Self-Hosted AI on OKE
-description: Deploy Gemma 3 1B language model on your OKE cluster using llama.cpp. OpenAI-compatible API with Bearer token authentication.
+title: Gemma 4 E2B LLM - Self-Hosted AI on OKE
+description: Deploy the Gemma 4 E2B language model on your OKE cluster using llama.cpp. OpenAI-compatible API with Bearer token authentication.
 ---
 
 import { Tabs, TabItem, Card, CardGrid, Aside } from '@astrojs/starlight/components';
 
-This cluster runs **Gemma 3 1B IT**, Google's lightweight instruction-tuned language model, using [llama.cpp](https://github.com/ggml-org/llama.cpp) for efficient CPU inference on ARM64 nodes.
+This cluster runs **Gemma 4 E2B IT**, Google's latest small Gemma 4 instruction-tuned model, using [llama.cpp](https://github.com/ggml-org/llama.cpp) with a Q4_K_M GGUF for efficient CPU inference on ARM64 nodes.
 
 ## Endpoint
 
@@ -37,7 +37,7 @@ flowchart TB
 
             subgraph GemmaPod["Gemma Pod"]
                 Auth[OpenResty<br/>Auth Proxy<br/>:8080]
-                LLM[llama-server<br/>Gemma 3 1B<br/>:8000]
+                LLM[llama-server<br/>Gemma 4 E2B<br/>:8000]
             end
 
             subgraph Storage["Persistent Storage"]
@@ -51,7 +51,7 @@ flowchart TB
     end
 
     subgraph HuggingFace["HuggingFace Hub"]
-        GGUF[(GGUF Model<br/>806 MB)]
+        GGUF[(GGUF Model<br/>3.46 GB)]
     end
 
     User -->|HTTPS| LB
@@ -111,7 +111,7 @@ curl https://gemma.k8s.sudhanva.me/v1/chat/completions \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "gemma-3-1b-it",
+    "model": "gemma-4-E2B-it",
     "messages": [{"role": "user", "content": "Hello!"}]
   }'
 ```
@@ -126,7 +126,7 @@ client = openai.OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="gemma-3-1b-it",
+    model="gemma-4-E2B-it",
     messages=[{"role": "user", "content": "Hello!"}]
 )
 print(response.choices[0].message.content)
@@ -141,7 +141,7 @@ const response = await fetch('https://gemma.k8s.sudhanva.me/v1/chat/completions'
     'Content-Type': 'application/json'
   },
   body: JSON.stringify({
-    model: 'gemma-3-1b-it',
+    model: 'gemma-4-E2B-it',
     messages: [{ role: 'user', content: 'Hello!' }]
   })
 });
@@ -162,7 +162,7 @@ curl -N https://gemma.k8s.sudhanva.me/v1/chat/completions \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "gemma-3-1b-it",
+    "model": "gemma-4-E2B-it",
     "messages": [{"role": "user", "content": "Explain quantum computing"}],
     "stream": true
   }'
@@ -178,7 +178,7 @@ client = openai.OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="gemma-3-1b-it",
+    model="gemma-4-E2B-it",
     messages=[{"role": "user", "content": "Explain quantum computing"}],
     stream=True
 )
@@ -206,7 +206,7 @@ flowchart LR
 
         subgraph LLMContainer["llama-server container"]
             Server[llama-server<br/>Port 8000]
-            Model[Gemma 3 1B<br/>Q4_K_M]
+            Model[Gemma 4 E2B<br/>Q4_K_M]
         end
 
         OpenResty --> Lua
@@ -232,15 +232,15 @@ flowchart LR
 | Container | Image | Purpose | Resources |
 |-----------|-------|---------|-----------|
 | `auth-proxy` | `openresty/openresty:alpine` | Bearer token validation | 32-64 MB, 10-50m CPU |
-| `llama-server` | `ghcr.io/nsudhanva/llama-server:latest` | LLM inference | 2-4 GB, 1.2-2 CPU |
+| `llama-server` | `ghcr.io/nsudhanva/llama-server:latest` | LLM inference | 3-6 GB, 1.2-2 CPU |
 
 ## Model Configuration
 
 ```mermaid
 flowchart LR
     subgraph Config["llama-server Configuration"]
-        HFRepo["--hf-repo<br/>ggml-org/gemma-3-1b-it-GGUF"]
-        HFFile["--hf-file<br/>gemma-3-1b-it-Q4_K_M.gguf"]
+        HFRepo["--hf-repo<br/>bartowski/google_gemma-4-E2B-it-GGUF"]
+        HFFile["--hf-file<br/>google_gemma-4-E2B-it-Q4_K_M.gguf"]
         Context["-c 4096<br/>Context Length"]
         GPU["-ngl 0<br/>CPU Only"]
     end
@@ -257,37 +257,42 @@ flowchart LR
 
 | Setting | Value | Description |
 |---------|-------|-------------|
-| `--hf-repo` | `ggml-org/gemma-3-1b-it-GGUF` | HuggingFace GGUF repository |
-| `--hf-file` | `gemma-3-1b-it-Q4_K_M.gguf` | Q4 quantized model file |
-| `-c` | `4096` | Context length (tokens) |
+| `--alias` | `gemma-4-E2B-it` | Clean model identifier exposed by the OpenAI-compatible API |
+| `--hf-repo` | `bartowski/google_gemma-4-E2B-it-GGUF` | GGUF repository for the Gemma 4 E2B instruction model |
+| `--hf-file` | `google_gemma-4-E2B-it-Q4_K_M.gguf` | Q4_K_M quantized model file (~3.46 GB) |
+| `-c` | `4096` | Deployment context cap (the model supports up to 128K) |
 | `-ngl` | `0` | GPU layers (0 = CPU only) |
 | `--threads` | `2` | Parallel inference threads |
 | `--batch-size` | `512` | Batch size for prompt processing |
 | `HF_HOME` | `/models` | Model cache directory (PVC mounted) |
 
+<Aside type="note" title="Official Weights, GGUF Runtime">
+Google publishes Gemma 4 E2B as official Hugging Face safetensors. This deployment uses a GGUF conversion from `bartowski/google_gemma-4-E2B-it-GGUF` because `llama.cpp` serves GGUF models efficiently on ARM64 CPUs.
+</Aside>
+
 ## Resource Allocation
 
-The deployment is optimized for OCI Always Free tier constraints:
+The deployment is tuned to fit a 12 GB ARM worker without crowding out the rest of the node:
 
 ```mermaid
 pie showData
-    title Memory Usage (4GB Limit)
-    "Model Weights (Q4)" : 806
-    "KV Cache" : 1500
+    title Approximate Memory Usage (6Gi Limit)
+    "Model Weights (Q4_K_M)" : 3300
+    "KV Cache" : 1800
     "Runtime Overhead" : 500
-    "Available Buffer" : 1194
+    "Available Buffer" : 544
 ```
 
 | Resource | Allocated | Notes |
 |----------|-----------|-------|
-| Memory Request | 2 GB | Minimum for model loading |
-| Memory Limit | 4 GB | Allows KV cache growth |
+| Memory Request | 3 GB | Gives the scheduler realistic room for the larger Gemma 4 weights |
+| Memory Limit | 6 GB | Leaves headroom for KV cache and runtime overhead |
 | CPU Request | 1.2 cores | Dedicated compute |
 | CPU Limit | 2 cores | Burst capacity for inference |
 | Storage | 5 GB PVC | Model cache persistence |
 
 <Aside type="tip" title="Efficient Quantization">
-Using Q4_K_M quantization reduces the model from 2GB (FP16) to 806MB while maintaining good quality. This allows CPU inference on constrained hardware.
+Using Q4_K_M quantization keeps Gemma 4 E2B to a ~3.46 GB GGUF artifact while preserving good quality. That makes CPU inference viable on a constrained 12 GB ARM worker.
 </Aside>
 
 ## Secrets Management
@@ -391,7 +396,7 @@ quadrantChart
 | Memory usage | Best | Heavy | Good |
 | ARM64 CPU | Native NEON | Experimental | Good |
 | OpenAI API | Native | Native | Wrapper |
-| Quantization | GGUF (Q4=806MB) | BF16 (2GB+) | GGUF |
+| Quantization | GGUF (Q4_K_M ≈ 3.46 GB) | BF16 (10 GB+) | GGUF |
 | Production ready | Yes | Yes | Dev-focused |
 | Auto model download | Yes | Yes | Manual pull |
 

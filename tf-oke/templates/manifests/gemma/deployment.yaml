@@ -64,10 +64,12 @@ spec:
         - name: llama-server
           image: ghcr.io/nsudhanva/llama-server:latest
           args:
+            - "--alias"
+            - "gemma-4-E2B-it"
             - "--hf-repo"
-            - "ggml-org/gemma-3-1b-it-GGUF"
+            - "bartowski/google_gemma-4-E2B-it-GGUF"
             - "--hf-file"
-            - "gemma-3-1b-it-Q4_K_M.gguf"
+            - "google_gemma-4-E2B-it-Q4_K_M.gguf"
             - "--port"
             - "8000"
             - "--host"
@@ -76,6 +78,10 @@ spec:
             - "4096"
             - "-ngl"
             - "0"
+            - "--threads"
+            - "2"
+            - "--batch-size"
+            - "512"
           ports:
             - containerPort: 8000
               name: http
@@ -90,11 +96,11 @@ spec:
                   optional: true
           resources:
             requests:
-              memory: "2Gi"
-              cpu: "1"
+              memory: "3Gi"
+              cpu: "1200m"
             limits:
-              memory: "4Gi"
-              cpu: "1800m"
+              memory: "6Gi"
+              cpu: "2000m"
           volumeMounts:
             - name: model-cache
               mountPath: /models

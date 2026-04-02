@@ -110,7 +110,7 @@ resource "local_file" "k3s_docs_httproute" {
   content  = file("${path.module}/templates/manifests/k3s-docs/httproute.yaml.tpl")
 }
 
-# Gemma LLM App (Ollama with Gemma 3 1B at gemma.sudhanva.me)
+# Gemma LLM App (llama.cpp with Gemma 4 E2B at gemma.sudhanva.me)
 resource "local_file" "gemma_deployment" {
   filename = "../argocd/apps/gemma/deployment.yaml"
   content  = file("${path.module}/templates/manifests/gemma/deployment.yaml")

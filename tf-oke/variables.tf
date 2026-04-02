@@ -144,7 +144,7 @@ variable "gemma_api_key" {
 }
 
 variable "huggingface_token" {
-  description = "HuggingFace API token for downloading gated models (e.g., Gemma 3)"
+  description = "HuggingFace API token for downloading model weights from Hugging Face (for example Gemma 4 GGUFs or gated models)"
   type        = string
   sensitive   = true
 }
@@ -168,4 +168,3 @@ variable "oidc_provider_url" {
   type        = string
   default     = ""
 }
-

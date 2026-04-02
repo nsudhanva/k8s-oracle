@@ -97,7 +97,7 @@ flowchart TB
 | **DNS** | External DNS + Cloudflare | Automatic DNS record management |
 | **TLS** | Cert Manager + Let's Encrypt | Automatic certificate issuance |
 | **Secrets** | External Secrets + OCI Vault | Secure secret synchronization |
-| **LLM** | llama.cpp + Gemma 3 1B | Self-hosted AI with OpenAI API |
+| **LLM** | llama.cpp + Gemma 4 E2B | Self-hosted AI with OpenAI API |
 
 ## Quick Start
 
@@ -141,7 +141,7 @@ This documentation site runs on the cluster. Try the self-hosted LLM:
 curl https://gemma.k8s.sudhanva.me/v1/chat/completions \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"model":"gemma","messages":[{"role":"user","content":"Hello!"}]}'
+  -d '{"model":"gemma-4-E2B-it","messages":[{"role":"user","content":"Hello!"}]}'
 ```
 
 ## Explore
