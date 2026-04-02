@@ -35,6 +35,19 @@ spec:
       containers:
         - name: open-webui
           image: ghcr.io/open-webui/open-webui:v0.8.12
+          command: ["bash", "-c"]
+          args:
+            - |
+              python3 -c "
+              p='/app/backend/open_webui/utils/oauth.py'
+              t=open(p).read()
+              t=t.replace(
+                'return await client.authorize_redirect(request, redirect_uri, **kwargs)',
+                'kwargs[\"response_mode\"] = \"query\"\n        return await client.authorize_redirect(request, redirect_uri, **kwargs)'
+              )
+              open(p,'w').write(t)
+              "
+              exec bash start.sh
           ports:
             - containerPort: 8080
               name: http
@@ -75,8 +88,6 @@ spec:
               value: "Gemma Chat"
             - name: DEFAULT_MODELS
               value: "gemma-4-E2B-it"
-            - name: OAUTH_RESPONSE_MODE
-              value: "query"
           resources:
             requests:
               memory: "1Gi"
