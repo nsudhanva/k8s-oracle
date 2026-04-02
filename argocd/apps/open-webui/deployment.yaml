@@ -75,6 +75,8 @@ spec:
               value: "Gemma Chat"
             - name: DEFAULT_MODELS
               value: "gemma-4-E2B-it"
+            - name: OAUTH_RESPONSE_MODE
+              value: "query"
           resources:
             requests:
               memory: "1Gi"
