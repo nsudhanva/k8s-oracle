@@ -11,7 +11,7 @@ on:
       llama_version:
         description: 'llama.cpp version tag (e.g., b7779)'
         required: false
-        default: 'b7779'
+        default: 'b8635'
 
 concurrency:
   group: llama-server-${{ github.ref }}
@@ -51,7 +51,7 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "version=${{ github.event.inputs.llama_version }}" >> $GITHUB_OUTPUT
           else
-            echo "version=b7779" >> $GITHUB_OUTPUT
+            echo "version=b8635" >> $GITHUB_OUTPUT
           fi
 
       - name: Extract metadata for Docker
