@@ -62,7 +62,7 @@ spec:
             initialDelaySeconds: 5
             periodSeconds: 5
         - name: llama-server
-          image: ghcr.io/nsudhanva/llama-server:b8635
+          image: ghcr.io/nsudhanva/llama-server:b8638
           args:
             - "--alias"
             - "gemma-4-E2B-it"

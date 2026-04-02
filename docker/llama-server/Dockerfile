@@ -6,7 +6,7 @@ RUN apt-get update && \
     apt-get install -y build-essential git cmake libssl-dev libcurl4-openssl-dev && \
     rm -rf /var/lib/apt/lists/*
 
-ARG LLAMA_CPP_VERSION=b8635
+ARG LLAMA_CPP_VERSION=b8638
 
 WORKDIR /build
 
