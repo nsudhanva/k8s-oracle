@@ -46,7 +46,7 @@ flowchart TB
             end
 
             subgraph GemmaPod["Gemma Pod"]
-                LLM[llama-server<br/>Gemma 3 1B]
+                LLM[llama-server<br/>Gemma 4 E2B]
             end
 
             ESO[External Secrets<br/>Operator]
@@ -113,7 +113,7 @@ Step 10-11 requires public access to the signing certificate. This is configured
 |---------|-------------|
 | **Chat Interface** | Modern, responsive ChatGPT-like UI |
 | **OCI OIDC Authentication** | Secure SSO via OCI Identity Domain |
-| **Gemma Integration** | Pre-configured to use Gemma 3 1B |
+| **Gemma Integration** | Pre-configured to use Gemma 4 E2B |
 | **Conversation History** | Persistent chat storage (2GB PVC) |
 | **Model Selection** | Switch between available models |
 | **OAuth User Signup** | Auto-create users on first OIDC login |
@@ -129,7 +129,7 @@ Open WebUI is configured with generous resources within free tier limits:
 | Storage | 2 GB PVC | - | Persistent user data and chats |
 
 <Aside type="note" title="Free Tier Budget">
-Total cluster: 4 OCPUs, 24 GB RAM. Open WebUI uses up to ~4 GB RAM and 2 CPUs (burst), leaving plenty for Gemma (4 GB) and system components.
+Total cluster: 4 OCPUs, 24 GB RAM. Open WebUI uses up to ~4 GB RAM and 2 CPUs (burst), leaving enough headroom for Gemma (6 GB limit) and system components.
 </Aside>
 
 ## OCI Identity Domain Configuration

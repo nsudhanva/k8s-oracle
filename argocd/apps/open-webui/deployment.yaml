@@ -74,7 +74,7 @@ spec:
             - name: WEBUI_NAME
               value: "Gemma Chat"
             - name: DEFAULT_MODELS
-              value: "gemma-3-1b-it"
+              value: "gemma-4-E2B-it"
           resources:
             requests:
               memory: "1Gi"

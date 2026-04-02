@@ -55,7 +55,7 @@ The cluster uses OKE Basic (free managed control plane) with ARM64 worker nodes 
 | Cert Manager | Let's Encrypt certificate automation |
 | OCI Vault | Secrets storage (Always Free) |
 | External Secrets | Sync Vault secrets to Kubernetes |
-| Gemma LLM | Gemma 3 1B via llama.cpp with OpenAI-compatible API |
+| Gemma LLM | Gemma 4 E2B via llama.cpp with an OpenAI-compatible API |
 | Open WebUI | Chat interface with OCI Identity OIDC authentication |
 
 ## OCI Always Free Resources
