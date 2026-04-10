@@ -163,6 +163,32 @@ resource "oci_vault_secret" "huggingface_token" {
   }
 }
 
+resource "oci_vault_secret" "openclaw_gateway_token" {
+  count          = var.openclaw_gateway_token != "" ? 1 : 0
+  compartment_id = var.compartment_ocid
+  vault_id       = oci_kms_vault.oke_vault.id
+  key_id         = oci_kms_key.master_key.id
+  secret_name    = "openclaw-gateway-token"
+
+  secret_content {
+    content_type = "BASE64"
+    content      = base64encode(var.openclaw_gateway_token)
+  }
+}
+
+resource "oci_vault_secret" "telegram_bot_token" {
+  count          = var.telegram_bot_token != "" ? 1 : 0
+  compartment_id = var.compartment_ocid
+  vault_id       = oci_kms_vault.oke_vault.id
+  key_id         = oci_kms_key.master_key.id
+  secret_name    = "telegram-bot-token"
+
+  secret_content {
+    content_type = "BASE64"
+    content      = base64encode(var.telegram_bot_token)
+  }
+}
+
 resource "oci_vault_secret" "oidc_client_id" {
   count          = var.oidc_client_id != "" ? 1 : 0
   compartment_id = var.compartment_ocid
