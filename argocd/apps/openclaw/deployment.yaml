@@ -46,7 +46,7 @@ data:
           "model": {
             "primary": "google/gemini-3.1-flash-lite-preview"
           },
-          "timeoutSeconds": 300,
+          "timeoutSeconds": 300
         }
       },
       "channels": {
