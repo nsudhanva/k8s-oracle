@@ -75,7 +75,7 @@ flowchart TB
 | Resource | Request | Limit |
 |----------|---------|-------|
 | Memory | 512 MB | 2 GB |
-| CPU | 250m | 1000m |
+| CPU | 100m | 1000m |
 | Storage | 2 GB PVC | - |
 
 ## Configuration
@@ -93,20 +93,21 @@ OpenClaw is configured via a ConfigMap (`openclaw-config`) containing `openclaw.
       "gemma": {
         "baseUrl": "http://gemma.default.svc.cluster.local/v1",
         "api": "openai-completions",
-        "models": [{ "id": "gemma-4-E2B-it", "name": "Gemma 4 E2B", "contextWindow": 16384, "maxTokens": 2048 }]
+        "models": [{ "id": "gemma-4-E2B-it", "name": "Gemma 4 E2B", "contextWindow": 32768, "maxTokens": 2048 }]
       }
     }
   },
   "agents": {
     "defaults": {
       "model": { "primary": "gemma/gemma-4-E2B-it" },
-      "timeoutSeconds": 900
+      "timeoutSeconds": 900,
+      "compaction": { "reserveTokensFloor": 20000 }
     }
   },
   "channels": {
     "telegram": {
       "enabled": true,
-      "tokenFile": "/secrets/telegram-bot-token",
+      "botToken": "(injected by init container)",
       "dmPolicy": "pairing"
     }
   }
@@ -115,11 +116,12 @@ OpenClaw is configured via a ConfigMap (`openclaw-config`) containing `openclaw.
 
 ### Key Config Notes
 
-- **Gateway binds to loopback** (`127.0.0.1`) by default in v2026.3.1. Health probes use `exec` with `wget` to reach localhost.
-- **Telegram token** is mounted as a file from a Kubernetes Secret, not set via env var.
+- **v2026.4.9** binds to `0.0.0.0` by default. Health probes use `exec` with `wget` to reach localhost.
+- **Telegram token** is injected into the config by the init container via a node script that reads the Kubernetes Secret and sets `botToken`.
 - **Gemma API key** is passed via `GEMMA_API_KEY` env var from the existing `gemma-api-key` secret. Referenced in config as `"apiKey": "${GEMMA_API_KEY}"`.
-- **Context window** must match the llama-server `-c` flag (16384). OpenClaw requires minimum 16000 tokens.
-- **Agent timeout** is set to 900s (15 min). OpenClaw's built-in system prompt is ~12K tokens, and CPU-only prompt processing on ARM takes ~12 minutes for the first message. Subsequent messages use llama.cpp's prompt cache and are much faster.
+- **Context window** is set to 32768 in OpenClaw config (higher than Gemma's actual 16384) to satisfy the compaction reserve precheck. Actual prompts stay within Gemma's 16K limit.
+- **Compaction reserve** (`reserveTokensFloor: 20000`) prevents context overflow errors on small context windows.
+- **Agent timeout** is set to 900s (15 min). CPU-only prompt processing on ARM takes ~12 minutes for the first message. Subsequent messages use llama.cpp's prompt cache and are much faster.
 
 ## Secrets Management
 
