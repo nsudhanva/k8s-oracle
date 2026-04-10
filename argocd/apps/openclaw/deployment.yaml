@@ -115,7 +115,7 @@ spec:
         runAsGroup: 1000
       initContainers:
         - name: copy-config
-          image: ghcr.io/openclaw/openclaw:2026.4.9
+          image: ghcr.io/nsudhanva/openclaw:latest
           command:
             - sh
             - -c
@@ -156,7 +156,7 @@ spec:
                 - ALL
       containers:
         - name: openclaw
-          image: ghcr.io/openclaw/openclaw:2026.4.9
+          image: ghcr.io/nsudhanva/openclaw:latest
           ports:
             - containerPort: 18789
               name: http
