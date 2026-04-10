@@ -20,10 +20,8 @@ data:
   openclaw.json: |
     {
       "gateway": {
-        "mode": "local",
-        "bind": "0.0.0.0",
-        "port": 18789,
-        "controlUI": true
+        "mode": "lan",
+        "port": 18789
       },
       "models": {
         "mode": "merge",
