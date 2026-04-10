@@ -28,7 +28,7 @@ data:
         "providers": {
           "gemma": {
             "baseUrl": "http://gemma.default.svc.cluster.local/v1",
-            "apiKey": "GEMMA_API_KEY",
+            "apiKey": "${GEMMA_API_KEY}",
             "api": "openai-completions",
             "models": [
               {
