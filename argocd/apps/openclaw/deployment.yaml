@@ -46,7 +46,8 @@ data:
           "model": {
             "primary": "google/gemini-3.1-flash-lite-preview"
           },
-          "timeoutSeconds": 300
+          "timeoutSeconds": 300,
+          "toolProfile": "coding"
         }
       },
       "channels": {
@@ -54,6 +55,40 @@ data:
           "enabled": true,
           "dmPolicy": "pairing"
         }
+      },
+      "session": {
+        "scope": "per-sender",
+        "dmScope": "per-peer",
+        "reset": {
+          "mode": "idle",
+          "idleMinutes": 120
+        }
+      },
+      "memory": {
+        "embeddingProvider": "google"
+      },
+      "plugins": {
+        "entries": {
+          "memory-core": {
+            "enabled": true,
+            "config": {
+              "dreaming": { "enabled": true }
+            }
+          }
+        }
+      },
+      "messages": {
+        "ackReaction": "eyes",
+        "ackReactionScope": "direct",
+        "queue": {
+          "mode": "collect",
+          "debounceMs": 1500
+        }
+      },
+      "commands": {
+        "native": true,
+        "nativeSkills": "auto",
+        "text": true
       }
     }
   AGENTS.md: |
