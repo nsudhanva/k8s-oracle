@@ -176,7 +176,7 @@ spec:
                   name: openclaw-secrets
                   key: gateway-token
             - name: BROWSER_CDP_URL
-              value: "http://127.0.0.1:9222"
+              value: "ws://127.0.0.1:3000/chromium"
           resources:
             requests:
               memory: "1Gi"
@@ -221,7 +221,7 @@ spec:
         - name: chromium
           image: ghcr.io/browserless/chromium:latest
           ports:
-            - containerPort: 9222
+            - containerPort: 3000
           env:
             - name: CONNECTION_TIMEOUT
               value: "300000"
