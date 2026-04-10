@@ -108,6 +108,7 @@ export default defineConfig({
             { label: 'Gemma LLM', slug: 'architecture/gemma-llm' },
             { label: 'Open WebUI', slug: 'architecture/open-webui' },
             { label: 'Homer Dashboard', slug: 'architecture/homer' },
+            { label: 'OpenClaw AI Agent', slug: 'architecture/openclaw' },
           ],
         },
         {
