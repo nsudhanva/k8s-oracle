@@ -46,7 +46,7 @@ data:
           "model": {
             "primary": "gemma/gemma-4-E2B-it"
           },
-          "timeoutSeconds": 300
+          "timeoutSeconds": 900
         }
       },
       "channels": {
