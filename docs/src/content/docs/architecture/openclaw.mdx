@@ -1,11 +1,11 @@
 ---
 title: OpenClaw - AI Agent Platform
-description: OpenClaw bridges messaging platforms like Telegram to the self-hosted Gemma LLM, providing an AI agent accessible from anywhere.
+description: OpenClaw connects messaging platforms like Telegram to Google Gemini, providing an AI agent accessible from anywhere.
 ---
 
 import { Aside } from '@astrojs/starlight/components';
 
-This cluster runs **OpenClaw**, an open-source AI agent platform that connects messaging channels (Telegram, Discord, etc.) to LLM providers.
+This cluster runs **OpenClaw v2026.4.9**, an open-source AI agent platform that connects messaging channels (Telegram, Discord, etc.) to LLM providers. It uses the **Google Gemini API** for fast, cloud-based inference.
 
 ## Endpoint
 
@@ -19,13 +19,14 @@ The web UI requires the gateway token for authentication. The Telegram bot (@Coo
 
 ## Architecture
 
-OpenClaw acts as a gateway between messaging platforms and the Gemma LLM:
+OpenClaw acts as a gateway between messaging platforms and the Gemini API:
 
 ```mermaid
 flowchart TB
     subgraph Internet
         User((User))
         TG[Telegram]
+        GeminiAPI[Google Gemini API<br/>gemini-3.1-flash-lite]
     end
 
     subgraph OKE["OKE Cluster"]
@@ -37,16 +38,12 @@ flowchart TB
             TGChannel[Telegram Channel<br/>grammY]
         end
 
-        subgraph GemmaPod["Gemma Pod"]
-            LLM[llama-server<br/>Gemma 4 E2B]
-        end
-
         ESO[External Secrets<br/>Operator]
-        Secrets[K8s Secrets<br/>openclaw-secrets<br/>telegram-bot-token]
+        Secrets[K8s Secrets<br/>openclaw-secrets<br/>telegram-bot-token<br/>gemini-api-key]
     end
 
     subgraph OCI["OCI Vault"]
-        VaultSecrets[(gateway-token<br/>telegram-bot-token)]
+        VaultSecrets[(gateway-token<br/>telegram-bot-token<br/>gemini-api-key)]
     end
 
     User -->|HTTPS| Gateway
@@ -54,7 +51,7 @@ flowchart TB
     User -->|DM| TG
     TG -->|Bot API| TGChannel
     TGChannel --> Agent
-    Agent -->|OpenAI API| LLM
+    Agent -->|Gemini API| GeminiAPI
     VaultSecrets --> ESO
     ESO --> Secrets
     Secrets --> GW
@@ -66,7 +63,7 @@ flowchart TB
 |---------|-------------|
 | **Telegram Bot** | Chat with AI via @CoochiepieBot |
 | **Web UI** | Control UI at claw.k8s.sudhanva.me |
-| **Gemma Integration** | Connected to local Gemma 4 E2B model |
+| **Gemini Integration** | Connected to Google Gemini 3.1 Flash Lite via API |
 | **DM Pairing** | Secure access control for Telegram |
 | **Persistent Config** | 2GB PVC for OpenClaw home directory |
 
@@ -74,8 +71,8 @@ flowchart TB
 
 | Resource | Request | Limit |
 |----------|---------|-------|
-| Memory | 512 MB | 2 GB |
-| CPU | 100m | 1000m |
+| Memory | 1 GB | 4 GB |
+| CPU | 500m | 2000m |
 | Storage | 2 GB PVC | - |
 
 ## Configuration
@@ -90,18 +87,18 @@ OpenClaw is configured via a ConfigMap (`openclaw-config`) containing `openclaw.
   },
   "models": {
     "providers": {
-      "gemma": {
-        "baseUrl": "http://gemma.default.svc.cluster.local/v1",
-        "api": "openai-completions",
-        "models": [{ "id": "gemma-4-E2B-it", "name": "Gemma 4 E2B", "contextWindow": 32768, "maxTokens": 2048 }]
+      "google": {
+        "baseUrl": "https://generativelanguage.googleapis.com/v1beta",
+        "apiKey": "${GEMINI_API_KEY}",
+        "api": "google-generative-ai",
+        "models": [{ "id": "gemini-3.1-flash-lite-preview", "name": "Gemini 3.1 Flash Lite", "contextWindow": 131072, "maxTokens": 8192 }]
       }
     }
   },
   "agents": {
     "defaults": {
-      "model": { "primary": "gemma/gemma-4-E2B-it" },
-      "timeoutSeconds": 900,
-      "compaction": { "reserveTokensFloor": 20000 }
+      "model": { "primary": "google/gemini-3.1-flash-lite-preview" },
+      "timeoutSeconds": 300
     }
   },
   "channels": {
@@ -117,20 +114,30 @@ OpenClaw is configured via a ConfigMap (`openclaw-config`) containing `openclaw.
 ### Key Config Notes
 
 - **v2026.4.9** binds to `0.0.0.0` by default. Health probes use `exec` with `wget` to reach localhost.
-- **Telegram token** is injected into the config by the init container via a node script that reads the Kubernetes Secret and sets `botToken`.
-- **Gemma API key** is passed via `GEMMA_API_KEY` env var from the existing `gemma-api-key` secret. Referenced in config as `"apiKey": "${GEMMA_API_KEY}"`.
-- **Context window** is set to 32768 in OpenClaw config (higher than Gemma's actual 16384) to satisfy the compaction reserve precheck. Actual prompts stay within Gemma's 16K limit.
-- **Compaction reserve** (`reserveTokensFloor: 20000`) prevents context overflow errors on small context windows.
-- **Agent timeout** is set to 900s (15 min). CPU-only prompt processing on ARM takes ~12 minutes for the first message. Subsequent messages use llama.cpp's prompt cache and are much faster.
+- **Telegram token** is injected into the config by the init container. The init container uses the OpenClaw image (`ghcr.io/openclaw/openclaw:2026.4.9`) and runs a `node` script that reads the token from the Kubernetes Secret mount and writes `botToken` into the JSON config.
+- **Gemini API key** is passed via `GEMINI_API_KEY` env var from the `gemini-api-key` K8s secret. Referenced in config as `"apiKey": "${GEMINI_API_KEY}"`.
+- **Context window** is set to 131072 (Gemini's native context size). The Gemini API handles context management server-side.
+- **Agent timeout** is 300s (5 min), sufficient for cloud API responses.
+
+### Init Container
+
+The init container performs setup before the main OpenClaw process starts:
+
+1. Copies `openclaw.json` and `AGENTS.md` from the ConfigMap to the PVC
+2. Removes stale `models.json` cache (prevents overriding the main config)
+3. Reads the Telegram bot token from the mounted secret and injects it as `botToken` into the config via a `node -e` script
+
+The init container uses the same OpenClaw image (`ghcr.io/openclaw/openclaw:2026.4.9`) to have access to the Node.js runtime.
 
 ## Secrets Management
 
-Two secrets are managed via Terraform and synced by External Secrets Operator:
+Three secrets are managed via Terraform and synced by External Secrets Operator:
 
 | Vault Secret | K8s Secret | Purpose |
 |-------------|------------|---------|
 | `openclaw-gateway-token` | `openclaw-secrets` | Web UI auth token |
 | `telegram-bot-token` | `telegram-bot-token` | Telegram Bot API token |
+| `gemini-api-key` | `gemini-api-key` | Google Gemini API key |
 
 ### Terraform Variables
 
@@ -139,6 +146,7 @@ Add to `tf-oke/terraform.tfvars`:
 ```hcl
 openclaw_gateway_token = "random-hex-string"
 telegram_bot_token     = "your-botfather-token"
+gemini_api_key         = "your-google-api-key"
 ```
 
 ## Telegram Setup
@@ -150,40 +158,46 @@ telegram_bot_token     = "your-botfather-token"
 5. Approve pairing:
 
 ```bash
-kubectl exec deploy/openclaw -c openclaw -- openclaw pairing list telegram
 kubectl exec deploy/openclaw -c openclaw -- openclaw pairing approve telegram <CODE>
 ```
 
 <Aside type="note">
-Pairing codes expire after 1 hour. DM pairing grants access to direct messages only, not group messages.
+Pairing codes expire after 1 hour. DM pairing grants access to direct messages only, not group messages. Pairing data persists across pod restarts (stored on PVC).
 </Aside>
+
+## Migration History
+
+OpenClaw was originally deployed with a self-hosted Gemma 4 E2B model running on CPU-only ARM nodes via llama.cpp. The 12K+ token system prompt took ~15 minutes to process on CPU, causing persistent timeouts. The deployment was migrated to Google Gemini API for near-instant responses.
+
+The Gemma deployment (`argocd/apps/gemma/`) is scaled to 0 replicas but kept in the repository for potential future GPU-based local inference.
 
 ## Troubleshooting
 
 ### Bot Not Responding
 
 ```bash
-kubectl logs deploy/openclaw | grep telegram
+kubectl logs deploy/openclaw -c openclaw | grep telegram
 ```
 
 Common causes:
 - Invalid bot token (check `kubectl get secret telegram-bot-token -o jsonpath='{.data.telegram-bot-token}' | base64 -d`)
-- Pairing not approved (run `openclaw pairing list telegram`)
+- Pairing not approved (run `openclaw pairing approve telegram <CODE>`)
+- v2026.4.9 Telegram polling may take ~30s after startup before processing messages
 
 ### Config Invalid Errors
 
 ```bash
-kubectl logs deploy/openclaw | head -20
+kubectl logs deploy/openclaw -c openclaw | head -20
 ```
 
 Common causes:
-- Missing `name` field on model definitions
+- Wrong `api` value (must be `google-generative-ai` for Gemini)
+- Missing `baseUrl` (required even for Google provider)
 - Unknown config keys (check version compatibility)
-- Legacy `gateway.bind` or `gateway.controlUI` keys
 
 ### Health Probes Failing
 
-The gateway binds to `127.0.0.1` in v2026.3.1. Probes must use `exec` with `wget` hitting localhost, not `httpGet`.
+v2026.4.9 binds to `0.0.0.0` but probes use `exec` with `wget` hitting localhost for reliability.
 
 ## Kubernetes Manifests
 

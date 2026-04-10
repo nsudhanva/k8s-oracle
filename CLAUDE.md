@@ -132,6 +132,7 @@ acme_email            = "admin@example.com"
 # LLM Config (stored in Vault)
 gemma_api_key     = "your-api-key"
 huggingface_token = "hf_..."
+gemini_api_key    = "your-google-api-key"
 
 # OpenClaw (stored in Vault)
 openclaw_gateway_token = "random-hex-string"

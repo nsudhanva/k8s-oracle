@@ -5,7 +5,11 @@ description: Deploy the Gemma 4 E2B language model on your OKE cluster using lla
 
 import { Tabs, TabItem, Card, CardGrid, Aside } from '@astrojs/starlight/components';
 
-This cluster runs **Gemma 4 E2B IT**, Google's latest small Gemma 4 instruction-tuned model, using [llama.cpp](https://github.com/ggml-org/llama.cpp) with a Q4_K_M GGUF for efficient CPU inference on ARM64 nodes.
+<Aside type="caution" title="Currently Scaled to Zero">
+Gemma is scaled to 0 replicas. OpenClaw now uses the Google Gemini API instead of local inference. The deployment is kept for potential future GPU-based local inference. To re-enable, set `replicas: 1` in `argocd/apps/gemma/deployment.yaml`.
+</Aside>
+
+This deployment runs **Gemma 4 E2B IT**, Google's small Gemma 4 instruction-tuned model, using [llama.cpp](https://github.com/ggml-org/llama.cpp) with a Q4_K_M GGUF for CPU inference on ARM64 nodes.
 
 ## Endpoint
 
