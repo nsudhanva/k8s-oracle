@@ -34,7 +34,8 @@ data:
               {
                 "id": "gemma-4-E2B-it",
                 "name": "Gemma 4 E2B",
-                "contextWindow": 32768
+                "contextWindow": 4096,
+                "maxTokens": 1024
               }
             ]
           }
@@ -57,8 +58,7 @@ data:
       }
     }
   AGENTS.md: |
-    You are a helpful AI assistant running on a personal Kubernetes cluster.
-    You use the Gemma 4 E2B model. Be concise and helpful.
+    Be concise.
 ---
 apiVersion: apps/v1
 kind: Deployment
