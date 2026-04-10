@@ -33,10 +33,11 @@ git_pat       = "ghp_..."
 argocd_admin_password      = "your-secure-password"
 argocd_admin_password_hash = "$2a$10$..."  # bcrypt hash of argocd_admin_password
 
-gemma_api_key = "secure-random-key" # API key for Gemma LLM authentication
+gemma_api_key = "secure-random-key" # API key for Gemma LLM authentication (unused while scaled to 0)
 
 openclaw_gateway_token = "random-hex-string"  # openssl rand -hex 32
 telegram_bot_token     = "your-botfather-token"
+gemini_api_key         = "your-google-api-key" # Google Gemini API key for OpenClaw
 ```
 
 ## Variable Reference
@@ -60,7 +61,8 @@ telegram_bot_token     = "your-botfather-token"
 | `git_pat` | GitHub Personal Access Token | Yes |
 | `argocd_admin_password` | Password for ArgoCD admin user | Yes |
 | `argocd_admin_password_hash` | Bcrypt hash of the password (for argocd-secret) | Yes |
-| `gemma_api_key` | API Key for Gemma LLM authentication | Yes |
+| `gemma_api_key` | API Key for Gemma LLM authentication (unused while scaled to 0) | Yes |
+| `gemini_api_key` | Google Gemini API key for OpenClaw | Yes |
 | `openclaw_gateway_token` | OpenClaw web UI auth token | Yes |
 | `telegram_bot_token` | Telegram bot token from BotFather | Yes |
 
