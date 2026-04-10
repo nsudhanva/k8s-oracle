@@ -163,6 +163,13 @@ variable "telegram_bot_token" {
   default     = ""
 }
 
+variable "gemini_api_key" {
+  description = "Google Gemini API key for OpenClaw"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
 variable "oidc_client_id" {
   description = "OCI Identity Domain OIDC client ID for Open WebUI (from OCI Console after app creation)"
   type        = string

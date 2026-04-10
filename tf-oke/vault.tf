@@ -189,6 +189,19 @@ resource "oci_vault_secret" "telegram_bot_token" {
   }
 }
 
+resource "oci_vault_secret" "gemini_api_key" {
+  count          = var.gemini_api_key != "" ? 1 : 0
+  compartment_id = var.compartment_ocid
+  vault_id       = oci_kms_vault.oke_vault.id
+  key_id         = oci_kms_key.master_key.id
+  secret_name    = "gemini-api-key"
+
+  secret_content {
+    content_type = "BASE64"
+    content      = base64encode(var.gemini_api_key)
+  }
+}
+
 resource "oci_vault_secret" "oidc_client_id" {
   count          = var.oidc_client_id != "" ? 1 : 0
   compartment_id = var.compartment_ocid
