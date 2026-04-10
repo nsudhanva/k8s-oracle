@@ -241,7 +241,7 @@ flowchart LR
     subgraph Config["llama-server Configuration"]
         HFRepo["--hf-repo<br/>bartowski/google_gemma-4-E2B-it-GGUF"]
         HFFile["--hf-file<br/>google_gemma-4-E2B-it-Q4_K_M.gguf"]
-        Context["-c 4096<br/>Context Length"]
+        Context["-c 16384<br/>Context Length"]
         GPU["-ngl 0<br/>CPU Only"]
     end
 
@@ -260,7 +260,7 @@ flowchart LR
 | `--alias` | `gemma-4-E2B-it` | Clean model identifier exposed by the OpenAI-compatible API |
 | `--hf-repo` | `bartowski/google_gemma-4-E2B-it-GGUF` | GGUF repository for the Gemma 4 E2B instruction model |
 | `--hf-file` | `google_gemma-4-E2B-it-Q4_K_M.gguf` | Q4_K_M quantized model file (~3.46 GB) |
-| `-c` | `4096` | Deployment context cap (the model supports up to 128K) |
+| `-c` | `16384` | Deployment context cap (the model supports up to 128K; 16K needed for OpenClaw) |
 | `-ngl` | `0` | GPU layers (0 = CPU only) |
 | `--threads` | `2` | Parallel inference threads |
 | `--batch-size` | `512` | Batch size for prompt processing |
