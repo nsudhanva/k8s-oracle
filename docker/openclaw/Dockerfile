@@ -49,5 +49,7 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/home/node/.cache/ms-playwright
 RUN npx playwright install chromium
 
 USER root
-RUN ln -sf /home/node/.cache/ms-playwright/chromium-*/chrome-linux/chrome /usr/bin/chromium
+RUN CHROME_PATH=$(find /home/node/.cache/ms-playwright -name chrome -path "*/chrome-linux/chrome" | head -1) && \
+    ln -sf "$CHROME_PATH" /usr/bin/chromium && \
+    ln -sf "$CHROME_PATH" /usr/bin/google-chrome
 USER node
