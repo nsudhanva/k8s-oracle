@@ -44,6 +44,10 @@ RUN set -e && \
 
 USER node
 
-# Install Playwright Chromium
+# Install Playwright Chromium and symlink to standard path
 ENV PLAYWRIGHT_BROWSERS_PATH=/home/node/.cache/ms-playwright
 RUN npx playwright install chromium
+
+USER root
+RUN ln -sf /home/node/.cache/ms-playwright/chromium-*/chrome-linux/chrome /usr/bin/chromium
+USER node
