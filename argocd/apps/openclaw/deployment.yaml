@@ -103,6 +103,8 @@ spec:
       containers:
         - name: openclaw
           image: ghcr.io/openclaw/openclaw:2026.3.1
+          command: ["openclaw"]
+          args: ["gateway", "--bind", "lan", "--port", "18789"]
           ports:
             - containerPort: 18789
               name: http
