@@ -23,9 +23,6 @@ data:
         "mode": "local",
         "port": 18789
       },
-      "browser": {
-        "cdpUrl": "ws://127.0.0.1:3000/chromium"
-      },
       "models": {
         "mode": "merge",
         "providers": {
@@ -127,6 +124,9 @@ spec:
               cp /config/openclaw.json /home/node/.openclaw/openclaw.json
               cp /config/AGENTS.md /home/node/.openclaw/AGENTS.md
               rm -f /home/node/.openclaw/agents/main/agent/models.json
+              if [ ! -d /home/node/.cache/ms-playwright ]; then
+                npx playwright install chromium 2>/dev/null || true
+              fi
               TG_TOKEN=$(cat /secrets/telegram-bot-token)
               export TG_TOKEN
               node -e "
@@ -178,12 +178,6 @@ spec:
                 secretKeyRef:
                   name: openclaw-secrets
                   key: gateway-token
-            - name: BROWSER_CDP_URL
-              value: "ws://127.0.0.1:3000/chromium"
-            - name: PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
-              value: "ws://127.0.0.1:3000/chromium"
-            - name: PLAYWRIGHT_WS_ENDPOINT
-              value: "ws://127.0.0.1:3000/chromium"
           resources:
             requests:
               memory: "1Gi"
@@ -220,29 +214,10 @@ spec:
             timeoutSeconds: 5
             failureThreshold: 3
           securityContext:
-            readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false
             capabilities:
               drop:
                 - ALL
-        - name: chromium
-          image: ghcr.io/browserless/chromium:latest
-          ports:
-            - containerPort: 3000
-          env:
-            - name: CONNECTION_TIMEOUT
-              value: "300000"
-            - name: MAX_CONCURRENT_SESSIONS
-              value: "2"
-          resources:
-            requests:
-              memory: "512Mi"
-              cpu: "200m"
-            limits:
-              memory: "1Gi"
-              cpu: "500m"
-          securityContext:
-            allowPrivilegeEscalation: false
       volumes:
         - name: home
           persistentVolumeClaim:
