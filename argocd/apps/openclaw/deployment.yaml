@@ -20,7 +20,6 @@ data:
   openclaw.json: |
     {
       "gateway": {
-        "mode": "lan",
         "port": 18789
       },
       "models": {
@@ -33,6 +32,7 @@ data:
             "models": [
               {
                 "id": "gemma-4-E2B-it",
+                "name": "Gemma 4 E2B",
                 "contextWindow": 4096
               }
             ]
