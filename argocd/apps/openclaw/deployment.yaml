@@ -30,7 +30,6 @@ data:
             "baseUrl": "http://gemma.default.svc.cluster.local/v1",
             "apiKey": "${GEMMA_API_KEY}",
             "api": "openai-completions",
-            "timeout": 900,
             "models": [
               {
                 "id": "gemma-4-E2B-it",
@@ -47,8 +46,7 @@ data:
           "model": {
             "primary": "gemma/gemma-4-E2B-it"
           },
-          "timeoutSeconds": 900,
-          "systemPrompt": "You are a helpful AI assistant. Be concise and direct in your responses."
+          "timeoutSeconds": 900
         }
       },
       "channels": {
