@@ -95,9 +95,17 @@ spec:
               mkdir -p /home/node/.openclaw
               cp /config/openclaw.json /home/node/.openclaw/openclaw.json
               cp /config/AGENTS.md /home/node/.openclaw/AGENTS.md
-              TOKEN=$(cat /secrets/telegram-bot-token)
               rm -f /home/node/.openclaw/agents/main/agent/models.json
-              openclaw channels add --channel telegram --token "$TOKEN" 2>/dev/null || true
+              TG_TOKEN=$(cat /secrets/telegram-bot-token)
+              export TG_TOKEN
+              node -e "
+              const fs = require('fs');
+              const cfg = JSON.parse(fs.readFileSync('/home/node/.openclaw/openclaw.json'));
+              cfg.channels.telegram.botToken = process.env.TG_TOKEN;
+              if (!cfg.meta) cfg.meta = {};
+              cfg.meta.lastTouchedVersion = '2026.4.9';
+              fs.writeFileSync('/home/node/.openclaw/openclaw.json', JSON.stringify(cfg, null, 2));
+              " || true
           env:
             - name: HOME
               value: /home/node
