@@ -47,7 +47,6 @@ data:
             "primary": "google/gemini-3.1-flash-lite-preview"
           },
           "timeoutSeconds": 300,
-          "toolProfile": "full"
         }
       },
       "channels": {
@@ -63,9 +62,6 @@ data:
           "mode": "idle",
           "idleMinutes": 120
         }
-      },
-      "memory": {
-        "embeddingProvider": "google"
       },
       "plugins": {
         "entries": {
