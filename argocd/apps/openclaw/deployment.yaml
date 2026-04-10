@@ -24,7 +24,8 @@ data:
         "port": 18789
       },
       "browser": {
-        "noSandbox": true
+        "noSandbox": true,
+        "launchArgs": ["--disable-dev-shm-usage", "--disable-gpu"]
       },
       "models": {
         "mode": "merge",
