@@ -219,7 +219,7 @@ spec:
               drop:
                 - ALL
         - name: chromium
-          image: browserless/chromium:latest
+          image: ghcr.io/browserless/chromium:latest
           ports:
             - containerPort: 9222
           env:
