@@ -23,11 +23,6 @@ data:
         "mode": "local",
         "port": 18789
       },
-      "browser": {
-        "enabled": true,
-        "headless": true,
-        "cdpUrl": "http://127.0.0.1:3000"
-      },
       "models": {
         "mode": "merge",
         "providers": {
@@ -220,24 +215,6 @@ spec:
             capabilities:
               drop:
                 - ALL
-        - name: chromium
-          image: ghcr.io/browserless/chromium:latest
-          ports:
-            - containerPort: 3000
-          env:
-            - name: CONNECTION_TIMEOUT
-              value: "300000"
-            - name: MAX_CONCURRENT_SESSIONS
-              value: "2"
-          resources:
-            requests:
-              memory: "512Mi"
-              cpu: "200m"
-            limits:
-              memory: "1Gi"
-              cpu: "500m"
-          securityContext:
-            allowPrivilegeEscalation: false
       volumes:
         - name: home
           persistentVolumeClaim:
