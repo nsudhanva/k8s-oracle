@@ -47,7 +47,7 @@ data:
             "primary": "google/gemini-3.1-flash-lite-preview"
           },
           "timeoutSeconds": 300,
-          "toolProfile": "coding"
+          "toolProfile": "full"
         }
       },
       "channels": {
