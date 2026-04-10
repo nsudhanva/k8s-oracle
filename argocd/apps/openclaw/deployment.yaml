@@ -19,9 +19,6 @@ metadata:
 data:
   openclaw.json: |
     {
-      "gateway": {
-        "port": 18789
-      },
       "models": {
         "mode": "merge",
         "providers": {
@@ -110,6 +107,8 @@ spec:
             - containerPort: 18789
               name: http
           env:
+            - name: OPENCLAW_GATEWAY_BIND
+              value: "custom:0.0.0.0"
             - name: GEMMA_API_KEY
               valueFrom:
                 secretKeyRef:
