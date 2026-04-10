@@ -82,6 +82,8 @@ spec:
             - "2"
             - "--batch-size"
             - "2048"
+            - "-np"
+            - "1"
           ports:
             - containerPort: 8000
               name: http
