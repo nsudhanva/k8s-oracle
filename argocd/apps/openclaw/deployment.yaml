@@ -26,16 +26,15 @@ data:
       "models": {
         "mode": "merge",
         "providers": {
-          "gemma": {
-            "baseUrl": "http://gemma.default.svc.cluster.local/v1",
-            "apiKey": "${GEMMA_API_KEY}",
-            "api": "openai-completions",
+          "google": {
+            "apiKey": "${GEMINI_API_KEY}",
+            "api": "google",
             "models": [
               {
-                "id": "gemma-4-E2B-it",
-                "name": "Gemma 4 E2B",
-                "contextWindow": 32768,
-                "maxTokens": 2048
+                "id": "gemini-3.1-flash-lite-preview",
+                "name": "Gemini 3.1 Flash Lite",
+                "contextWindow": 131072,
+                "maxTokens": 8192
               }
             ]
           }
@@ -44,12 +43,9 @@ data:
       "agents": {
         "defaults": {
           "model": {
-            "primary": "gemma/gemma-4-E2B-it"
+            "primary": "google/gemini-3.1-flash-lite-preview"
           },
-          "timeoutSeconds": 900,
-          "compaction": {
-            "reserveTokensFloor": 20000
-          }
+          "timeoutSeconds": 300
         }
       },
       "channels": {
@@ -137,10 +133,10 @@ spec:
               value: /home/node
             - name: OPENCLAW_CONFIG_DIR
               value: /home/node/.openclaw
-            - name: GEMMA_API_KEY
+            - name: GEMINI_API_KEY
               valueFrom:
                 secretKeyRef:
-                  name: gemma-api-key
+                  name: gemini-api-key
                   key: api-key
             - name: OPENCLAW_GATEWAY_TOKEN
               valueFrom:
