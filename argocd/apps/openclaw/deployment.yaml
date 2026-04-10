@@ -180,6 +180,10 @@ spec:
                   key: gateway-token
             - name: BROWSER_CDP_URL
               value: "ws://127.0.0.1:3000/chromium"
+            - name: PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+              value: "ws://127.0.0.1:3000/chromium"
+            - name: PLAYWRIGHT_WS_ENDPOINT
+              value: "ws://127.0.0.1:3000/chromium"
           resources:
             requests:
               memory: "1Gi"
