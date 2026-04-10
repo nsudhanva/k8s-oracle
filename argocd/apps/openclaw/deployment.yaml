@@ -23,6 +23,11 @@ data:
         "mode": "local",
         "port": 18789
       },
+      "browser": {
+        "enabled": true,
+        "headless": true,
+        "cdpUrl": "http://127.0.0.1:3000"
+      },
       "models": {
         "mode": "merge",
         "providers": {
@@ -124,9 +129,6 @@ spec:
               cp /config/openclaw.json /home/node/.openclaw/openclaw.json
               cp /config/AGENTS.md /home/node/.openclaw/AGENTS.md
               rm -f /home/node/.openclaw/agents/main/agent/models.json
-              if [ ! -d /home/node/.cache/ms-playwright ]; then
-                npx playwright install chromium 2>/dev/null || true
-              fi
               TG_TOKEN=$(cat /secrets/telegram-bot-token)
               export TG_TOKEN
               node -e "
@@ -218,6 +220,24 @@ spec:
             capabilities:
               drop:
                 - ALL
+        - name: chromium
+          image: ghcr.io/browserless/chromium:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: CONNECTION_TIMEOUT
+              value: "300000"
+            - name: MAX_CONCURRENT_SESSIONS
+              value: "2"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "200m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+          securityContext:
+            allowPrivilegeEscalation: false
       volumes:
         - name: home
           persistentVolumeClaim:
