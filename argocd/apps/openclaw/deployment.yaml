@@ -46,7 +46,10 @@ data:
           "model": {
             "primary": "gemma/gemma-4-E2B-it"
           },
-          "timeoutSeconds": 900
+          "timeoutSeconds": 900,
+          "compaction": {
+            "reserveTokensFloor": 2048
+          }
         }
       },
       "channels": {
