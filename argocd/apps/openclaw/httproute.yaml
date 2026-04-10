@@ -1,0 +1,53 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: openclaw-route
+  namespace: default
+spec:
+  parentRefs:
+  - name: public-gateway
+    namespace: envoy-gateway-system
+    sectionName: https-claw
+  hostnames:
+  - "claw.k8s.sudhanva.me"
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: openclaw
+      port: 80
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: openclaw-redirect
+  namespace: default
+spec:
+  parentRefs:
+  - name: public-gateway
+    namespace: envoy-gateway-system
+    sectionName: http
+  hostnames:
+  - "claw.k8s.sudhanva.me"
+  rules:
+  - filters:
+    - type: RequestRedirect
+      requestRedirect:
+        scheme: https
+        statusCode: 301
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: claw-tls
+  namespace: default
+spec:
+  secretName: claw-tls
+  issuerRef:
+    name: cloudflare-issuer
+    kind: ClusterIssuer
+  commonName: "claw.k8s.sudhanva.me"
+  dnsNames:
+  - "claw.k8s.sudhanva.me"
