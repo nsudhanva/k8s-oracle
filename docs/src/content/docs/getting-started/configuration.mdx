@@ -34,6 +34,9 @@ argocd_admin_password      = "your-secure-password"
 argocd_admin_password_hash = "$2a$10$..."  # bcrypt hash of argocd_admin_password
 
 gemma_api_key = "secure-random-key" # API key for Gemma LLM authentication
+
+openclaw_gateway_token = "random-hex-string"  # openssl rand -hex 32
+telegram_bot_token     = "your-botfather-token"
 ```
 
 ## Variable Reference
@@ -58,6 +61,8 @@ gemma_api_key = "secure-random-key" # API key for Gemma LLM authentication
 | `argocd_admin_password` | Password for ArgoCD admin user | Yes |
 | `argocd_admin_password_hash` | Bcrypt hash of the password (for argocd-secret) | Yes |
 | `gemma_api_key` | API Key for Gemma LLM authentication | Yes |
+| `openclaw_gateway_token` | OpenClaw web UI auth token | Yes |
+| `telegram_bot_token` | Telegram bot token from BotFather | Yes |
 
 :::note
   OCI authentication variables are not stored in Vault since they're needed to access Vault. Keep them in a password manager.

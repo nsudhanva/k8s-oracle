@@ -132,6 +132,10 @@ acme_email            = "admin@example.com"
 # LLM Config (stored in Vault)
 gemma_api_key     = "your-api-key"
 huggingface_token = "hf_..."
+
+# OpenClaw (stored in Vault)
+openclaw_gateway_token = "random-hex-string"
+telegram_bot_token     = "bot-token-from-botfather"
 ```
 
 ## OKE Cluster Configuration
