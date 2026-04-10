@@ -175,6 +175,8 @@ spec:
                 secretKeyRef:
                   name: openclaw-secrets
                   key: gateway-token
+            - name: BROWSER_CDP_URL
+              value: "http://127.0.0.1:9222"
           resources:
             requests:
               memory: "1Gi"
@@ -216,6 +218,24 @@ spec:
             capabilities:
               drop:
                 - ALL
+        - name: chromium
+          image: browserless/chromium:latest
+          ports:
+            - containerPort: 9222
+          env:
+            - name: CONNECTION_TIMEOUT
+              value: "300000"
+            - name: MAX_CONCURRENT_SESSIONS
+              value: "2"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "200m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+          securityContext:
+            allowPrivilegeEscalation: false
       volumes:
         - name: home
           persistentVolumeClaim:
