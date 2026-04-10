@@ -127,6 +127,18 @@ spec:
         certificateRefs:
           - name: chat-tls
             namespace: default
+    - name: https-claw
+      port: 443
+      protocol: HTTPS
+      hostname: "claw.k8s.sudhanva.me"
+      allowedRoutes:
+        namespaces:
+          from: All
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: claw-tls
+            namespace: default
     - name: https-homer
       port: 443
       protocol: HTTPS

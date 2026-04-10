@@ -1,0 +1,175 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: openclaw-home
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: oci-bv
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openclaw-config
+  namespace: default
+data:
+  openclaw.json: |
+    {
+      "gateway": {
+        "mode": "local",
+        "bind": "0.0.0.0",
+        "port": 18789,
+        "controlUI": true
+      },
+      "models": {
+        "mode": "merge",
+        "providers": {
+          "gemma": {
+            "baseUrl": "http://gemma.default.svc.cluster.local/v1",
+            "apiKey": "GEMMA_API_KEY",
+            "api": "openai-completions",
+            "models": [
+              {
+                "id": "gemma-4-E2B-it",
+                "contextWindow": 4096
+              }
+            ]
+          }
+        }
+      },
+      "agents": {
+        "defaults": {
+          "model": {
+            "primary": "gemma/gemma-4-E2B-it"
+          },
+          "timeoutSeconds": 300
+        }
+      },
+      "channels": {
+        "telegram": {
+          "enabled": true,
+          "tokenFile": "/secrets/telegram-bot-token",
+          "dmPolicy": "pairing"
+        }
+      }
+    }
+  AGENTS.md: |
+    You are a helpful AI assistant running on a personal Kubernetes cluster.
+    You use the Gemma 4 E2B model. Be concise and helpful.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openclaw
+  namespace: default
+  labels:
+    app: openclaw
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: openclaw
+  template:
+    metadata:
+      labels:
+        app: openclaw
+    spec:
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+        runAsGroup: 1000
+      initContainers:
+        - name: copy-config
+          image: busybox:1.37
+          command:
+            - sh
+            - -c
+            - |
+              mkdir -p /home/node/.openclaw
+              cp /config/openclaw.json /home/node/.openclaw/openclaw.json
+              cp /config/AGENTS.md /home/node/.openclaw/AGENTS.md
+          volumeMounts:
+            - name: home
+              mountPath: /home/node
+            - name: config
+              mountPath: /config
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+      containers:
+        - name: openclaw
+          image: ghcr.io/openclaw/openclaw:v2026.4.9
+          ports:
+            - containerPort: 18789
+              name: http
+          env:
+            - name: GEMMA_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: gemma-api-key
+                  key: api-key
+            - name: OPENCLAW_GATEWAY_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-secrets
+                  key: gateway-token
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          volumeMounts:
+            - name: home
+              mountPath: /home/node
+            - name: tmp
+              mountPath: /tmp
+            - name: telegram-token
+              mountPath: /secrets
+              readOnly: true
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: 18789
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 30
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 18789
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 18789
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+      volumes:
+        - name: home
+          persistentVolumeClaim:
+            claimName: openclaw-home
+        - name: tmp
+          emptyDir: {}
+        - name: config
+          configMap:
+            name: openclaw-config
+        - name: telegram-token
+          secret:
+            secretName: telegram-bot-token
