@@ -149,6 +149,20 @@ variable "huggingface_token" {
   sensitive   = true
 }
 
+variable "openclaw_gateway_token" {
+  description = "Gateway auth token for OpenClaw web UI access"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "telegram_bot_token" {
+  description = "Telegram bot token from BotFather for OpenClaw"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
 variable "oidc_client_id" {
   description = "OCI Identity Domain OIDC client ID for Open WebUI (from OCI Console after app creation)"
   type        = string
