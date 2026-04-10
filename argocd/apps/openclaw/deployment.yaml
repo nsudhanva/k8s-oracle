@@ -23,10 +23,6 @@ data:
         "mode": "local",
         "port": 18789
       },
-      "browser": {
-        "executablePath": "/home/node/.cache/ms-playwright/chromium-1217/chrome-linux/chrome",
-        "headless": true
-      },
       "models": {
         "mode": "merge",
         "providers": {
