@@ -263,7 +263,7 @@ flowchart LR
 | `-c` | `16384` | Deployment context cap (the model supports up to 128K; 16K needed for OpenClaw) |
 | `-ngl` | `0` | GPU layers (0 = CPU only) |
 | `--threads` | `2` | Parallel inference threads |
-| `--batch-size` | `512` | Batch size for prompt processing |
+| `--batch-size` | `2048` | Batch size for prompt processing (larger batches reduce overhead for long prompts) |
 | `HF_HOME` | `/models` | Model cache directory (PVC mounted) |
 
 <Aside type="note" title="Official Weights, GGUF Runtime">
