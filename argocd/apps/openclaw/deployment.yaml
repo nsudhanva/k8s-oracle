@@ -52,7 +52,7 @@ data:
       "channels": {
         "telegram": {
           "enabled": true,
-          "tokenFile": "/secrets/telegram-bot-token",
+          "token": "${TELEGRAM_BOT_TOKEN}",
           "dmPolicy": "pairing"
         }
       }
@@ -106,7 +106,7 @@ spec:
                 - ALL
       containers:
         - name: openclaw
-          image: ghcr.io/openclaw/openclaw:2026.3.1
+          image: ghcr.io/openclaw/openclaw:2026.4.9
           ports:
             - containerPort: 18789
               name: http
@@ -125,6 +125,11 @@ spec:
                 secretKeyRef:
                   name: openclaw-secrets
                   key: gateway-token
+            - name: TELEGRAM_BOT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: telegram-bot-token
+                  key: telegram-bot-token
           resources:
             requests:
               memory: "512Mi"
