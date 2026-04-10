@@ -99,7 +99,8 @@ OpenClaw is configured via a ConfigMap (`openclaw-config`) containing `openclaw.
   },
   "agents": {
     "defaults": {
-      "model": { "primary": "gemma/gemma-4-E2B-it" }
+      "model": { "primary": "gemma/gemma-4-E2B-it" },
+      "timeoutSeconds": 900
     }
   },
   "channels": {
@@ -118,6 +119,7 @@ OpenClaw is configured via a ConfigMap (`openclaw-config`) containing `openclaw.
 - **Telegram token** is mounted as a file from a Kubernetes Secret, not set via env var.
 - **Gemma API key** is passed via `GEMMA_API_KEY` env var from the existing `gemma-api-key` secret. Referenced in config as `"apiKey": "${GEMMA_API_KEY}"`.
 - **Context window** must match the llama-server `-c` flag (16384). OpenClaw requires minimum 16000 tokens.
+- **Agent timeout** is set to 900s (15 min). OpenClaw's built-in system prompt is ~12K tokens, and CPU-only prompt processing on ARM takes ~12 minutes for the first message. Subsequent messages use llama.cpp's prompt cache and are much faster.
 
 ## Secrets Management
 
