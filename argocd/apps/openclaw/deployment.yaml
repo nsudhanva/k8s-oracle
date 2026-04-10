@@ -24,8 +24,7 @@ data:
         "port": 18789
       },
       "browser": {
-        "noSandbox": true,
-        "launchArgs": ["--disable-dev-shm-usage", "--disable-gpu"]
+        "noSandbox": true
       },
       "models": {
         "mode": "merge",
@@ -193,6 +192,8 @@ spec:
               mountPath: /home/node
             - name: tmp
               mountPath: /tmp
+            - name: dshm
+              mountPath: /dev/shm
             - name: telegram-token
               mountPath: /secrets
               readOnly: true
@@ -227,6 +228,10 @@ spec:
             claimName: openclaw-home
         - name: tmp
           emptyDir: {}
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 256Mi
         - name: config
           configMap:
             name: openclaw-config
