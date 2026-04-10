@@ -27,8 +27,9 @@ data:
         "mode": "merge",
         "providers": {
           "google": {
+            "baseUrl": "https://generativelanguage.googleapis.com/v1beta",
             "apiKey": "${GEMINI_API_KEY}",
-            "api": "google",
+            "api": "google-generative-ai",
             "models": [
               {
                 "id": "gemini-3.1-flash-lite-preview",
