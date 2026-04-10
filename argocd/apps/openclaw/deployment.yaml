@@ -19,6 +19,11 @@ metadata:
 data:
   openclaw.json: |
     {
+      "gateway": {
+        "bind": "custom",
+        "customHost": "0.0.0.0",
+        "port": 18789
+      },
       "models": {
         "mode": "merge",
         "providers": {
