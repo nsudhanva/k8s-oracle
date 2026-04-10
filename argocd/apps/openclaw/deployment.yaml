@@ -48,7 +48,7 @@ data:
           },
           "timeoutSeconds": 900,
           "compaction": {
-            "reserveTokensFloor": 2048
+            "reserveTokensFloor": 20000
           }
         }
       },
