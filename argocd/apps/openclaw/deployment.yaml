@@ -127,7 +127,7 @@ spec:
               cp /config/openclaw.json /home/node/.openclaw/openclaw.json
               cp /config/AGENTS.md /home/node/.openclaw/AGENTS.md
               rm -f /home/node/.openclaw/agents/main/agent/models.json
-              find /home/node/.openclaw/browser-profiles -name "Singleton*" -delete 2>/dev/null || true
+              find /home/node/.openclaw/browser -name "Singleton*" -delete 2>/dev/null || true
               TG_TOKEN=$(cat /secrets/telegram-bot-token)
               export TG_TOKEN
               node -e "
