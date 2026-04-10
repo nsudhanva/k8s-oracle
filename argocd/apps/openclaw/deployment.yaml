@@ -145,11 +145,11 @@ spec:
                   key: gateway-token
           resources:
             requests:
-              memory: "512Mi"
-              cpu: "100m"
+              memory: "1Gi"
+              cpu: "500m"
             limits:
-              memory: "2Gi"
-              cpu: "1000m"
+              memory: "4Gi"
+              cpu: "2000m"
           volumeMounts:
             - name: home
               mountPath: /home/node
