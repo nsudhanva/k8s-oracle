@@ -21,7 +21,6 @@ data:
     {
       "gateway": {
         "mode": "local",
-        "bind": "custom:0.0.0.0",
         "port": 18789
       },
       "models": {
@@ -116,8 +115,6 @@ spec:
               value: /home/node
             - name: OPENCLAW_CONFIG_DIR
               value: /home/node/.openclaw
-            - name: OPENCLAW_GATEWAY_BIND
-              value: "custom:0.0.0.0"
             - name: GEMMA_API_KEY
               valueFrom:
                 secretKeyRef:
@@ -143,18 +140,22 @@ spec:
             - name: telegram-token
               mountPath: /secrets
               readOnly: true
+          startupProbe:
+            exec:
+              command: ["wget", "-q", "--spider", "http://127.0.0.1:18789/healthz"]
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 30
           livenessProbe:
-            httpGet:
-              path: /healthz
-              port: 18789
+            exec:
+              command: ["wget", "-q", "--spider", "http://127.0.0.1:18789/healthz"]
             initialDelaySeconds: 60
             periodSeconds: 30
             timeoutSeconds: 10
             failureThreshold: 3
           readinessProbe:
-            httpGet:
-              path: /readyz
-              port: 18789
+            exec:
+              command: ["wget", "-q", "--spider", "http://127.0.0.1:18789/readyz"]
             initialDelaySeconds: 15
             periodSeconds: 10
             timeoutSeconds: 5
