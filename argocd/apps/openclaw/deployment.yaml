@@ -52,7 +52,7 @@ data:
       "channels": {
         "telegram": {
           "enabled": true,
-          "token": "${TELEGRAM_BOT_TOKEN}",
+          "tokenFile": "/secrets/telegram-bot-token",
           "dmPolicy": "pairing"
         }
       }
@@ -85,7 +85,7 @@ spec:
         runAsGroup: 1000
       initContainers:
         - name: copy-config
-          image: busybox:1.37
+          image: ghcr.io/openclaw/openclaw:2026.4.9
           command:
             - sh
             - -c
@@ -93,13 +93,23 @@ spec:
               mkdir -p /home/node/.openclaw
               cp /config/openclaw.json /home/node/.openclaw/openclaw.json
               cp /config/AGENTS.md /home/node/.openclaw/AGENTS.md
+              openclaw channels add --channel telegram --token-file /secrets/telegram-bot-token 2>/dev/null || true
+          env:
+            - name: HOME
+              value: /home/node
+            - name: OPENCLAW_CONFIG_DIR
+              value: /home/node/.openclaw
           volumeMounts:
             - name: home
               mountPath: /home/node
             - name: config
               mountPath: /config
+            - name: telegram-token
+              mountPath: /secrets
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
           securityContext:
-            readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false
             capabilities:
               drop:
@@ -125,11 +135,6 @@ spec:
                 secretKeyRef:
                   name: openclaw-secrets
                   key: gateway-token
-            - name: TELEGRAM_BOT_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: telegram-bot-token
-                  key: telegram-bot-token
           resources:
             requests:
               memory: "512Mi"
