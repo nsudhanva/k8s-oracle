@@ -23,6 +23,9 @@ data:
         "mode": "local",
         "port": 18789
       },
+      "browser": {
+        "cdpUrl": "ws://127.0.0.1:3000/chromium"
+      },
       "models": {
         "mode": "merge",
         "providers": {
