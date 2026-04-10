@@ -93,7 +93,7 @@ OpenClaw is configured via a ConfigMap (`openclaw-config`) containing `openclaw.
       "gemma": {
         "baseUrl": "http://gemma.default.svc.cluster.local/v1",
         "api": "openai-completions",
-        "models": [{ "id": "gemma-4-E2B-it", "name": "Gemma 4 E2B" }]
+        "models": [{ "id": "gemma-4-E2B-it", "name": "Gemma 4 E2B", "contextWindow": 16384, "maxTokens": 2048 }]
       }
     }
   },
@@ -116,7 +116,8 @@ OpenClaw is configured via a ConfigMap (`openclaw-config`) containing `openclaw.
 
 - **Gateway binds to loopback** (`127.0.0.1`) by default in v2026.3.1. Health probes use `exec` with `wget` to reach localhost.
 - **Telegram token** is mounted as a file from a Kubernetes Secret, not set via env var.
-- **Gemma API key** is passed via `GEMMA_API_KEY` env var from the existing `gemma-api-key` secret.
+- **Gemma API key** is passed via `GEMMA_API_KEY` env var from the existing `gemma-api-key` secret. Referenced in config as `"apiKey": "${GEMMA_API_KEY}"`.
+- **Context window** must match the llama-server `-c` flag (16384). OpenClaw requires minimum 16000 tokens.
 
 ## Secrets Management
 
