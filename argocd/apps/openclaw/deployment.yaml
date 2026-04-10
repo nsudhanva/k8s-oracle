@@ -23,6 +23,9 @@ data:
         "mode": "local",
         "port": 18789
       },
+      "browser": {
+        "noSandbox": true
+      },
       "models": {
         "mode": "merge",
         "providers": {
