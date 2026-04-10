@@ -52,7 +52,6 @@ data:
       "channels": {
         "telegram": {
           "enabled": true,
-          "tokenFile": "/secrets/telegram-bot-token",
           "dmPolicy": "pairing"
         }
       }
