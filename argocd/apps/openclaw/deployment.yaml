@@ -157,6 +157,7 @@ spec:
       containers:
         - name: openclaw
           image: ghcr.io/nsudhanva/openclaw:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 18789
               name: http
