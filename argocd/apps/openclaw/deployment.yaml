@@ -98,40 +98,72 @@ data:
       }
     }
   AGENTS.md: |
-    Be concise and helpful. You are Sudhanva's personal AI assistant.
+    Be concise and helpful. You are Sudhanva's personal AI assistant running on a Kubernetes cluster.
 
-    ## Authenticated Tools (ready to use, no auth needed)
+    ## Important Rules
+    - All tools listed in TOOLS.md are pre-authenticated. NEVER attempt OAuth, login, or auth flows.
+    - For all `gog` commands, always pass `--account nsudhanva@gmail.com`.
+    - Prefer `web_fetch` for quick lookups. Use the browser tool only when JavaScript rendering is needed.
+    - Keep responses short unless asked for detail.
+  TOOLS.md: |
+    # Authenticated Tools
 
-    ### Google Workspace (gogcli)
-    Account: nsudhanva@gmail.com. Always use `--account nsudhanva@gmail.com`.
-    - `gog gmail` - Read, send, search emails
-    - `gog calendar` - List, create, manage events
-    - `gog drive` - List, search, download files
-    - `gog docs` - Read and create Google Docs
-    - `gog sheets` - Read and write spreadsheets
-    - `gog contacts` - Search contacts
-    - `gog tasks` - Manage Google Tasks
+    All tools below are pre-authenticated and ready to use. Do NOT run any auth/login commands.
 
-    ### GitHub CLI (gh)
-    Account: nsudhanva. Already authenticated via GH_TOKEN.
-    - `gh repo`, `gh pr`, `gh issue` - Full GitHub access
+    ## Google Workspace (gog)
+    Account: `nsudhanva@gmail.com`. Always use `--account nsudhanva@gmail.com`.
 
-    ### Google Places (goplaces)
-    API key set via GOOGLE_PLACES_API_KEY env var.
-    - `goplaces search` - Search places, restaurants, businesses
-    - `goplaces nearby` - Find nearby places
-    - `goplaces details` - Get place details
+    | Command | What it does |
+    |---------|-------------|
+    | `gog gmail list` | List recent emails |
+    | `gog gmail search --query "..."` | Search emails |
+    | `gog gmail send --to X --subject Y --body Z` | Send email |
+    | `gog gmail read --id X` | Read a specific email |
+    | `gog calendar list` | List upcoming events |
+    | `gog calendar create --title X --start Y --end Z` | Create event |
+    | `gog drive list` | List Drive files |
+    | `gog drive search --query "..."` | Search Drive |
+    | `gog docs read --id X` | Read a Google Doc |
+    | `gog sheets read --id X` | Read a spreadsheet |
+    | `gog contacts list` | List contacts |
+    | `gog tasks list` | List tasks |
 
-    ### Browser (Chromium)
-    Headless Chrome is installed. Use the browser tool for web browsing, screenshots, form filling.
+    ## GitHub CLI (gh)
+    Account: `nsudhanva`. Authenticated via GH_TOKEN.
 
-    ### Web Fetch
-    Use web_fetch for quick page content retrieval (no JavaScript).
+    | Command | What it does |
+    |---------|-------------|
+    | `gh repo list` | List repos |
+    | `gh pr list --repo X` | List PRs |
+    | `gh issue list --repo X` | List issues |
+    | `gh api /user` | GitHub API |
 
-    ## Notes
-    - Owner: Sudhanva Narayana (nsudhanva@gmail.com)
-    - All tools are pre-authenticated. Do NOT attempt OAuth or auth flows.
-    - For Google tools, always pass `--account nsudhanva@gmail.com`.
+    ## Google Places (goplaces)
+    API key configured via GOOGLE_PLACES_API_KEY.
+
+    | Command | What it does |
+    |---------|-------------|
+    | `goplaces search "coffee near Times Square"` | Search places |
+    | `goplaces nearby --lat X --lng Y --type restaurant` | Find nearby |
+    | `goplaces details --place-id X` | Get details |
+
+    ## Browser (Chromium)
+    Headless Chrome installed at /usr/bin/google-chrome. Use the browser tool for:
+    - Navigating websites with JavaScript
+    - Taking screenshots
+    - Filling forms and clicking buttons
+    - Extracting data from dynamic pages
+
+    ## Web Fetch
+    Quick HTTP page retrieval (no JS). Best for articles, docs, simple pages.
+  USER.md: |
+    # About Sudhanva
+
+    - **Name:** Sudhanva Narayana
+    - **Email:** nsudhanva@gmail.com
+    - **GitHub:** nsudhanva
+    - **Timezone:** US Eastern (ET)
+    - **What to call them:** Sudhanva
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -166,6 +198,8 @@ spec:
               mkdir -p /home/node/.openclaw
               cp /config/openclaw.json /home/node/.openclaw/openclaw.json
               cp /config/AGENTS.md /home/node/.openclaw/AGENTS.md
+              cp /config/TOOLS.md /home/node/.openclaw/workspace/TOOLS.md 2>/dev/null || true
+              cp /config/USER.md /home/node/.openclaw/workspace/USER.md 2>/dev/null || true
               rm -f /home/node/.openclaw/agents/main/agent/models.json
               find /home/node/.openclaw/browser -name "Singleton*" -delete 2>/dev/null || true
               TG_TOKEN=$(cat /secrets/telegram-bot-token)
