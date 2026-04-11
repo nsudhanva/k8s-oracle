@@ -182,6 +182,32 @@ spec:
                 secretKeyRef:
                   name: openclaw-secrets
                   key: gateway-token
+            - name: GH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: github-pat
+                  key: github-pat
+                  optional: true
+            - name: GOOGLE_PLACES_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: google-places-api-key
+                  key: api-key
+                  optional: true
+            - name: DISCORD_BOT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: discord-bot-token
+                  key: token
+                  optional: true
+            - name: GOG_KEYRING_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: gog-keyring-password
+                  key: password
+                  optional: true
+            - name: GOG_KEYRING_BACKEND
+              value: "file"
           resources:
             requests:
               memory: "1Gi"

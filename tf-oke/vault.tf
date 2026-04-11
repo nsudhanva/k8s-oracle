@@ -189,6 +189,45 @@ resource "oci_vault_secret" "telegram_bot_token" {
   }
 }
 
+resource "oci_vault_secret" "google_places_api_key" {
+  count          = var.google_places_api_key != "" ? 1 : 0
+  compartment_id = var.compartment_ocid
+  vault_id       = oci_kms_vault.oke_vault.id
+  key_id         = oci_kms_key.master_key.id
+  secret_name    = "google-places-api-key"
+
+  secret_content {
+    content_type = "BASE64"
+    content      = base64encode(var.google_places_api_key)
+  }
+}
+
+resource "oci_vault_secret" "discord_bot_token" {
+  count          = var.discord_bot_token != "" ? 1 : 0
+  compartment_id = var.compartment_ocid
+  vault_id       = oci_kms_vault.oke_vault.id
+  key_id         = oci_kms_key.master_key.id
+  secret_name    = "discord-bot-token"
+
+  secret_content {
+    content_type = "BASE64"
+    content      = base64encode(var.discord_bot_token)
+  }
+}
+
+resource "oci_vault_secret" "gog_keyring_password" {
+  count          = var.gog_keyring_password != "" ? 1 : 0
+  compartment_id = var.compartment_ocid
+  vault_id       = oci_kms_vault.oke_vault.id
+  key_id         = oci_kms_key.master_key.id
+  secret_name    = "gog-keyring-password"
+
+  secret_content {
+    content_type = "BASE64"
+    content      = base64encode(var.gog_keyring_password)
+  }
+}
+
 resource "oci_vault_secret" "gemini_api_key" {
   count          = var.gemini_api_key != "" ? 1 : 0
   compartment_id = var.compartment_ocid

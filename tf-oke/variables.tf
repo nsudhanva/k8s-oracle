@@ -170,6 +170,27 @@ variable "gemini_api_key" {
   default     = ""
 }
 
+variable "google_places_api_key" {
+  description = "Google Places API key for goplaces CLI"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "discord_bot_token" {
+  description = "Discord bot token for discrawl CLI"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "gog_keyring_password" {
+  description = "Password for gogcli encrypted keyring file"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
 variable "oidc_client_id" {
   description = "OCI Identity Domain OIDC client ID for Open WebUI (from OCI Console after app creation)"
   type        = string
