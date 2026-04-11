@@ -55,7 +55,8 @@ The cluster uses OKE Basic (free managed control plane) with ARM64 worker nodes 
 | Cert Manager | Let's Encrypt certificate automation |
 | OCI Vault | Secrets storage (Always Free) |
 | External Secrets | Sync Vault secrets to Kubernetes |
-| Gemma LLM | Gemma 4 E2B via llama.cpp with an OpenAI-compatible API |
+| OpenClaw | AI agent platform with Telegram bot, Gemini API, and browser control |
+| Gemma LLM | Gemma 4 E2B via llama.cpp (scaled to 0, kept for future GPU use) |
 | Open WebUI | Chat interface with OCI Identity OIDC authentication |
 
 ## OCI Always Free Resources
@@ -140,7 +141,15 @@ git_username         = "your-github-username"
 git_email            = "your-email@example.com"
 git_pat              = "ghp_..."
 
-argocd_admin_password = "your-secure-password"
+argocd_admin_password      = "your-secure-password"
+argocd_admin_password_hash = "$2a$10$..."
+
+gemma_api_key              = "secure-random-key"
+huggingface_token          = "hf_..."
+gemini_api_key             = "your-google-api-key"
+
+openclaw_gateway_token     = "random-hex-string"
+telegram_bot_token         = "your-botfather-token"
 ```
 
 ### Deploy Infrastructure
