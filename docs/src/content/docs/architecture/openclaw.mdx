@@ -5,7 +5,7 @@ description: OpenClaw connects messaging platforms like Telegram to Google Gemin
 
 import { Aside } from '@astrojs/starlight/components';
 
-This cluster runs **OpenClaw v2026.4.9**, an open-source AI agent platform that connects messaging channels (Telegram, Discord, etc.) to LLM providers. It uses the **Google Gemini API** for fast, cloud-based inference.
+This cluster runs **OpenClaw v2026.4.9**, an open-source AI agent platform that connects messaging channels (Telegram, Discord, etc.) to LLM providers. It uses the **Google Gemini API** for fast, cloud-based inference and a **custom Docker image** with Chromium and CLI tools baked in.
 
 ## Endpoint
 
@@ -18,8 +18,6 @@ The web UI requires the gateway token for authentication. The Telegram bot (@Coo
 </Aside>
 
 ## Architecture
-
-OpenClaw acts as a gateway between messaging platforms and the Gemini API:
 
 ```mermaid
 flowchart TB
@@ -36,6 +34,7 @@ flowchart TB
             GW[Gateway<br/>:18789]
             Agent[AI Agent]
             TGChannel[Telegram Channel<br/>grammY]
+            Browser[Chromium<br/>Headless]
         end
 
         ESO[External Secrets<br/>Operator]
@@ -52,6 +51,7 @@ flowchart TB
     TG -->|Bot API| TGChannel
     TGChannel --> Agent
     Agent -->|Gemini API| GeminiAPI
+    Agent -->|CDP| Browser
     VaultSecrets --> ESO
     ESO --> Secrets
     Secrets --> GW
@@ -63,9 +63,54 @@ flowchart TB
 |---------|-------------|
 | **Telegram Bot** | Chat with AI via @CoochiepieBot |
 | **Web UI** | Control UI at claw.k8s.sudhanva.me |
-| **Gemini Integration** | Connected to Google Gemini 3.1 Flash Lite via API |
+| **Gemini Integration** | Google Gemini 3.1 Flash Lite via API |
+| **Browser Control** | Headless Chromium for web browsing and scraping |
+| **Memory + Dreaming** | Persistent memory with background consolidation |
+| **Session Isolation** | Per-sender sessions with 2hr idle auto-reset |
+| **Message Queuing** | Batches rapid Telegram messages (1.5s debounce) |
+| **Ack Reactions** | Eyes emoji when processing starts |
+| **Slash Commands** | `/model`, `/reset`, `/focus`, `/plugins` in chat |
 | **DM Pairing** | Secure access control for Telegram |
 | **Persistent Config** | 2GB PVC for OpenClaw home directory |
+
+## Custom Docker Image
+
+The standard OpenClaw image lacks Chromium and system dependencies. A custom image is built and pushed to `ghcr.io/nsudhanva/openclaw:latest`.
+
+**Dockerfile:** `docker/openclaw/Dockerfile`
+
+**What it adds on top of `ghcr.io/openclaw/openclaw:latest`:**
+
+| Category | Packages/Tools |
+|----------|---------------|
+| **Browser** | Chromium via Playwright + all system libs (libnss3, libatk, libgbm, etc.) + Xvfb |
+| **Fonts** | Noto Color Emoji, Noto CJK (for browser screenshots) |
+| **Google Tools** | `gogcli` (Gmail, Calendar, Drive, Docs, Sheets, Contacts), `goplaces` (Google Maps/Places) |
+| **Media** | `ffmpeg` (audio/video processing) |
+| **Dev Tools** | `gh` (GitHub CLI), `jq`, `ripgrep`, `tmux`, `python3` |
+| **Other CLIs** | `spogo` (Spotify), `discrawl` (Discord), `camsnap` (RTSP cameras), `ordercli` (food delivery) |
+
+### Building the Image
+
+```bash
+cd docker/openclaw
+
+# Build for ARM64 (OKE cluster architecture)
+docker buildx build --platform linux/arm64 -t ghcr.io/nsudhanva/openclaw:latest --push .
+
+# Build with no cache (force fresh)
+docker buildx build --platform linux/arm64 --no-cache -t ghcr.io/nsudhanva/openclaw:latest --push .
+```
+
+<Aside type="caution">
+The GHCR package must be set to **Public** visibility. Go to `https://github.com/users/nsudhanva/packages/container/openclaw/settings` and change visibility if needed.
+</Aside>
+
+### Key Dockerfile Details
+
+- Chromium is installed via `npx playwright install chromium` and symlinked to `/usr/bin/chromium` and `/usr/bin/google-chrome` for auto-detection
+- The `find` command is used instead of glob patterns because glob doesn't expand during Docker build
+- steipete CLI tools are downloaded from GitHub releases with verified ARM64 binaries
 
 ## Resource Allocation
 
@@ -74,10 +119,15 @@ flowchart TB
 | Memory | 1 GB | 4 GB |
 | CPU | 500m | 2000m |
 | Storage | 2 GB PVC | - |
+| Shared Memory | 256 MB tmpfs | - |
+
+<Aside type="note">
+The `/dev/shm` tmpfs mount (256Mi) is required for Chrome. Without it, Chrome crashes with shared memory errors in containers.
+</Aside>
 
 ## Configuration
 
-OpenClaw is configured via a ConfigMap (`openclaw-config`) containing `openclaw.json`:
+### openclaw.json (ConfigMap)
 
 ```json
 {
@@ -85,13 +135,21 @@ OpenClaw is configured via a ConfigMap (`openclaw-config`) containing `openclaw.
     "mode": "local",
     "port": 18789
   },
+  "browser": {
+    "noSandbox": true
+  },
   "models": {
     "providers": {
       "google": {
         "baseUrl": "https://generativelanguage.googleapis.com/v1beta",
         "apiKey": "${GEMINI_API_KEY}",
         "api": "google-generative-ai",
-        "models": [{ "id": "gemini-3.1-flash-lite-preview", "name": "Gemini 3.1 Flash Lite", "contextWindow": 131072, "maxTokens": 8192 }]
+        "models": [{
+          "id": "gemini-3.1-flash-lite-preview",
+          "name": "Gemini 3.1 Flash Lite",
+          "contextWindow": 131072,
+          "maxTokens": 8192
+        }]
       }
     }
   },
@@ -104,50 +162,127 @@ OpenClaw is configured via a ConfigMap (`openclaw-config`) containing `openclaw.
   "channels": {
     "telegram": {
       "enabled": true,
-      "botToken": "(injected by init container)",
       "dmPolicy": "pairing"
     }
+  },
+  "session": {
+    "scope": "per-sender",
+    "dmScope": "per-peer",
+    "reset": { "mode": "idle", "idleMinutes": 120 }
+  },
+  "plugins": {
+    "entries": {
+      "memory-core": {
+        "enabled": true,
+        "config": { "dreaming": { "enabled": true } }
+      }
+    }
+  },
+  "messages": {
+    "ackReaction": "eyes",
+    "ackReactionScope": "direct",
+    "queue": { "mode": "collect", "debounceMs": 1500 }
+  },
+  "commands": {
+    "native": true,
+    "nativeSkills": "auto",
+    "text": true
   }
 }
 ```
 
 ### Key Config Notes
 
-- **v2026.4.9** binds to `0.0.0.0` by default. Health probes use `exec` with `wget` to reach localhost.
-- **Telegram token** is injected into the config by the init container. The init container uses the OpenClaw image (`ghcr.io/openclaw/openclaw:2026.4.9`) and runs a `node` script that reads the token from the Kubernetes Secret mount and writes `botToken` into the JSON config.
-- **Gemini API key** is passed via `GEMINI_API_KEY` env var from the `gemini-api-key` K8s secret. Referenced in config as `"apiKey": "${GEMINI_API_KEY}"`.
-- **Context window** is set to 131072 (Gemini's native context size). The Gemini API handles context management server-side.
+- **`browser.noSandbox: true`** is required for running Chrome in a container without root privileges.
+- **`api` must be `google-generative-ai`** (not `google` or `openai-completions`). This is the only valid value for Gemini.
+- **`baseUrl` is required** even for the Google provider. Use `https://generativelanguage.googleapis.com/v1beta`.
+- **Gemini API key** uses `${GEMINI_API_KEY}` env var substitution. The env var is populated from the `gemini-api-key` K8s secret.
 - **Agent timeout** is 300s (5 min), sufficient for cloud API responses.
+- **Context window** is 131072 (Gemini's native 128K context). No compaction tricks needed unlike local models.
+- **`botToken`** is NOT in the ConfigMap. It's injected by the init container (see below).
 
-### Init Container
+### Invalid Config Keys (v2026.4.9)
 
-The init container performs setup before the main OpenClaw process starts:
+These keys cause startup crashes - do NOT use them:
 
-1. Copies `openclaw.json` and `AGENTS.md` from the ConfigMap to the PVC
-2. Removes stale `models.json` cache (prevents overriding the main config)
-3. Reads the Telegram bot token from the mounted secret and injects it as `botToken` into the config via a `node -e` script
+| Key | Status |
+|-----|--------|
+| `agents.defaults.toolProfile` | Unrecognized |
+| `memory.embeddingProvider` | Unrecognized |
+| `browser.launchArgs` | Unrecognized |
+| `agents.defaults.systemPrompt` | Unrecognized |
+| `agents.defaults.llm` | Unrecognized |
+| `models.providers.*.timeout` | Unrecognized |
+| `channels.telegram.token` | Unrecognized (use `botToken` or `tokenFile`) |
 
-The init container uses the same OpenClaw image (`ghcr.io/openclaw/openclaw:2026.4.9`) to have access to the Node.js runtime.
+### Environment Variables
+
+| Variable | Value | Purpose |
+|----------|-------|---------|
+| `NODE_OPTIONS` | `--dns-result-order=ipv4first` | Fixes Node.js fetch failures on OKE (IPv6 unreachable) |
+| `HOME` | `/home/node` | Home directory |
+| `OPENCLAW_CONFIG_DIR` | `/home/node/.openclaw` | Config directory |
+| `GEMINI_API_KEY` | (from secret) | Google Gemini API key |
+| `OPENCLAW_GATEWAY_TOKEN` | (from secret) | Web UI authentication |
+
+## Init Container
+
+The init container (`copy-config`) runs before the main OpenClaw process. It uses the same custom image (`ghcr.io/nsudhanva/openclaw:latest`) for Node.js access.
+
+**What it does:**
+
+1. **Copies config files** from ConfigMap to PVC (`openclaw.json`, `AGENTS.md`)
+2. **Removes stale `models.json`** cache at `agents/main/agent/models.json` (this file overrides the main config's model settings and causes issues when switching providers)
+3. **Clears Chrome Singleton locks** at `browser/*/Singleton*` (stale locks from previous pods prevent Chrome from starting)
+4. **Injects Telegram bot token** by reading the mounted secret and writing `botToken` into the JSON config via a `node -e` script
+
+<Aside type="caution" title="Why botToken injection?">
+v2026.4.9 does NOT support `tokenFile` for Telegram (the gateway can't read the file at runtime). The `botToken` field must be set directly in the JSON config. Since we can't put secrets in the ConfigMap (committed to Git), the init container reads from the K8s Secret mount and injects it.
+</Aside>
 
 ## Secrets Management
 
 Three secrets are managed via Terraform and synced by External Secrets Operator:
 
-| Vault Secret | K8s Secret | Purpose |
-|-------------|------------|---------|
-| `openclaw-gateway-token` | `openclaw-secrets` | Web UI auth token |
-| `telegram-bot-token` | `telegram-bot-token` | Telegram Bot API token |
-| `gemini-api-key` | `gemini-api-key` | Google Gemini API key |
+| Vault Secret | K8s Secret | Key | Purpose |
+|-------------|------------|-----|---------|
+| `openclaw-gateway-token` | `openclaw-secrets` | `gateway-token` | Web UI auth token |
+| `telegram-bot-token` | `telegram-bot-token` | `telegram-bot-token` | Telegram Bot API token |
+| `gemini-api-key` | `gemini-api-key` | `api-key` | Google Gemini API key |
 
 ### Terraform Variables
 
 Add to `tf-oke/terraform.tfvars`:
 
 ```hcl
-openclaw_gateway_token = "random-hex-string"
-telegram_bot_token     = "your-botfather-token"
-gemini_api_key         = "your-google-api-key"
+openclaw_gateway_token = "random-hex-string"    # openssl rand -hex 32
+telegram_bot_token     = "your-botfather-token"  # from @BotFather
+gemini_api_key         = "your-google-api-key"   # from Google AI Studio
 ```
+
+### Adding a New Secret
+
+1. Add variable to `tf-oke/variables.tf` (sensitive, default "")
+2. Add `oci_vault_secret` resource to `tf-oke/vault.tf` (with count conditional)
+3. Add value to `tf-oke/terraform.tfvars` (gitignored)
+4. Run `terraform apply -target=oci_vault_secret.<name>`
+5. Run `git checkout -- argocd/` (terraform overwrites local_file resources)
+6. Add ExternalSecret to `argocd/infrastructure/managed-secrets/secrets.yaml`
+7. Force sync: `kubectl annotate externalsecret -n default <name>-sync force-sync=$(date +%s) --overwrite`
+
+## Browser Control
+
+OpenClaw v2026.4.9 launches its own Chrome process via Playwright CDP. It does NOT support connecting to external browsers.
+
+**Requirements for browser to work:**
+
+1. Chrome must be installed in the container at a standard path (`/usr/bin/chromium` or `/usr/bin/google-chrome`)
+2. `browser.noSandbox: true` in config (containers don't have sandbox capabilities)
+3. `/dev/shm` must be mounted as tmpfs with sufficient size (256Mi)
+4. Stale Chrome `Singleton*` lock files must be cleaned on startup (init container handles this)
+5. `NODE_OPTIONS=--dns-result-order=ipv4first` to fix IPv6 networking issues
+
+**How it works:** When the agent needs to browse, it starts Chrome headless on port 18800, connects via CDP, navigates pages, takes screenshots, extracts text, clicks elements, and fills forms.
 
 ## Telegram Setup
 
@@ -155,19 +290,89 @@ gemini_api_key         = "your-google-api-key"
 2. Add the bot token to `terraform.tfvars` as `telegram_bot_token`
 3. Run `terraform apply` to store in OCI Vault
 4. After deployment, DM the bot on Telegram
-5. Approve pairing:
+5. You'll receive a pairing code. Approve it:
 
 ```bash
 kubectl exec deploy/openclaw -c openclaw -- openclaw pairing approve telegram <CODE>
 ```
 
 <Aside type="note">
-Pairing codes expire after 1 hour. DM pairing grants access to direct messages only, not group messages. Pairing data persists across pod restarts (stored on PVC).
+Pairing codes expire after 1 hour. Pairing data persists across pod restarts (stored on PVC at `credentials/telegram-default-allowFrom.json`). You do NOT need to re-pair after pod restarts.
 </Aside>
+
+## Deployment from Scratch
+
+Complete steps to deploy OpenClaw on a fresh cluster:
+
+### 1. Build and Push Docker Image
+
+```bash
+cd docker/openclaw
+docker buildx build --platform linux/arm64 --no-cache \
+  -t ghcr.io/nsudhanva/openclaw:latest --push .
+```
+
+Make the GHCR package public at `https://github.com/users/nsudhanva/packages/container/openclaw/settings`.
+
+### 2. Create Terraform Secrets
+
+Add to `tf-oke/terraform.tfvars`:
+
+```hcl
+openclaw_gateway_token = "$(openssl rand -hex 32)"
+telegram_bot_token     = "your-botfather-token"
+gemini_api_key         = "your-google-api-key"
+```
+
+Apply:
+
+```bash
+cd tf-oke
+terraform apply -target=oci_vault_secret.openclaw_gateway_token \
+  -target=oci_vault_secret.telegram_bot_token \
+  -target=oci_vault_secret.gemini_api_key
+git checkout -- ../argocd/
+```
+
+### 3. Deploy via ArgoCD
+
+```bash
+kubectl apply -f argocd/applications.yaml
+```
+
+Wait for ArgoCD to sync all apps. Force sync if needed:
+
+```bash
+kubectl patch app openclaw-app -n argocd --type merge \
+  -p '{"metadata":{"annotations":{"argocd.argoproj.io/refresh":"hard"}}}'
+```
+
+### 4. Force ExternalSecret Sync
+
+```bash
+kubectl annotate externalsecret -n default openclaw-secrets-sync force-sync=$(date +%s) --overwrite
+kubectl annotate externalsecret -n default telegram-bot-token-sync force-sync=$(date +%s) --overwrite
+kubectl annotate externalsecret -n default gemini-api-key-sync force-sync=$(date +%s) --overwrite
+```
+
+### 5. Pair Telegram
+
+DM the bot, get the pairing code, then:
+
+```bash
+kubectl exec deploy/openclaw -c openclaw -- openclaw pairing approve telegram <CODE>
+```
+
+### 6. Verify
+
+```bash
+kubectl exec deploy/openclaw -c openclaw -- openclaw browser status
+kubectl exec deploy/openclaw -c openclaw -- openclaw channels status
+```
 
 ## Migration History
 
-OpenClaw was originally deployed with a self-hosted Gemma 4 E2B model running on CPU-only ARM nodes via llama.cpp. The 12K+ token system prompt took ~15 minutes to process on CPU, causing persistent timeouts. The deployment was migrated to Google Gemini API for near-instant responses.
+OpenClaw was originally deployed with a self-hosted **Gemma 4 E2B** model running on CPU-only ARM nodes via llama.cpp. The 12K+ token system prompt took ~15 minutes to process on CPU, causing persistent timeouts. After trying many approaches (batch-size tuning, context window adjustments, prompt cache warming, version upgrades), the deployment was migrated to the **Google Gemini API** for near-instant responses.
 
 The Gemma deployment (`argocd/apps/gemma/`) is scaled to 0 replicas but kept in the repository for potential future GPU-based local inference.
 
@@ -180,9 +385,10 @@ kubectl logs deploy/openclaw -c openclaw | grep telegram
 ```
 
 Common causes:
-- Invalid bot token (check `kubectl get secret telegram-bot-token -o jsonpath='{.data.telegram-bot-token}' | base64 -d`)
-- Pairing not approved (run `openclaw pairing approve telegram <CODE>`)
-- v2026.4.9 Telegram polling may take ~30s after startup before processing messages
+- **Telegram polling dead:** Check for `UND_ERR_SOCKET` or `DNS-resolved IP unreachable` errors. Restart the pod.
+- **Invalid bot token:** `kubectl get secret telegram-bot-token -o jsonpath='{.data.telegram-bot-token}' | base64 -d`
+- **Pairing not approved:** `kubectl exec deploy/openclaw -c openclaw -- openclaw pairing approve telegram <CODE>`
+- **v2026.4.9 startup delay:** Telegram polling takes ~30-40s after gateway ready
 
 ### Config Invalid Errors
 
@@ -190,22 +396,42 @@ Common causes:
 kubectl logs deploy/openclaw -c openclaw | head -20
 ```
 
-Common causes:
-- Wrong `api` value (must be `google-generative-ai` for Gemini)
-- Missing `baseUrl` (required even for Google provider)
-- Unknown config keys (check version compatibility)
+If you see "Unrecognized key", remove the offending key from the ConfigMap. See the invalid keys table above.
 
-### Health Probes Failing
+### Browser Not Working
 
-v2026.4.9 binds to `0.0.0.0` but probes use `exec` with `wget` hitting localhost for reliability.
+```bash
+kubectl exec deploy/openclaw -c openclaw -- openclaw browser status
+```
+
+- **`detectedBrowser: unknown`**: Chrome not found. Check `/usr/bin/google-chrome` exists. Rebuild the custom image.
+- **`Singleton` lock errors**: Restart the pod (init container clears locks).
+- **`Failed to start Chrome CDP`**: Check `/dev/shm` is mounted. Check `browser.noSandbox: true` is set.
+- **`timed out` + "Do NOT retry"**: The gateway cached a failure. Restart the pod.
+- **`fetch failed` on web_fetch**: Check `NODE_OPTIONS=--dns-result-order=ipv4first` is set.
+
+### Chrome Test (Manual)
+
+```bash
+kubectl exec deploy/openclaw -c openclaw -- \
+  google-chrome --headless --no-sandbox --disable-gpu \
+  --remote-debugging-port=19999 --user-data-dir=/tmp/chrome-test about:blank &
+sleep 5
+kubectl exec deploy/openclaw -c openclaw -- \
+  wget -q -O- http://127.0.0.1:19999/json/version
+```
 
 ## Kubernetes Manifests
 
 | File | Purpose |
 |------|---------|
-| `argocd/apps/openclaw/deployment.yaml` | PVC + ConfigMap + Deployment |
+| `argocd/apps/openclaw/deployment.yaml` | PVC + ConfigMap + Deployment (main manifest) |
 | `argocd/apps/openclaw/service.yaml` | ClusterIP service (80 -> 18789) |
-| `argocd/apps/openclaw/httproute.yaml` | Gateway routing + TLS cert |
+| `argocd/apps/openclaw/httproute.yaml` | HTTPRoute + TLS Certificate |
+| `argocd/apps/openclaw/kustomization.yaml` | Kustomize resource list |
 | `argocd/infrastructure/managed-secrets/secrets.yaml` | ExternalSecrets for vault sync |
+| `argocd/infrastructure/envoy-gateway/config.yaml` | HTTPS listener for claw.k8s.sudhanva.me |
+| `argocd/infrastructure/envoy-gateway/dnsendpoint.yaml` | DNS A record |
+| `docker/openclaw/Dockerfile` | Custom image with Chromium + tools |
 | `tf-oke/vault.tf` | OCI Vault secret resources |
 | `tf-oke/variables.tf` | Terraform variable definitions |
