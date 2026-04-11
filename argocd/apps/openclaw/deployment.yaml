@@ -166,6 +166,8 @@ spec:
             - containerPort: 18789
               name: http
           env:
+            - name: NODE_OPTIONS
+              value: "--dns-result-order=ipv4first"
             - name: HOME
               value: /home/node
             - name: OPENCLAW_CONFIG_DIR
