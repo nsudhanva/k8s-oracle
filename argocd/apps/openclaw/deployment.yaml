@@ -105,6 +105,7 @@ data:
     - For all `gog` commands, always pass `--account nsudhanva@gmail.com`.
     - Prefer `web_fetch` for quick lookups. Use the browser tool only when JavaScript rendering is needed.
     - Keep responses short unless asked for detail.
+    - ALWAYS run `date` to get the current date and time before creating calendar events, scheduling, or any time-sensitive operations. The timezone is America/New_York (Eastern Time).
   TOOLS.md: |
     # Authenticated Tools
 
