@@ -21,7 +21,14 @@ data:
     {
       "gateway": {
         "mode": "local",
-        "port": 18789
+        "port": 18789,
+        "controlUi": {
+          "allowedOrigins": [
+            "https://claw.k8s.sudhanva.me",
+            "http://localhost:18789",
+            "http://127.0.0.1:18789"
+          ]
+        }
       },
       "browser": {
         "noSandbox": true
