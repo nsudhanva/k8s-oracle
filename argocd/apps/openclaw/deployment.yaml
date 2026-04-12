@@ -35,9 +35,12 @@ data:
         "headless": true,
         "noSandbox": true,
         "defaultProfile": "remote",
+        "ssrfPolicy": {
+          "dangerouslyAllowPrivateNetwork": true
+        },
         "profiles": {
           "remote": {
-            "cdpUrl": "http://chromium-local:9222",
+            "cdpUrl": "http://chromium-local:9223",
             "color": "#FF4500"
           }
         }
