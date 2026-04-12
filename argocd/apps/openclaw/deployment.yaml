@@ -39,11 +39,13 @@ data:
         "profiles": {
           "default": {
             "cdpUrl": "http://127.0.0.1:9222",
-            "attachOnly": true
+            "attachOnly": true,
+            "color": "#4285F4"
           },
           "openclaw": {
             "cdpUrl": "http://127.0.0.1:9222",
-            "attachOnly": true
+            "attachOnly": true,
+            "color": "#FF4500"
           }
         }
       },
