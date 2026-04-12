@@ -31,7 +31,8 @@ data:
         }
       },
       "browser": {
-        "noSandbox": true
+        "noSandbox": true,
+        "attachOnly": true
       },
       "models": {
         "mode": "merge",
