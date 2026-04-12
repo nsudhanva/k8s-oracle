@@ -161,11 +161,23 @@ data:
     | `goplaces details --place-id X` | Get details |
 
     ## Browser (Chromium)
-    Headless Chrome installed at /usr/bin/google-chrome. Use the browser tool for:
+    Headless Chrome installed at /usr/bin/chromium. Use the browser tool for:
     - Navigating websites with JavaScript
     - Taking screenshots
     - Filling forms and clicking buttons
     - Extracting data from dynamic pages
+
+    ## Sending Files and Images via Telegram
+    Browser screenshots are saved to `~/.openclaw/media/browser/`.
+    To send a screenshot or any file to the user on Telegram, use the message tool:
+    ```
+    message send --channel telegram --target <chatId> --message "caption" --file /home/node/.openclaw/media/browser/<filename>
+    ```
+    Trusted file paths for Telegram sending:
+    - `/home/node/.openclaw/media/` (screenshots, generated images)
+    - `/tmp/openclaw/` (temp files, downloads)
+    - `/home/node/.openclaw/workspace/` (workspace files)
+    Do NOT use paths outside these roots - they will be rejected.
 
     ## Web Fetch
     Quick HTTP page retrieval (no JS). Best for articles, docs, simple pages.
