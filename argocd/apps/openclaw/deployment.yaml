@@ -238,7 +238,7 @@ spec:
               const cfg = JSON.parse(fs.readFileSync('/home/node/.openclaw/openclaw.json'));
               cfg.channels.telegram.botToken = process.env.TG_TOKEN;
               if (!cfg.meta) cfg.meta = {};
-              cfg.meta.lastTouchedVersion = '2026.4.9';
+              cfg.meta.lastTouchedVersion = '2026.4.11';
               fs.writeFileSync('/home/node/.openclaw/openclaw.json', JSON.stringify(cfg, null, 2));
               " || true
           env:

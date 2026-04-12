@@ -108,7 +108,7 @@ The GHCR package must be set to **Public** visibility. Go to `https://github.com
 
 ### Key Dockerfile Details
 
-- Chromium is installed via `npx playwright install chromium` and symlinked to `/usr/bin/chromium` and `/usr/bin/google-chrome` for auto-detection
+- Debian `chromium` package installs the browser at `/usr/bin/chromium`; Playwright's Chromium is installed separately via the bundled CLI for CDP/navigate support
 - The `find` command is used instead of glob patterns because glob doesn't expand during Docker build
 - steipete CLI tools are downloaded from GitHub releases with verified ARM64 binaries
 
@@ -119,10 +119,10 @@ The GHCR package must be set to **Public** visibility. Go to `https://github.com
 | Memory | 1 GB | 4 GB |
 | CPU | 500m | 2000m |
 | Storage | 2 GB PVC | - |
-| Shared Memory | 256 MB tmpfs | - |
+| Shared Memory | 1 GB tmpfs | - |
 
 <Aside type="note">
-The `/dev/shm` tmpfs mount (256Mi) is required for Chrome. Without it, Chrome crashes with shared memory errors in containers.
+The `/dev/shm` tmpfs mount (1Gi) is required for Chrome. Without it, Chrome crashes with shared memory errors in containers.
 </Aside>
 
 ## Configuration
@@ -133,10 +133,29 @@ The `/dev/shm` tmpfs mount (256Mi) is required for Chrome. Without it, Chrome cr
 {
   "gateway": {
     "mode": "local",
-    "port": 18789
+    "port": 18789,
+    "controlUi": {
+      "allowedOrigins": [
+        "https://claw.k8s.sudhanva.me",
+        "http://localhost:18789",
+        "http://127.0.0.1:18789"
+      ]
+    }
   },
   "browser": {
-    "noSandbox": true
+    "enabled": true,
+    "headless": true,
+    "noSandbox": true,
+    "defaultProfile": "remote",
+    "ssrfPolicy": {
+      "dangerouslyAllowPrivateNetwork": true
+    },
+    "profiles": {
+      "remote": {
+        "cdpUrl": "http://chromium-local:9223",
+        "color": "#FF4500"
+      }
+    }
   },
   "models": {
     "mode": "merge",
@@ -231,6 +250,7 @@ These keys cause startup crashes - do NOT use them:
 | `GH_TOKEN` | (from secret, optional) | GitHub CLI authentication |
 | `GOOGLE_PLACES_API_KEY` | (from secret, optional) | Google Places API |
 | `GOG_KEYRING_PASSWORD` | (from secret, optional) | gogcli encrypted keyring |
+| `DISCORD_BOT_TOKEN` | (from secret, optional) | Discord bot authentication |
 | `GOG_KEYRING_BACKEND` | `file` | gogcli keyring backend |
 
 ## Init Container
@@ -257,6 +277,10 @@ Three secrets are managed via Terraform and synced by External Secrets Operator:
 | `openclaw-gateway-token` | `openclaw-secrets` | `gateway-token` | Web UI auth token |
 | `telegram-bot-token` | `telegram-bot-token` | `telegram-bot-token` | Telegram Bot API token |
 | `gemini-api-key` | `gemini-api-key` | `api-key` | Google Gemini API key |
+| `google-places-api-key` | `google-places-api-key` | `api-key` | Google Places API |
+| `discord-bot-token` | `discord-bot-token` | `token` | Discord bot (optional) |
+| `gog-keyring-password` | `gog-keyring-password` | `password` | gogcli keyring encryption |
+| `github-pat` | `github-pat` | `github-pat` | GitHub CLI |
 
 ### Terraform Variables
 
@@ -449,7 +473,7 @@ If you see "Unrecognized key", remove the offending key from the ConfigMap. See 
 kubectl exec deploy/openclaw -c openclaw -- openclaw browser status
 ```
 
-- **`detectedBrowser: unknown`**: Chrome not found. Check `/usr/bin/google-chrome` exists. Rebuild the custom image.
+- **`detectedBrowser: unknown`**: Chrome not found. Check `/usr/bin/chromium` exists. Rebuild the custom image.
 - **`Singleton` lock errors**: Restart the pod (init container clears locks).
 - **`Failed to start Chrome CDP`**: Check `/dev/shm` is mounted. Check `browser.noSandbox: true` is set.
 - **`timed out` + "Do NOT retry"**: The gateway cached a failure. Restart the pod.
@@ -459,7 +483,7 @@ kubectl exec deploy/openclaw -c openclaw -- openclaw browser status
 
 ```bash
 kubectl exec deploy/openclaw -c openclaw -- \
-  google-chrome --headless --no-sandbox --disable-gpu \
+  chromium --headless --no-sandbox --disable-gpu \
   --remote-debugging-port=19999 --user-data-dir=/tmp/chrome-test about:blank &
 sleep 5
 kubectl exec deploy/openclaw -c openclaw -- \
