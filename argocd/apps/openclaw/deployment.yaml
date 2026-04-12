@@ -32,22 +32,7 @@ data:
       },
       "browser": {
         "noSandbox": true,
-        "attachOnly": true,
-        "cdpUrl": "ws://127.0.0.1:9222/chromium",
-        "remoteCdpTimeoutMs": 10000,
-        "remoteCdpHandshakeTimeoutMs": 10000,
-        "profiles": {
-          "default": {
-            "cdpUrl": "ws://127.0.0.1:9222/chromium",
-            "attachOnly": true,
-            "color": "#4285F4"
-          },
-          "openclaw": {
-            "cdpUrl": "ws://127.0.0.1:9222/chromium",
-            "attachOnly": true,
-            "color": "#FF4500"
-          }
-        }
+        "actTimeoutMs": 60000
       },
       "models": {
         "mode": "merge",
@@ -343,42 +328,6 @@ spec:
             capabilities:
               drop:
                 - ALL
-        - name: chromium
-          image: ghcr.io/browserless/chromium:latest
-          ports:
-            - containerPort: 9222
-          startupProbe:
-            httpGet:
-              path: /json/version
-              port: 9222
-            initialDelaySeconds: 5
-            periodSeconds: 5
-            failureThreshold: 12
-          livenessProbe:
-            httpGet:
-              path: /json/version
-              port: 9222
-            periodSeconds: 30
-            failureThreshold: 3
-          env:
-            - name: PORT
-              value: "9222"
-            - name: CONNECTION_TIMEOUT
-              value: "300000"
-            - name: MAX_CONCURRENT_SESSIONS
-              value: "3"
-          resources:
-            requests:
-              memory: "512Mi"
-              cpu: "100m"
-            limits:
-              memory: "1Gi"
-              cpu: "500m"
-          volumeMounts:
-            - name: dshm
-              mountPath: /dev/shm
-          securityContext:
-            allowPrivilegeEscalation: false
       volumes:
         - name: home
           persistentVolumeClaim:
