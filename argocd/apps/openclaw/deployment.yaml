@@ -34,10 +34,12 @@ data:
         "enabled": true,
         "headless": true,
         "noSandbox": true,
-        "defaultProfile": "openclaw",
+        "defaultProfile": "remote",
         "profiles": {
-          "openclaw": {
-            "cdpUrl": "ws://127.0.0.1:9222",
+          "remote": {
+            "cdpUrl": "http://127.0.0.1:9222",
+            "driver": "existing-session",
+            "attachOnly": true,
             "color": "#FF4500"
           }
         }
