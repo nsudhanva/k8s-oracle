@@ -48,7 +48,7 @@ RUN CHROME_PATH=$(find /home/node/.cache/ms-playwright -name chrome -path "*/chr
     ln -sf "$CHROME_PATH" /usr/bin/google-chrome
 
 # Patch Chrome launch timeout from 15s to 60s for ARM64
-RUN sed -i 's/CHROME_LAUNCH_READY_WINDOW_MS=15e3/CHROME_LAUNCH_READY_WINDOW_MS=6e4/g' /app/dist/cdp.helpers-*.js
+RUN sed -i 's/CHROME_LAUNCH_READY_WINDOW_MS = 15e3/CHROME_LAUNCH_READY_WINDOW_MS = 6e4/g' /app/dist/cdp.helpers-*.js
 
 # Custom entrypoint: clean locks then launch OpenClaw
 COPY --chmod=755 entrypoint.sh /usr/local/bin/openclaw-entrypoint.sh
