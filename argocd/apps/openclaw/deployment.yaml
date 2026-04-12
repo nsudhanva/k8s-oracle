@@ -35,7 +35,7 @@ data:
         "attachOnly": true,
         "headless": true,
         "noSandbox": true,
-        "executablePath": "/usr/bin/google-chrome"
+        "executablePath": "/usr/bin/chromium"
       },
       "models": {
         "mode": "merge",
