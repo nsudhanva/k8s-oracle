@@ -3,26 +3,18 @@ FROM ghcr.io/openclaw/openclaw:2026.4.11
 USER root
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    # Chromium browser (Debian package, NOT snap, works on ARM64)
     chromium \
-    # Fonts for browser screenshots
     fonts-noto-color-emoji fonts-noto-cjk \
-    # Media processing
-    ffmpeg \
-    # Utilities needed by skills
-    jq ripgrep socat tmux wget ca-certificates \
-    # Python for uv-based skills
+    ffmpeg jq ripgrep socat tmux wget ca-certificates \
     python3 python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
-# Install GitHub CLI
 RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg && \
     chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg && \
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null && \
     apt-get update && apt-get install -y gh && \
     rm -rf /var/lib/apt/lists/*
 
-# Install steipete CLI tools (verified Linux ARM64 releases)
 ARG TARGETARCH
 RUN set -e && \
     ARCH=$([ "$TARGETARCH" = "arm64" ] && echo "arm64" || echo "amd64") && \
@@ -40,7 +32,12 @@ RUN sed -i \
     -e 's/CHROME_BOOTSTRAP_EXIT_TIMEOUT_MS = 5e3/CHROME_BOOTSTRAP_EXIT_TIMEOUT_MS = 15e3/g' \
     /app/dist/cdp.helpers-Cx11b16A.js
 
-# Custom entrypoint
+# Install Playwright browser using bundled CLI (docs say: avoid npx playwright)
+USER node
+ENV PLAYWRIGHT_BROWSERS_PATH=/home/node/.cache/ms-playwright
+RUN node /app/node_modules/playwright-core/cli.js install chromium
+
+USER root
 COPY --chmod=755 entrypoint.sh /usr/local/bin/openclaw-entrypoint.sh
 USER node
 ENTRYPOINT ["/usr/local/bin/openclaw-entrypoint.sh"]
