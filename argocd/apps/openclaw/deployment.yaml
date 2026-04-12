@@ -343,7 +343,6 @@ spec:
                 - ALL
         - name: chromium
           image: ghcr.io/browserless/chromium:latest
-          args: ["--timeout", "300000"]
           ports:
             - containerPort: 9222
           startupProbe:
