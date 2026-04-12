@@ -31,8 +31,7 @@ data:
         }
       },
       "browser": {
-        "noSandbox": true,
-        "actTimeoutMs": 60000
+        "noSandbox": true
       },
       "models": {
         "mode": "merge",
