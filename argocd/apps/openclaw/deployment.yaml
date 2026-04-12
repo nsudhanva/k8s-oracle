@@ -237,6 +237,16 @@ spec:
         - name: openclaw
           image: ghcr.io/nsudhanva/openclaw:latest
           imagePullPolicy: Always
+          command:
+            - sh
+            - -c
+            - |
+              google-chrome --headless --no-sandbox --disable-gpu --disable-dev-shm-usage \
+                --remote-debugging-port=18800 \
+                --user-data-dir=/home/node/.openclaw/browser/openclaw/user-data \
+                about:blank >/dev/null 2>&1 &
+              sleep 3
+              exec openclaw
           ports:
             - containerPort: 18789
               name: http
