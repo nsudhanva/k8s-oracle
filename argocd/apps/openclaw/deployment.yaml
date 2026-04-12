@@ -31,8 +31,7 @@ data:
         }
       },
       "browser": {
-        "noSandbox": true,
-        "cdpUrl": "http://127.0.0.1:19222"
+        "noSandbox": true
       },
       "models": {
         "mode": "merge",
