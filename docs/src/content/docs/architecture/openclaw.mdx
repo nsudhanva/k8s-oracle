@@ -5,7 +5,7 @@ description: OpenClaw connects messaging platforms like Telegram to Google Gemin
 
 import { Aside } from '@astrojs/starlight/components';
 
-This cluster runs **OpenClaw v2026.4.9**, an open-source AI agent platform that connects messaging channels (Telegram, Discord, etc.) to LLM providers. It uses the **Google Gemini API** for fast, cloud-based inference and a **custom Docker image** with Chromium and CLI tools baked in.
+This cluster runs **OpenClaw v2026.4.11**, an open-source AI agent platform that connects messaging channels (Telegram, Discord, etc.) to LLM providers. It uses the **Google Gemini API** for fast, cloud-based inference and a **custom Docker image** with Chromium and CLI tools baked in.
 
 ## Endpoint
 
@@ -202,7 +202,7 @@ The `/dev/shm` tmpfs mount (256Mi) is required for Chrome. Without it, Chrome cr
 - **Context window** is 131072 (Gemini's native 128K context). No compaction tricks needed unlike local models.
 - **`botToken`** is NOT in the ConfigMap. It's injected by the init container (see below).
 
-### Invalid Config Keys (v2026.4.9)
+### Invalid Config Keys (v2026.4.11)
 
 These keys cause startup crashes - do NOT use them:
 
@@ -215,6 +215,8 @@ These keys cause startup crashes - do NOT use them:
 | `agents.defaults.llm` | Unrecognized |
 | `models.providers.*.timeout` | Unrecognized |
 | `channels.telegram.token` | Unrecognized (use `botToken` or `tokenFile`) |
+| `browser.actTimeoutMs` | Unrecognized |
+| `browser.launchTimeoutMs` | Unrecognized |
 
 ### Environment Variables
 
@@ -225,6 +227,11 @@ These keys cause startup crashes - do NOT use them:
 | `OPENCLAW_CONFIG_DIR` | `/home/node/.openclaw` | Config directory |
 | `GEMINI_API_KEY` | (from secret) | Google Gemini API key |
 | `OPENCLAW_GATEWAY_TOKEN` | (from secret) | Web UI authentication |
+| `TZ` | `America/New_York` | Timezone for date/time operations |
+| `GH_TOKEN` | (from secret, optional) | GitHub CLI authentication |
+| `GOOGLE_PLACES_API_KEY` | (from secret, optional) | Google Places API |
+| `GOG_KEYRING_PASSWORD` | (from secret, optional) | gogcli encrypted keyring |
+| `GOG_KEYRING_BACKEND` | `file` | gogcli keyring backend |
 
 ## Init Container
 
@@ -238,7 +245,7 @@ The init container (`copy-config`) runs before the main OpenClaw process. It use
 4. **Injects Telegram bot token** by reading the mounted secret and writing `botToken` into the JSON config via a `node -e` script
 
 <Aside type="caution" title="Why botToken injection?">
-v2026.4.9 does NOT support `tokenFile` for Telegram (the gateway can't read the file at runtime). The `botToken` field must be set directly in the JSON config. Since we can't put secrets in the ConfigMap (committed to Git), the init container reads from the K8s Secret mount and injects it.
+v2026.4.11 does NOT support `tokenFile` for Telegram (the gateway can't read the file at runtime). The `botToken` field must be set directly in the JSON config. Since we can't put secrets in the ConfigMap (committed to Git), the init container reads from the K8s Secret mount and injects it.
 </Aside>
 
 ## Secrets Management
@@ -273,17 +280,54 @@ gemini_api_key         = "your-google-api-key"   # from Google AI Studio
 
 ## Browser Control
 
-OpenClaw v2026.4.9 launches its own Chrome process via Playwright CDP. It does NOT support connecting to external browsers.
+OpenClaw v2026.4.11 launches its own Chrome process via Playwright CDP. It does NOT support connecting to external browsers.
 
-**Requirements for browser to work:**
+### How Browser Control Works (Remote CDP Mode)
 
-1. Chrome must be installed in the container at a standard path (`/usr/bin/chromium` or `/usr/bin/google-chrome`)
-2. `browser.noSandbox: true` in config (containers don't have sandbox capabilities)
-3. `/dev/shm` must be mounted as tmpfs with sufficient size (256Mi)
-4. Stale Chrome `Singleton*` lock files must be cleaned on startup (init container handles this)
-5. `NODE_OPTIONS=--dns-result-order=ipv4first` to fix IPv6 networking issues
+OpenClaw's default browser launch has a hardcoded 15s timeout that's too short for ARM64. The solution uses **Remote CDP mode** - Chrome runs as a separate process and OpenClaw connects to it as a remote browser.
 
-**How it works:** When the agent needs to browse, it starts Chrome headless on port 18800, connects via CDP, navigates pages, takes screenshots, extracts text, clicks elements, and fills forms.
+**Architecture:**
+1. The custom entrypoint starts Debian `chromium` headless on `127.0.0.1:9222`
+2. `socat` proxies from `podIP:9223` → `127.0.0.1:9222`
+3. The entrypoint patches `openclaw.json` with `cdpUrl: http://podIP:9223`
+4. Since the pod IP is non-loopback, OpenClaw treats it as **Remote CDP** (no local launch)
+5. `browser.ssrfPolicy.dangerouslyAllowPrivateNetwork: true` allows the private IP
+6. K8s `hostAliases` adds `chromium-local` as a hostname alias
+
+**Requirements:**
+- Debian `chromium` package installed in custom Docker image
+- Playwright installed via bundled CLI (`node /app/node_modules/playwright-core/cli.js install chromium`)
+- `/dev/shm` mounted as 1Gi tmpfs
+- `socat` installed for the CDP proxy
+- Chrome timeout patches in `cdp.helpers-Cx11b16A.js` (as backup)
+
+### Logging Into Websites
+
+Three approaches for authenticated browsing:
+
+1. **Tell the bot to log in** - "Go to twitter.com and log in with email X password Y". The agent navigates, types credentials, handles the flow. Session persists until pod restart.
+
+2. **Set cookies directly** - If you have session cookies:
+   ```bash
+   kubectl exec deploy/openclaw -c openclaw -- openclaw browser cookies set session_token VALUE --url "https://site.com"
+   ```
+
+3. **Navigate + manual input** - For 2FA/CAPTCHA, tell the bot to go to the login page, then provide credentials via Telegram messages.
+
+<Aside type="note">
+Chrome's user data is in `/tmp/chrome-data` (emptyDir) which resets on pod restart. Login sessions don't persist across restarts.
+</Aside>
+
+### ClawHub Skills
+
+Installed skills (persisted on PVC at `workspace/skills/`):
+
+| Skill | Version | What it does |
+|-------|---------|-------------|
+| `self-improving-agent` | 3.0.13 | Self-improving agent behaviors |
+| `multi-search-engine` | 2.1.3 | Multi search engine support |
+
+Install more: `kubectl exec deploy/openclaw -c openclaw -- openclaw skills install <name>`
 
 ## Telegram Setup
 
@@ -389,7 +433,7 @@ Common causes:
 - **Telegram polling dead:** Check for `UND_ERR_SOCKET` or `DNS-resolved IP unreachable` errors. Restart the pod.
 - **Invalid bot token:** `kubectl get secret telegram-bot-token -o jsonpath='{.data.telegram-bot-token}' | base64 -d`
 - **Pairing not approved:** `kubectl exec deploy/openclaw -c openclaw -- openclaw pairing approve telegram <CODE>`
-- **v2026.4.9 startup delay:** Telegram polling takes ~30-40s after gateway ready
+- **v2026.4.11 startup delay:** Telegram polling takes ~30-40s after gateway ready
 
 ### Config Invalid Errors
 
