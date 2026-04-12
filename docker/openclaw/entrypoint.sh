@@ -3,7 +3,8 @@ find "${HOME}/.openclaw/browser" -name "Singleton*" -delete 2>/dev/null || true
 
 mkdir -p /tmp/chrome-data
 chromium --headless --no-sandbox --disable-gpu --disable-dev-shm-usage \
-  --remote-debugging-port=9222 --remote-debugging-address=127.0.0.1 \
+  --remote-debugging-port=9222 --remote-debugging-address=0.0.0.0 \
+  --remote-allow-origins=* \
   --user-data-dir=/tmp/chrome-data \
   --no-first-run --no-default-browser-check \
   about:blank >/dev/null 2>&1 &
