@@ -10,7 +10,6 @@ chromium --headless --no-sandbox --disable-gpu --disable-dev-shm-usage \
   --no-first-run --no-default-browser-check \
   about:blank >/dev/null 2>&1 &
 
-# Proxy CDP from pod IP to localhost (Chromium ignores --remote-debugging-address)
 socat TCP-LISTEN:9223,fork,reuseaddr,bind=${POD_IP} TCP:127.0.0.1:9222 &
 
 for i in $(seq 1 30); do
@@ -20,13 +19,16 @@ for i in $(seq 1 30); do
   sleep 1
 done
 
-# Patch cdpUrl with pod IP + proxied port
+# Patch config: set cdpUrl to pod IP and add SSRF policy
 node -e "
 const fs = require('fs');
 const cfg = JSON.parse(fs.readFileSync('${HOME}/.openclaw/openclaw.json'));
-if (cfg.browser && cfg.browser.profiles) {
-  for (const p of Object.values(cfg.browser.profiles)) {
-    if (p.cdpUrl) p.cdpUrl = 'http://${POD_IP}:9223';
+if (cfg.browser) {
+  cfg.browser.ssrfPolicy = { dangerouslyAllowPrivateNetwork: true };
+  if (cfg.browser.profiles) {
+    for (const p of Object.values(cfg.browser.profiles)) {
+      if (p.cdpUrl) p.cdpUrl = 'http://${POD_IP}:9223';
+    }
   }
 }
 fs.writeFileSync('${HOME}/.openclaw/openclaw.json', JSON.stringify(cfg, null, 2));
