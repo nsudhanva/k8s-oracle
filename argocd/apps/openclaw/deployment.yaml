@@ -31,8 +31,7 @@ data:
         }
       },
       "browser": {
-        "noSandbox": true,
-        "attachOnly": true
+        "noSandbox": true
       },
       "models": {
         "mode": "merge",
@@ -337,7 +336,7 @@ spec:
         - name: dshm
           emptyDir:
             medium: Memory
-            sizeLimit: 256Mi
+            sizeLimit: 1Gi
         - name: config
           configMap:
             name: openclaw-config
