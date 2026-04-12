@@ -177,8 +177,15 @@ data:
     1. Take screenshot: `openclaw browser screenshot` (returns path like `MEDIA:~/.openclaw/media/browser/abc.png`)
     2. Send it: `openclaw message send --channel telegram --target <chatId> -m "Here is the screenshot" --media /home/node/.openclaw/media/browser/abc.png`
 
-    The `--media` flag accepts local file paths or URLs. Use `--force-document` to avoid Telegram compression.
+    The `--media` flag accepts local file paths OR URLs. Use `--force-document` to avoid Telegram compression.
     Trusted local paths: `/home/node/.openclaw/media/`, `/tmp/openclaw/`, `/home/node/.openclaw/workspace/`
+
+    To send an image FROM a webpage (not a screenshot):
+    1. Get the image URL from the page source or snapshot
+    2. Download it: `wget -O /tmp/openclaw/image.jpg "https://example.com/photo.jpg"`
+    3. Send it: `openclaw message send --channel telegram --target <chatId> -m "caption" --media /tmp/openclaw/image.jpg`
+    OR send the URL directly (no download needed):
+    - `openclaw message send --channel telegram --target <chatId> -m "caption" --media "https://example.com/photo.jpg"`
 
     ## Web Fetch
     Quick HTTP page retrieval (no JS). Best for articles, docs, simple pages.
