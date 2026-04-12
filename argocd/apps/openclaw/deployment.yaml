@@ -33,17 +33,17 @@ data:
       "browser": {
         "noSandbox": true,
         "attachOnly": true,
-        "cdpUrl": "ws://127.0.0.1:9222",
+        "cdpUrl": "ws://127.0.0.1:9222/chromium",
         "remoteCdpTimeoutMs": 10000,
         "remoteCdpHandshakeTimeoutMs": 10000,
         "profiles": {
           "default": {
-            "cdpUrl": "ws://127.0.0.1:9222",
+            "cdpUrl": "ws://127.0.0.1:9222/chromium",
             "attachOnly": true,
             "color": "#4285F4"
           },
           "openclaw": {
-            "cdpUrl": "ws://127.0.0.1:9222",
+            "cdpUrl": "ws://127.0.0.1:9222/chromium",
             "attachOnly": true,
             "color": "#FF4500"
           }
