@@ -194,6 +194,10 @@ spec:
       labels:
         app: openclaw
     spec:
+      hostAliases:
+        - ip: "127.0.0.1"
+          hostnames:
+            - "chromium-local"
       securityContext:
         fsGroup: 1000
         runAsUser: 1000

@@ -1,10 +1,6 @@
 #!/bin/sh
 find "${HOME}/.openclaw/browser" -name "Singleton*" -delete 2>/dev/null || true
 
-# Add hostname alias so OpenClaw treats Chrome as a remote CDP endpoint
-# (OpenClaw auto-launches Chrome when cdpUrl points to 127.0.0.1/localhost)
-echo "127.0.0.1 chromium-local" >> /etc/hosts 2>/dev/null || true
-
 mkdir -p /tmp/chrome-data
 chromium --headless --no-sandbox --disable-gpu --disable-dev-shm-usage \
   --remote-debugging-port=9222 --remote-debugging-address=127.0.0.1 \
