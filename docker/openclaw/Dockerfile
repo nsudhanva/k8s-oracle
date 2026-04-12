@@ -29,17 +29,11 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | d
 ARG TARGETARCH
 RUN set -e && \
     ARCH=$([ "$TARGETARCH" = "arm64" ] && echo "arm64" || echo "amd64") && \
-    # gogcli - Google Workspace (Gmail, Calendar, Drive, Docs, Sheets, Contacts)
     curl -fsSL "https://github.com/steipete/gogcli/releases/latest/download/gogcli_0.12.0_linux_${ARCH}.tar.gz" | tar -xz -C /usr/local/bin && \
-    # goplaces - Google Places/Maps (search, nearby, directions)
     curl -fsSL "https://github.com/steipete/goplaces/releases/latest/download/goplaces_0.3.0_linux_${ARCH}.tar.gz" | tar -xz -C /usr/local/bin && \
-    # spogo - Spotify terminal interface
     curl -fsSL "https://github.com/steipete/spogo/releases/latest/download/spogo_0.2.0_linux_${ARCH}.tar.gz" | tar -xz -C /usr/local/bin && \
-    # discrawl - Discord mirror and search
     curl -fsSL "https://github.com/steipete/discrawl/releases/latest/download/discrawl_0.2.0_linux_${ARCH}.tar.gz" | tar -xz -C /usr/local/bin && \
-    # camsnap - RTSP/ONVIF camera snapshots
     curl -fsSL "https://github.com/steipete/camsnap/releases/latest/download/camsnap_0.2.0_linux_${ARCH}.tar.gz" | tar -xz -C /usr/local/bin && \
-    # ordercli - Food delivery order tracking
     curl -fsSL "https://github.com/steipete/ordercli/releases/latest/download/ordercli_0.1.0_linux_${ARCH}.tar.gz" | tar -xz -C /usr/local/bin
 
 USER node
@@ -52,4 +46,8 @@ USER root
 RUN CHROME_PATH=$(find /home/node/.cache/ms-playwright -name chrome -path "*/chrome-linux/chrome" | head -1) && \
     ln -sf "$CHROME_PATH" /usr/bin/chromium && \
     ln -sf "$CHROME_PATH" /usr/bin/google-chrome
+
+# Custom entrypoint: pre-start Chrome then launch OpenClaw
+COPY --chmod=755 entrypoint.sh /usr/local/bin/openclaw-entrypoint.sh
 USER node
+ENTRYPOINT ["/usr/local/bin/openclaw-entrypoint.sh"]
