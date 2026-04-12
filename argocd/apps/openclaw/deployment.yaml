@@ -31,7 +31,11 @@ data:
         }
       },
       "browser": {
-        "noSandbox": true
+        "enabled": true,
+        "attachOnly": true,
+        "headless": true,
+        "noSandbox": true,
+        "executablePath": "/usr/bin/google-chrome"
       },
       "models": {
         "mode": "merge",
