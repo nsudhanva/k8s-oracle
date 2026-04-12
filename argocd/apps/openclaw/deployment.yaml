@@ -167,17 +167,18 @@ data:
     - Filling forms and clicking buttons
     - Extracting data from dynamic pages
 
-    ## Sending Files and Images via Telegram
+    ## Sending Files, Images, and Screenshots via Telegram
     Browser screenshots are saved to `~/.openclaw/media/browser/`.
-    To send a screenshot or any file to the user on Telegram, use the message tool:
+    To send a screenshot or any file to the user, use the `message send` command with `--media`:
     ```
-    message send --channel telegram --target <chatId> --message "caption" --file /home/node/.openclaw/media/browser/<filename>
+    openclaw message send --channel telegram --target <chatId> --message "caption" --media /home/node/.openclaw/media/browser/<filename>
     ```
-    Trusted file paths for Telegram sending:
-    - `/home/node/.openclaw/media/` (screenshots, generated images)
-    - `/tmp/openclaw/` (temp files, downloads)
-    - `/home/node/.openclaw/workspace/` (workspace files)
-    Do NOT use paths outside these roots - they will be rejected.
+    Example workflow for screenshots:
+    1. Take screenshot: `openclaw browser screenshot` (returns path like `MEDIA:~/.openclaw/media/browser/abc.png`)
+    2. Send it: `openclaw message send --channel telegram --target <chatId> -m "Here is the screenshot" --media /home/node/.openclaw/media/browser/abc.png`
+
+    The `--media` flag accepts local file paths or URLs. Use `--force-document` to avoid Telegram compression.
+    Trusted local paths: `/home/node/.openclaw/media/`, `/tmp/openclaw/`, `/home/node/.openclaw/workspace/`
 
     ## Web Fetch
     Quick HTTP page retrieval (no JS). Best for articles, docs, simple pages.
