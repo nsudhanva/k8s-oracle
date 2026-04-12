@@ -37,9 +37,7 @@ data:
         "defaultProfile": "remote",
         "profiles": {
           "remote": {
-            "cdpUrl": "http://127.0.0.1:9222",
-            "driver": "existing-session",
-            "attachOnly": true,
+            "cdpUrl": "http://chromium-local:9222",
             "color": "#FF4500"
           }
         }
