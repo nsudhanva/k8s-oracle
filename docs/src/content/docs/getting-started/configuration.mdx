@@ -38,6 +38,10 @@ gemma_api_key = "secure-random-key" # API key for Gemma LLM authentication (unus
 openclaw_gateway_token = "random-hex-string"  # openssl rand -hex 32
 telegram_bot_token     = "your-botfather-token"
 gemini_api_key         = "your-google-api-key" # Google Gemini API key for OpenClaw
+
+google_places_api_key = "your-google-places-key" # Google Places API (optional)
+discord_bot_token     = "your-discord-bot-token" # Discord bot token (optional)
+gog_keyring_password  = "your-keyring-password"  # gogcli keyring encryption (optional)
 ```
 
 ## Variable Reference
@@ -65,6 +69,9 @@ gemini_api_key         = "your-google-api-key" # Google Gemini API key for OpenC
 | `gemini_api_key` | Google Gemini API key for OpenClaw | Yes |
 | `openclaw_gateway_token` | OpenClaw web UI auth token | Yes |
 | `telegram_bot_token` | Telegram bot token from BotFather | Yes |
+| `google_places_api_key` | Google Places API key (optional) | Yes |
+| `discord_bot_token` | Discord bot token (optional) | Yes |
+| `gog_keyring_password` | gogcli keyring encryption password (optional) | Yes |
 
 :::note
   OCI authentication variables are not stored in Vault since they're needed to access Vault. Keep them in a password manager.
