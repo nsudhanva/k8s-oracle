@@ -246,7 +246,7 @@ spec:
                 --user-data-dir=/home/node/.openclaw/browser/openclaw/user-data \
                 about:blank >/dev/null 2>&1 &
               sleep 3
-              exec openclaw
+              exec docker-entrypoint.sh
           ports:
             - containerPort: 18789
               name: http
