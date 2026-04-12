@@ -32,10 +32,15 @@ data:
       },
       "browser": {
         "enabled": true,
-        "attachOnly": true,
         "headless": true,
         "noSandbox": true,
-        "executablePath": "/usr/bin/chromium"
+        "defaultProfile": "openclaw",
+        "profiles": {
+          "openclaw": {
+            "cdpUrl": "ws://127.0.0.1:9222",
+            "color": "#FF4500"
+          }
+        }
       },
       "models": {
         "mode": "merge",
