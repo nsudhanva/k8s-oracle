@@ -32,7 +32,7 @@ data:
       },
       "browser": {
         "enabled": true,
-        "headless": true,
+        "headless": false,
         "noSandbox": true,
         "defaultProfile": "remote",
         "ssrfPolicy": {

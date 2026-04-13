@@ -30,6 +30,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     fonts-noto-color-emoji fonts-noto-cjk \
     ffmpeg jq ripgrep socat tmux wget ca-certificates \
     python3 python3-pip \
+    xvfb xauth dbus dbus-x11 \
     && rm -rf /var/lib/apt/lists/*
 
 # GitHub CLI - for gh skill (PR reviews, issue management, repo operations)
