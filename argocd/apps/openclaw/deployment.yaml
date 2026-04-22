@@ -124,32 +124,28 @@ data:
     All tools below are pre-authenticated and ready to use. Do NOT run any auth/login commands.
 
     ## Google Workspace CLI (gws)
-    Pre-authenticated via GOOGLE_WORKSPACE_CLI_CREDENTIALS_FILE.
-    Covers ALL Google Workspace APIs dynamically. See: https://github.com/googleworkspace/cli
+    Pre-authenticated via credentials at /home/node/.config/gws/credentials.json.
+    GOOGLE_WORKSPACE_CLI_KEYRING_BACKEND=file is set.
+    Covers ALL Google Workspace APIs. See: https://github.com/googleworkspace/cli
 
-    Helper commands (use `+verb` shortcuts for common tasks):
+    gws uses `--params JSON` for API parameters. Use `gws <service> --help` to discover resources.
+
     | Command | What it does |
     |---------|-------------|
-    | `gws +send --to X --subject Y --body Z` | Send email |
-    | `gws +reply --message-id X --body Z` | Reply to email |
-    | `gws gmail users.messages list --user-id me` | List emails |
-    | `gws +agenda` | Show calendar agenda (timezone-aware) |
-    | `gws +insert --summary X --start Y --end Z` | Create calendar event |
-    | `gws calendar events list --calendar-id primary` | List events |
+    | `gws gmail users messages list --params '{"userId":"me","maxResults":5}'` | List emails |
+    | `gws gmail users messages get --params '{"userId":"me","id":"MSG_ID"}'` | Read email |
+    | `gws gmail users messages send --params '{"userId":"me"}' --json '{"raw":"BASE64"}'` | Send email |
+    | `gws calendar events list --params '{"calendarId":"primary"}'` | List events |
+    | `gws calendar events insert --params '{"calendarId":"primary"}' --json '{"summary":"X","start":{"dateTime":"Y"},"end":{"dateTime":"Z"}}'` | Create event |
     | `gws drive files list` | List Drive files |
-    | `gws +upload ./file.pdf` | Upload to Drive |
-    | `gws docs documents get --document-id X` | Read a Google Doc |
-    | `gws +write --document-id X --text "content"` | Write to a Doc |
-    | `gws sheets spreadsheets.values get --spreadsheet-id X --range A1:Z` | Read spreadsheet |
-    | `gws +append --spreadsheet-id X --range A1 --values '[["a","b"]]'` | Append to sheet |
-    | `gws +read --spreadsheet-id X --range A1:Z` | Read sheet |
-    | `gws tasks tasks list --tasklist @default` | List tasks |
-    | `gws +standup-report` | Generate standup report |
-    | `gws +meeting-prep` | Prepare for next meeting |
-    | `gws +weekly-digest` | Weekly email/calendar digest |
-    | `gws schema <service>.<resource>.<method>` | Introspect any API |
+    | `gws drive files get --params '{"fileId":"ID"}'` | Get file metadata |
+    | `gws docs documents get --params '{"documentId":"ID"}'` | Read Google Doc |
+    | `gws sheets spreadsheets values get --params '{"spreadsheetId":"ID","range":"A1:Z"}'` | Read sheet |
+    | `gws tasks tasks list --params '{"tasklist":"@default"}'` | List tasks |
+    | `gws people people connections list --params '{"resourceName":"people/me","personFields":"names,emailAddresses"}'` | List contacts |
 
-    Use `gws --help` to discover all services. Use `gws schema` to introspect any API.
+    Available services: gmail, calendar, drive, docs, sheets, slides, tasks, people, chat, forms, keep, meet, events, classroom.
+    Discover any API: `gws <service> --help` or `gws schema <service>`.
 
     ## GitHub CLI (gh)
     Account: `nsudhanva`. Authenticated via GH_TOKEN.
