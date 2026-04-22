@@ -41,18 +41,14 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | d
     apt-get update && apt-get install -y gh && \
     rm -rf /var/lib/apt/lists/*
 
-# steipete CLI tools - verified Linux ARM64 releases from GitHub
-# These enable OpenClaw skills when the binary is on PATH:
-# - gogcli (gog): Google Workspace - Gmail, Calendar, Drive, Docs, Sheets, Contacts
-# - goplaces: Google Places/Maps API - search, nearby, directions
-# - spogo: Spotify terminal interface
-# - discrawl: Discord mirror and search
-# - camsnap: RTSP/ONVIF camera snapshots
-# - ordercli: Food delivery order tracking
+# Google Workspace CLI (gws) - replaces gogcli
+# Official Google tool covering ALL Workspace APIs dynamically
+# https://github.com/googleworkspace/cli
 ARG TARGETARCH
 RUN set -e && \
+    GWS_ARCH=$([ "$TARGETARCH" = "arm64" ] && echo "aarch64" || echo "x86_64") && \
+    curl -fsSL "https://github.com/googleworkspace/cli/releases/latest/download/google-workspace-cli-${GWS_ARCH}-unknown-linux-gnu.tar.gz" | tar -xz -C /usr/local/bin && \
     ARCH=$([ "$TARGETARCH" = "arm64" ] && echo "arm64" || echo "amd64") && \
-    curl -fsSL "https://github.com/steipete/gogcli/releases/latest/download/gogcli_0.12.0_linux_${ARCH}.tar.gz" | tar -xz -C /usr/local/bin && \
     curl -fsSL "https://github.com/steipete/goplaces/releases/latest/download/goplaces_0.3.0_linux_${ARCH}.tar.gz" | tar -xz -C /usr/local/bin && \
     curl -fsSL "https://github.com/steipete/spogo/releases/latest/download/spogo_0.2.0_linux_${ARCH}.tar.gz" | tar -xz -C /usr/local/bin && \
     curl -fsSL "https://github.com/steipete/discrawl/releases/latest/download/discrawl_0.2.0_linux_${ARCH}.tar.gz" | tar -xz -C /usr/local/bin && \
