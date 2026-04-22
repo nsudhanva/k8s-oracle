@@ -57,7 +57,7 @@ RUN set -e && \
     ARCH=$([ "$TARGETARCH" = "arm64" ] && echo "arm64" || echo "amd64") && \
     curl -fsSL "https://github.com/steipete/goplaces/releases/latest/download/goplaces_0.3.0_linux_${ARCH}.tar.gz" | tar -xz -C /usr/local/bin && \
     curl -fsSL "https://github.com/steipete/spogo/releases/latest/download/spogo_0.2.0_linux_${ARCH}.tar.gz" | tar -xz -C /usr/local/bin && \
-    curl -fsSL "https://github.com/steipete/discrawl/releases/latest/download/discrawl_0.3.0_linux_${ARCH}.tar.gz" | tar -xz -C /usr/local/bin && \
+    curl -fsSL "https://github.com/steipete/discrawl/releases/latest/download/discrawl_0.4.1_linux_${ARCH}.tar.gz" | tar -xz -C /usr/local/bin && \
     curl -fsSL "https://github.com/steipete/camsnap/releases/latest/download/camsnap_0.2.0_linux_${ARCH}.tar.gz" | tar -xz -C /usr/local/bin && \
     curl -fsSL "https://github.com/steipete/ordercli/releases/latest/download/ordercli_0.1.0_linux_${ARCH}.tar.gz" | tar -xz -C /usr/local/bin
 
