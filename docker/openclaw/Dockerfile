@@ -33,11 +33,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     xvfb xauth dbus dbus-x11 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install uv (fast Python package manager) globally + Python 3.14
+# Install uv globally, then Python 3.14 as node user (so it's accessible at runtime)
 ENV UV_INSTALL_DIR="/usr/local/bin"
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
-    uv python install 3.14 && \
-    ln -sf $(uv python find 3.14) /usr/local/bin/python3.14
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # GitHub CLI - for gh skill (PR reviews, issue management, repo operations)
 # Installed from GitHub's official apt repo
@@ -87,6 +85,10 @@ RUN sed -i \
 # Docs say: use bundled CLI (node /app/node_modules/...) NOT npx playwright
 # See: https://docs.openclaw.ai/tools/browser → Docker section
 USER node
+
+# Install Python 3.14 as node user (so it's accessible at runtime)
+RUN uv python install 3.14
+
 ENV PLAYWRIGHT_BROWSERS_PATH=/home/node/.cache/ms-playwright
 RUN node /app/node_modules/playwright-core/cli.js install chromium
 
