@@ -211,26 +211,57 @@ data:
     OR send the URL directly (no download needed):
     - `openclaw message send --channel telegram --target <chatId> -m "caption" --media "https://example.com/photo.jpg"`
 
-    ## Sending Email with Attachments
-    To email a screenshot or file as an attachment:
-    1. Take screenshot: `openclaw browser screenshot` (saves to ~/.openclaw/media/browser/abc.png)
-    2. Build MIME email with Python:
+    ## Emailing Files/Screenshots
+
+    ### Option A: Email with file attachment (use send_email.py helper)
     ```
-    python3 -c "
-    import base64, email.mime.multipart, email.mime.text, email.mime.image, json
-    msg = email.mime.multipart.MIMEMultipart()
-    msg['To'] = 'recipient@example.com'
-    msg['Subject'] = 'Screenshot'
-    msg.attach(email.mime.text.MIMEText('See attached screenshot.'))
-    with open('/home/node/.openclaw/media/browser/abc.png', 'rb') as f:
-        img = email.mime.image.MIMEImage(f.read(), name='screenshot.png')
-        img.add_header('Content-Disposition', 'attachment', filename='screenshot.png')
-        msg.attach(img)
+    python3 /tmp/openclaw/send_email.py \
+      --to "recipient@example.com" \
+      --subject "Screenshots" \
+      --body "Here are the screenshots" \
+      --attach /home/node/.openclaw/media/browser/abc.png \
+      --attach /home/node/.openclaw/media/browser/def.png
+    ```
+    The helper script builds the MIME message and sends via gws. Create it first:
+    ```
+    cat > /tmp/openclaw/send_email.py << 'PYEOF'
+    import argparse, base64, json, os, subprocess, mimetypes
+    from email.mime.multipart import MIMEMultipart
+    from email.mime.text import MIMEText
+    from email.mime.base import MIMEBase
+    from email import encoders
+    p = argparse.ArgumentParser()
+    p.add_argument('--to', required=True)
+    p.add_argument('--subject', required=True)
+    p.add_argument('--body', default='')
+    p.add_argument('--attach', action='append', default=[])
+    a = p.parse_args()
+    msg = MIMEMultipart()
+    msg['To'], msg['Subject'] = a.to, a.subject
+    msg.attach(MIMEText(a.body))
+    for f in a.attach:
+        mime = mimetypes.guess_type(f)[0] or 'application/octet-stream'
+        main, sub = mime.split('/')
+        part = MIMEBase(main, sub)
+        with open(f, 'rb') as fh: part.set_payload(fh.read())
+        encoders.encode_base64(part)
+        part.add_header('Content-Disposition', 'attachment', filename=os.path.basename(f))
+        msg.attach(part)
     raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
-    print(json.dumps({'raw': raw}))
-    " > /tmp/openclaw/email.json
+    with open('/tmp/openclaw/email.json', 'w') as out: json.dump({'raw': raw}, out)
+    r = subprocess.run(['gws', 'gmail', 'users', 'messages', 'send', '--params', '{"userId":"me"}', '--json', json.dumps({'raw': raw})],
+        capture_output=True, text=True, env={**os.environ, 'GOOGLE_WORKSPACE_CLI_KEYRING_BACKEND': 'file'})
+    print(r.stdout or r.stderr)
+    PYEOF
     ```
-    3. Send: `gws gmail users messages send --params '{"userId":"me"}' --json "$(cat /tmp/openclaw/email.json)"`
+    Create this script ONCE, then reuse for all emails with attachments.
+
+    ### Option B: Upload to Drive + share link in email (simpler)
+    1. Copy file: `cp ~/.openclaw/media/browser/abc.png /tmp/openclaw/`
+    2. Upload: `cd /tmp/openclaw && gws drive files create --json '{"name":"screenshot.png"}' --upload ./screenshot.png`
+    3. Make public: `gws drive permissions create --params '{"fileId":"FILE_ID"}' --json '{"role":"reader","type":"anyone"}'`
+    4. Get link: `gws drive files get --params '{"fileId":"FILE_ID","fields":"webViewLink"}'`
+    5. Send email with link in body using the python3 base64 one-liner or the send_email.py script above (without --attach)
 
     ## Upload to Google Drive and Share Link
     Upload files to Drive and get a shareable link:
