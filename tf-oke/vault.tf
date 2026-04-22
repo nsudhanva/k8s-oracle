@@ -215,6 +215,19 @@ resource "oci_vault_secret" "discord_bot_token" {
   }
 }
 
+resource "oci_vault_secret" "alphavantage_api_key" {
+  count          = var.alphavantage_api_key != "" ? 1 : 0
+  compartment_id = var.compartment_ocid
+  vault_id       = oci_kms_vault.oke_vault.id
+  key_id         = oci_kms_key.master_key.id
+  secret_name    = "alphavantage-api-key"
+
+  secret_content {
+    content_type = "BASE64"
+    content      = base64encode(var.alphavantage_api_key)
+  }
+}
+
 resource "oci_vault_secret" "gog_keyring_password" {
   count          = var.gog_keyring_password != "" ? 1 : 0
   compartment_id = var.compartment_ocid
