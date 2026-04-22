@@ -215,6 +215,32 @@ resource "oci_vault_secret" "discord_bot_token" {
   }
 }
 
+resource "oci_vault_secret" "bw_client_id" {
+  count          = var.bw_client_id != "" ? 1 : 0
+  compartment_id = var.compartment_ocid
+  vault_id       = oci_kms_vault.oke_vault.id
+  key_id         = oci_kms_key.master_key.id
+  secret_name    = "bw-client-id"
+
+  secret_content {
+    content_type = "BASE64"
+    content      = base64encode(var.bw_client_id)
+  }
+}
+
+resource "oci_vault_secret" "bw_client_secret" {
+  count          = var.bw_client_secret != "" ? 1 : 0
+  compartment_id = var.compartment_ocid
+  vault_id       = oci_kms_vault.oke_vault.id
+  key_id         = oci_kms_key.master_key.id
+  secret_name    = "bw-client-secret"
+
+  secret_content {
+    content_type = "BASE64"
+    content      = base64encode(var.bw_client_secret)
+  }
+}
+
 resource "oci_vault_secret" "alphavantage_api_key" {
   count          = var.alphavantage_api_key != "" ? 1 : 0
   compartment_id = var.compartment_ocid

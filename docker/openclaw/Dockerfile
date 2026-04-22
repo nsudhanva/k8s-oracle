@@ -37,6 +37,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 ENV UV_INSTALL_DIR="/usr/local/bin"
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
+# Bitwarden CLI - password manager access
+RUN npm install -g @bitwarden/cli
+
 # GitHub CLI - for gh skill (PR reviews, issue management, repo operations)
 # Installed from GitHub's official apt repo
 RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg && \
