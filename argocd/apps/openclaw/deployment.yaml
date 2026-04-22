@@ -68,7 +68,16 @@ data:
           "model": {
             "primary": "google/gemini-3.1-flash-lite-preview"
           },
-          "timeoutSeconds": 300
+          "timeoutSeconds": 300,
+          "compaction": {
+            "mode": "safeguard",
+            "reserveTokensFloor": 24000
+          },
+          "contextLimits": {
+            "toolResultMaxChars": 12000
+          },
+          "bootstrapMaxChars": 10000,
+          "bootstrapTotalMaxChars": 40000
         }
       },
       "channels": {
@@ -82,7 +91,12 @@ data:
         "dmScope": "per-peer",
         "reset": {
           "mode": "idle",
-          "idleMinutes": 120
+          "idleMinutes": 30
+        },
+        "maintenance": {
+          "mode": "enforce",
+          "pruneAfter": "7d",
+          "maxEntries": 100
         }
       },
       "plugins": {
