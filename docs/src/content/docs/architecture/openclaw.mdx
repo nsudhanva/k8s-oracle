@@ -5,7 +5,7 @@ description: OpenClaw connects messaging platforms like Telegram to Google Gemin
 
 import { Aside } from '@astrojs/starlight/components';
 
-This cluster runs **OpenClaw v2026.4.11**, an open-source AI agent platform that connects messaging channels (Telegram, Discord, etc.) to LLM providers. It uses the **Google Gemini API** for fast, cloud-based inference and a **custom Docker image** with Chromium and CLI tools baked in.
+This cluster runs **OpenClaw v2026.4.15**, an open-source AI agent platform that connects messaging channels (Telegram, Discord, etc.) to LLM providers. It uses the **Google Gemini API** for fast, cloud-based inference and a **custom Docker image** with Chromium and CLI tools baked in.
 
 ## Endpoint
 
@@ -85,7 +85,7 @@ The standard OpenClaw image lacks Chromium and system dependencies. A custom ima
 |----------|---------------|
 | **Browser** | Chromium via Playwright + all system libs (libnss3, libatk, libgbm, etc.) + Xvfb |
 | **Fonts** | Noto Color Emoji, Noto CJK (for browser screenshots) |
-| **Google Tools** | `gogcli` (Gmail, Calendar, Drive, Docs, Sheets, Contacts), `goplaces` (Google Maps/Places) |
+| **Google Tools** | `gws` (Google Workspace CLI - Gmail, Calendar, Drive, Docs, Sheets, Tasks, Chat, etc.), `goplaces` (Google Maps/Places) |
 | **Media** | `ffmpeg` (audio/video processing) |
 | **Dev Tools** | `gh` (GitHub CLI), `jq`, `ripgrep`, `tmux`, `python3` |
 | **Other CLIs** | `spogo` (Spotify), `discrawl` (Discord), `camsnap` (RTSP cameras), `ordercli` (food delivery) |
@@ -221,7 +221,7 @@ The `/dev/shm` tmpfs mount (1Gi) is required for Chrome. Without it, Chrome cras
 - **Context window** is 131072 (Gemini's native 128K context). No compaction tricks needed unlike local models.
 - **`botToken`** is NOT in the ConfigMap. It's injected by the init container (see below).
 
-### Invalid Config Keys (v2026.4.11)
+### Invalid Config Keys (v2026.4.15)
 
 These keys cause startup crashes - do NOT use them:
 
@@ -249,9 +249,8 @@ These keys cause startup crashes - do NOT use them:
 | `TZ` | `America/New_York` | Timezone for date/time operations |
 | `GH_TOKEN` | (from secret, optional) | GitHub CLI authentication |
 | `GOOGLE_PLACES_API_KEY` | (from secret, optional) | Google Places API |
-| `GOG_KEYRING_PASSWORD` | (from secret, optional) | gogcli encrypted keyring |
 | `DISCORD_BOT_TOKEN` | (from secret, optional) | Discord bot authentication |
-| `GOG_KEYRING_BACKEND` | `file` | gogcli keyring backend |
+| `GOOGLE_WORKSPACE_CLI_KEYRING_BACKEND` | `file` | gws credential storage backend |
 
 ## Init Container
 
@@ -265,7 +264,7 @@ The init container (`copy-config`) runs before the main OpenClaw process. It use
 4. **Injects Telegram bot token** by reading the mounted secret and writing `botToken` into the JSON config via a `node -e` script
 
 <Aside type="caution" title="Why botToken injection?">
-v2026.4.11 does NOT support `tokenFile` for Telegram (the gateway can't read the file at runtime). The `botToken` field must be set directly in the JSON config. Since we can't put secrets in the ConfigMap (committed to Git), the init container reads from the K8s Secret mount and injects it.
+v2026.4.15 does NOT support `tokenFile` for Telegram (the gateway can't read the file at runtime). The `botToken` field must be set directly in the JSON config. Since we can't put secrets in the ConfigMap (committed to Git), the init container reads from the K8s Secret mount and injects it.
 </Aside>
 
 ## Secrets Management
@@ -279,7 +278,6 @@ Three secrets are managed via Terraform and synced by External Secrets Operator:
 | `gemini-api-key` | `gemini-api-key` | `api-key` | Google Gemini API key |
 | `google-places-api-key` | `google-places-api-key` | `api-key` | Google Places API |
 | `discord-bot-token` | `discord-bot-token` | `token` | Discord bot (optional) |
-| `gog-keyring-password` | `gog-keyring-password` | `password` | gogcli keyring encryption |
 | `github-pat` | `github-pat` | `github-pat` | GitHub CLI |
 
 ### Terraform Variables
@@ -304,7 +302,7 @@ gemini_api_key         = "your-google-api-key"   # from Google AI Studio
 
 ## Browser Control
 
-OpenClaw v2026.4.11 launches its own Chrome process via Playwright CDP. It does NOT support connecting to external browsers.
+OpenClaw v2026.4.15 launches its own Chrome process via Playwright CDP. It does NOT support connecting to external browsers.
 
 ### How Browser Control Works (Remote CDP Mode)
 
@@ -457,7 +455,7 @@ Common causes:
 - **Telegram polling dead:** Check for `UND_ERR_SOCKET` or `DNS-resolved IP unreachable` errors. Restart the pod.
 - **Invalid bot token:** `kubectl get secret telegram-bot-token -o jsonpath='{.data.telegram-bot-token}' | base64 -d`
 - **Pairing not approved:** `kubectl exec deploy/openclaw -c openclaw -- openclaw pairing approve telegram <CODE>`
-- **v2026.4.11 startup delay:** Telegram polling takes ~30-40s after gateway ready
+- **v2026.4.15 startup delay:** Telegram polling takes ~30-40s after gateway ready
 
 ### Config Invalid Errors
 
