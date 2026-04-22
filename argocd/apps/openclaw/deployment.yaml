@@ -211,17 +211,17 @@ data:
     OR send the URL directly (no download needed):
     - `openclaw message send --channel telegram --target <chatId> -m "caption" --media "https://example.com/photo.jpg"`
 
-    ## Sending Email with Attachments (Screenshot -> Email)
+    ## Sending Email with Attachments
     To email a screenshot or file as an attachment:
-    1. Take the screenshot: `openclaw browser screenshot` (saves to ~/.openclaw/media/browser/abc.png)
-    2. Create a MIME email with attachment using Python:
+    1. Take screenshot: `openclaw browser screenshot` (saves to ~/.openclaw/media/browser/abc.png)
+    2. Build MIME email with Python:
     ```
     python3 -c "
     import base64, email.mime.multipart, email.mime.text, email.mime.image, json
     msg = email.mime.multipart.MIMEMultipart()
     msg['To'] = 'recipient@example.com'
     msg['Subject'] = 'Screenshot'
-    msg.attach(email.mime.text.MIMEText('Please see the attached screenshot.'))
+    msg.attach(email.mime.text.MIMEText('See attached screenshot.'))
     with open('/home/node/.openclaw/media/browser/abc.png', 'rb') as f:
         img = email.mime.image.MIMEImage(f.read(), name='screenshot.png')
         img.add_header('Content-Disposition', 'attachment', filename='screenshot.png')
@@ -230,7 +230,26 @@ data:
     print(json.dumps({'raw': raw}))
     " > /tmp/openclaw/email.json
     ```
-    3. Send via gws: `gws gmail users messages send --params '{"userId":"me"}' --json "$(cat /tmp/openclaw/email.json)"`
+    3. Send: `gws gmail users messages send --params '{"userId":"me"}' --json "$(cat /tmp/openclaw/email.json)"`
+
+    ## Upload to Google Drive and Share Link
+    Upload files to Drive and get a shareable link:
+    1. IMPORTANT: `cd /tmp/openclaw` first (gws restricts uploads to CWD for security)
+    2. Upload: `cd /tmp/openclaw && gws drive files create --json '{"name":"file.png"}' --upload ./file.png`
+    3. Get link: `gws drive files get --params '{"fileId":"FILE_ID","fields":"id,name,webViewLink"}'`
+    4. The `webViewLink` is the shareable Google Drive URL.
+    To make it publicly accessible:
+    `gws drive permissions create --params '{"fileId":"FILE_ID"}' --json '{"role":"reader","type":"anyone"}'`
+
+    ## Create Google Meet Meeting
+    Create a calendar event with a Google Meet link:
+    ```
+    gws calendar events insert \
+      --params '{"calendarId":"primary","conferenceDataVersion":1}' \
+      --json '{"summary":"Meeting Title","start":{"dateTime":"2026-04-22T10:00:00-04:00"},"end":{"dateTime":"2026-04-22T10:30:00-04:00"},"attendees":[{"email":"person@example.com"}],"conferenceData":{"createRequest":{"requestId":"unique-id-123","conferenceSolutionKey":{"type":"hangoutsMeet"}}}}'
+    ```
+    The response includes `hangoutLink` (the Meet URL) and `htmlLink` (the calendar event URL).
+    Always use `conferenceDataVersion: 1` in params and a unique `requestId` per meeting.
 
     ## Web Fetch
     Quick HTTP page retrieval (no JS). Best for articles, docs, simple pages.
