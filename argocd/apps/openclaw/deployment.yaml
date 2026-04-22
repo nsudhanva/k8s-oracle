@@ -439,6 +439,14 @@ spec:
                   optional: true
             - name: GOOGLE_WORKSPACE_CLI_KEYRING_BACKEND
               value: "file"
+            - name: ALPHAVANTAGE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: alphavantage-api-key
+                  key: api-key
+                  optional: true
+            - name: PATH
+              value: "/home/node/.local/bin:/usr/local/bin:/usr/bin:/bin"
           resources:
             requests:
               memory: "1Gi"

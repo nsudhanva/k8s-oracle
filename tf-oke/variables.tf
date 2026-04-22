@@ -191,6 +191,13 @@ variable "gog_keyring_password" {
   default     = ""
 }
 
+variable "alphavantage_api_key" {
+  description = "Alpha Vantage API key for stock analysis"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
 variable "oidc_client_id" {
   description = "OCI Identity Domain OIDC client ID for Open WebUI (from OCI Console after app creation)"
   type        = string
