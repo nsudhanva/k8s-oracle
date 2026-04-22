@@ -191,6 +191,20 @@ variable "gog_keyring_password" {
   default     = ""
 }
 
+variable "bw_client_id" {
+  description = "Bitwarden CLI API client ID"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "bw_client_secret" {
+  description = "Bitwarden CLI API client secret"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
 variable "alphavantage_api_key" {
   description = "Alpha Vantage API key for stock analysis"
   type        = string
