@@ -211,6 +211,27 @@ data:
     OR send the URL directly (no download needed):
     - `openclaw message send --channel telegram --target <chatId> -m "caption" --media "https://example.com/photo.jpg"`
 
+    ## Sending Email with Attachments (Screenshot -> Email)
+    To email a screenshot or file as an attachment:
+    1. Take the screenshot: `openclaw browser screenshot` (saves to ~/.openclaw/media/browser/abc.png)
+    2. Create a MIME email with attachment using Python:
+    ```
+    python3 -c "
+    import base64, email.mime.multipart, email.mime.text, email.mime.image, json
+    msg = email.mime.multipart.MIMEMultipart()
+    msg['To'] = 'recipient@example.com'
+    msg['Subject'] = 'Screenshot'
+    msg.attach(email.mime.text.MIMEText('Please see the attached screenshot.'))
+    with open('/home/node/.openclaw/media/browser/abc.png', 'rb') as f:
+        img = email.mime.image.MIMEImage(f.read(), name='screenshot.png')
+        img.add_header('Content-Disposition', 'attachment', filename='screenshot.png')
+        msg.attach(img)
+    raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
+    print(json.dumps({'raw': raw}))
+    " > /tmp/openclaw/email.json
+    ```
+    3. Send via gws: `gws gmail users messages send --params '{"userId":"me"}' --json "$(cat /tmp/openclaw/email.json)"`
+
     ## Web Fetch
     Quick HTTP page retrieval (no JS). Best for articles, docs, simple pages.
   USER.md: |
