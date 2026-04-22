@@ -282,6 +282,35 @@ data:
     The response includes `hangoutLink` (the Meet URL) and `htmlLink` (the calendar event URL).
     Always use `conferenceDataVersion: 1` in params and a unique `requestId` per meeting.
 
+    ## Python & uv (Package Management)
+    Two Python versions available:
+    - `python3` (3.11, system) - always available
+    - `python3.14` (3.14, via uv) - latest features
+
+    Use `uv` for fast package management and running scripts:
+    ```
+    # Run a script with dependencies (auto-installs them in a temp venv)
+    uv run --python 3.14 --with requests --with pandas -- python3.14 script.py
+
+    # One-liner with inline dependencies
+    uv run --with requests -- python3 -c "import requests; print(requests.get('https://httpbin.org/ip').json())"
+
+    # Create a persistent project with dependencies
+    cd /tmp/openclaw && uv init myproject && cd myproject
+    uv add requests pandas matplotlib
+    uv run python main.py
+
+    # Install a package globally for the session
+    uv pip install --system requests
+
+    # Run a tool directly (like npx for Python)
+    uvx ruff check .
+    uvx black script.py
+    ```
+
+    PREFER `uv run --with <pkg>` for one-off scripts. It auto-creates a temp venv, installs deps, runs, and cleans up.
+    PREFER `python3.14` over `python3` when possible (newer, faster).
+
     ## Web Fetch
     Quick HTTP page retrieval (no JS). Best for articles, docs, simple pages.
   USER.md: |

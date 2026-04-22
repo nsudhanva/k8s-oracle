@@ -28,10 +28,16 @@ USER root
 RUN apt-get update && apt-get install -y --no-install-recommends \
     chromium \
     fonts-noto-color-emoji fonts-noto-cjk \
-    ffmpeg jq ripgrep socat tmux wget ca-certificates \
-    python3 python3-pip \
+    ffmpeg jq ripgrep socat tmux wget ca-certificates curl \
+    python3 python3-pip python3-venv \
     xvfb xauth dbus dbus-x11 \
     && rm -rf /var/lib/apt/lists/*
+
+# Install uv (fast Python package manager) globally + Python 3.14
+ENV UV_INSTALL_DIR="/usr/local/bin"
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
+    uv python install 3.14 && \
+    ln -sf $(uv python find 3.14) /usr/local/bin/python3.14
 
 # GitHub CLI - for gh skill (PR reviews, issue management, repo operations)
 # Installed from GitHub's official apt repo
