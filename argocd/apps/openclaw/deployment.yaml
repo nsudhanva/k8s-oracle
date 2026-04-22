@@ -77,7 +77,11 @@ data:
             "toolResultMaxChars": 12000
           },
           "bootstrapMaxChars": 10000,
-          "bootstrapTotalMaxChars": 40000
+          "bootstrapTotalMaxChars": 40000,
+          "heartbeat": {
+            "every": "15m",
+            "target": "last"
+          }
         }
       },
       "channels": {
