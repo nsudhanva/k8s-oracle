@@ -1,5 +1,5 @@
 # Custom OpenClaw Docker image for ARM64 OKE cluster
-# Base: official OpenClaw 2026.4.11 (latest stable)
+# Base: official OpenClaw 2026.4.15 (latest stable)
 # Adds: Chromium browser, CLI tools, timeout patches
 #
 # Why custom image?
@@ -11,7 +11,7 @@
 # Build: docker buildx build --platform linux/arm64 --no-cache -t ghcr.io/nsudhanva/openclaw:latest --push .
 # GHCR package must be Public: https://github.com/users/nsudhanva/packages/container/openclaw/settings
 
-FROM ghcr.io/openclaw/openclaw:2026.4.11
+FROM ghcr.io/openclaw/openclaw:2026.4.15
 
 USER root
 
@@ -51,12 +51,12 @@ RUN set -e && \
     ARCH=$([ "$TARGETARCH" = "arm64" ] && echo "arm64" || echo "amd64") && \
     curl -fsSL "https://github.com/steipete/goplaces/releases/latest/download/goplaces_0.3.0_linux_${ARCH}.tar.gz" | tar -xz -C /usr/local/bin && \
     curl -fsSL "https://github.com/steipete/spogo/releases/latest/download/spogo_0.2.0_linux_${ARCH}.tar.gz" | tar -xz -C /usr/local/bin && \
-    curl -fsSL "https://github.com/steipete/discrawl/releases/latest/download/discrawl_0.2.0_linux_${ARCH}.tar.gz" | tar -xz -C /usr/local/bin && \
+    curl -fsSL "https://github.com/steipete/discrawl/releases/latest/download/discrawl_0.3.0_linux_${ARCH}.tar.gz" | tar -xz -C /usr/local/bin && \
     curl -fsSL "https://github.com/steipete/camsnap/releases/latest/download/camsnap_0.2.0_linux_${ARCH}.tar.gz" | tar -xz -C /usr/local/bin && \
     curl -fsSL "https://github.com/steipete/ordercli/releases/latest/download/ordercli_0.1.0_linux_${ARCH}.tar.gz" | tar -xz -C /usr/local/bin
 
 # Patch Chrome CDP timeouts for ARM64 containers
-# File: /app/dist/cdp.helpers-Cx11b16A.js (hash may change with OpenClaw version)
+# File: /app/dist/cdp.helpers-CJUeV0SO.js (hash may change with OpenClaw version)
 #
 # Why: OpenClaw launches Chrome in two phases:
 #   1. Bootstrap phase - starts Chrome to create Default/Preferences and Local State files
@@ -73,7 +73,7 @@ RUN sed -i \
     -e 's/CHROME_LAUNCH_READY_WINDOW_MS = 15e3/CHROME_LAUNCH_READY_WINDOW_MS = 6e4/g' \
     -e 's/CHROME_BOOTSTRAP_PREFS_TIMEOUT_MS = 1e4/CHROME_BOOTSTRAP_PREFS_TIMEOUT_MS = 3e4/g' \
     -e 's/CHROME_BOOTSTRAP_EXIT_TIMEOUT_MS = 5e3/CHROME_BOOTSTRAP_EXIT_TIMEOUT_MS = 15e3/g' \
-    /app/dist/cdp.helpers-Cx11b16A.js
+    /app/dist/cdp.helpers-CJUeV0SO.js
 
 # Install Playwright's Chromium browser bundle
 # Why: OpenClaw uses Playwright ON TOP of CDP for navigate, act, snapshots, PDFs.
