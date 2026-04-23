@@ -63,7 +63,7 @@ data:
           "contextLimits": {
             "toolResultMaxChars": 12000
           },
-          "bootstrapMaxChars": 10000,
+          "bootstrapMaxChars": 20000,
           "bootstrapTotalMaxChars": 40000,
           "heartbeat": {
             "every": "15m",
