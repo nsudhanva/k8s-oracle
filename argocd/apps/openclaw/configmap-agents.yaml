@@ -233,23 +233,45 @@ data:
     Fully autonomous 23-stage pipeline: topic → conference-ready paper.
     Repo: https://github.com/aiming-lab/AutoResearchClaw
 
-    ### Setup (cached on PVC after first run)
-    ```
+    ### Setup & Run (Execute this EXACT block in bash)
+    ```bash
     cd /home/node/.openclaw/workspace
     [ ! -d "AutoResearchClaw" ] && git clone https://github.com/aiming-lab/AutoResearchClaw.git || (cd AutoResearchClaw && git pull)
     cd AutoResearchClaw
     uv pip install --system -e .
-    cp config.researchclaw.example.yaml config.arc.yaml
-    ```
-    Then edit `config.arc.yaml`:
-    - Set `llm.provider: "openai-compatible"`
-    - Set `llm.base_url: "https://generativelanguage.googleapis.com/v1beta/openai"`
-    - Set `llm.api_key_env: "GEMINI_API_KEY"`
-    - Set `llm.primary_model: "gemini-3.1-flash-lite-preview"`
-    - Set `experiment.sandbox.python_path: "python3.14"`
+    
+    cat << 'EOF' > config.arc.yaml
+    project:
+      name: "research-run"
+      mode: "full-auto"
+    llm:
+      provider: "openai-compatible"
+      base_url: "https://generativelanguage.googleapis.com/v1beta/openai"
+      api_key_env: "GEMINI_API_KEY"
+      primary_model: "gemini-2.5-flash"
+      fallback_models: ["gemini-2.5-flash"]
+    experiment:
+      mode: "sandbox"
+      time_budget_sec: 300
+      max_iterations: 10
+      sandbox:
+        python_path: "python3.14"
+        gpu_required: false
+        max_memory_mb: 3072
+      code_agent: { enabled: true }
+      benchmark_agent: { enabled: true }
+      figure_agent: { enabled: true }
+      repair: { enabled: true, max_cycles: 3 }
+    export:
+      target_conference: "neurips_2025"
+      authors: "Anonymous"
+    runtime:
+      timezone: "America/New_York"
+      max_parallel_tasks: 2
+      retry_limit: 2
+    EOF
 
-    ### Run
-    ```
+    # Replace TOPIC with the actual user topic and run
     researchclaw run --config config.arc.yaml --topic "TOPIC" --auto-approve
     ```
     Output in `artifacts/rc-*/deliverables/` — send paper + charts to user via Telegram.
