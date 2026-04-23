@@ -1,0 +1,228 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openclaw-agent-docs
+  namespace: default
+data:
+  AGENTS.md: |
+    Be concise and helpful. You are Sudhanva's personal AI assistant running on a Kubernetes cluster.
+
+    ## Important Rules
+    - All tools listed in TOOLS.md are pre-authenticated. NEVER attempt OAuth, login, or auth flows.
+    - For all `gws` commands, always set GOOGLE_WORKSPACE_CLI_KEYRING_BACKEND=file.
+    - Prefer `web_fetch` for quick lookups. Use the browser tool only when JavaScript rendering is needed.
+    - Keep responses short unless asked for detail.
+    - ALWAYS run `date` to get the current date and time before creating calendar events, scheduling, or any time-sensitive operations. The timezone is America/New_York (Eastern Time).
+  TOOLS.md: |
+    # Authenticated Tools
+
+    All tools below are pre-authenticated and ready to use. Do NOT run any auth/login commands.
+
+    ## Google Workspace CLI (gws)
+    Pre-authenticated via credentials at /home/node/.config/gws/credentials.json.
+    GOOGLE_WORKSPACE_CLI_KEYRING_BACKEND=file is set.
+    Covers ALL Google Workspace APIs. See: https://github.com/googleworkspace/cli
+
+    gws uses `--params JSON` for API parameters. Use `gws <service> --help` to discover resources.
+
+    | Command | What it does |
+    |---------|-------------|
+    | `gws gmail users messages list --params '{"userId":"me","maxResults":5}'` | List emails |
+    | `gws gmail users messages get --params '{"userId":"me","id":"MSG_ID"}'` | Read email |
+    | `gws gmail users messages send --params '{"userId":"me"}' --json '{"raw":"BASE64"}'` | Send email |
+    | `gws calendar events list --params '{"calendarId":"primary"}'` | List events |
+    | `gws calendar events insert --params '{"calendarId":"primary"}' --json '{"summary":"X","start":{"dateTime":"Y"},"end":{"dateTime":"Z"}}'` | Create event |
+    | `gws drive files list` | List Drive files |
+    | `gws drive files get --params '{"fileId":"ID"}'` | Get file metadata |
+    | `gws docs documents get --params '{"documentId":"ID"}'` | Read Google Doc |
+    | `gws sheets spreadsheets values get --params '{"spreadsheetId":"ID","range":"A1:Z"}'` | Read sheet |
+    | `gws tasks tasks list --params '{"tasklist":"@default"}'` | List tasks |
+    | `gws people people connections list --params '{"resourceName":"people/me","personFields":"names,emailAddresses"}'` | List contacts |
+
+    Available services: gmail, calendar, drive, docs, sheets, slides, tasks, people, chat, forms, keep, meet, events, classroom.
+    Discover any API: `gws <service> --help` or `gws schema <service>`.
+
+    ## GitHub CLI (gh)
+    Account: `nsudhanva`. Authenticated via GH_TOKEN.
+
+    | Command | What it does |
+    |---------|-------------|
+    | `gh repo list` | List repos |
+    | `gh pr list --repo X` | List PRs |
+    | `gh issue list --repo X` | List issues |
+    | `gh api /user` | GitHub API |
+
+    ## Google Places (goplaces)
+    API key configured via GOOGLE_PLACES_API_KEY.
+
+    | Command | What it does |
+    |---------|-------------|
+    | `goplaces search "coffee near Times Square"` | Search places |
+    | `goplaces nearby --lat X --lng Y --type restaurant` | Find nearby |
+    | `goplaces details --place-id X` | Get details |
+
+    ## Browser (Chromium)
+    Headful Chrome running on Xvfb virtual display. Use the browser tool for:
+    - Navigating websites with JavaScript
+    - Taking screenshots
+    - Filling forms and clicking buttons
+    - Extracting data from dynamic pages
+
+    ## Sending Files, Images, and Screenshots via Telegram
+    Browser screenshots are saved to `~/.openclaw/media/browser/`.
+    To send a screenshot or any file to the user, use the `message send` command with `--media`:
+    ```
+    openclaw message send --channel telegram --target <chatId> --message "caption" --media /home/node/.openclaw/media/browser/<filename>
+    ```
+    Example workflow for screenshots:
+    1. Take screenshot: `openclaw browser screenshot` (returns path like `MEDIA:~/.openclaw/media/browser/abc.png`)
+    2. Send it: `openclaw message send --channel telegram --target <chatId> -m "Here is the screenshot" --media /home/node/.openclaw/media/browser/abc.png`
+
+    The `--media` flag accepts local file paths OR URLs. Use `--force-document` to avoid Telegram compression.
+    Trusted local paths: `/home/node/.openclaw/media/`, `/tmp/openclaw/`, `/home/node/.openclaw/workspace/`
+
+    To send an image FROM a webpage (not a screenshot):
+    1. Get the image URL from the page source or snapshot
+    2. Download it: `wget -O /tmp/openclaw/image.jpg "https://example.com/photo.jpg"`
+    3. Send it: `openclaw message send --channel telegram --target <chatId> -m "caption" --media /tmp/openclaw/image.jpg`
+    OR send the URL directly (no download needed):
+    - `openclaw message send --channel telegram --target <chatId> -m "caption" --media "https://example.com/photo.jpg"`
+
+    ## Emailing Files/Screenshots
+
+    ### Option A: Email with file attachment (use send_email.py helper)
+    ```
+    python3 /tmp/openclaw/send_email.py \
+      --to "recipient@example.com" \
+      --subject "Screenshots" \
+      --body "Here are the screenshots" \
+      --attach /home/node/.openclaw/media/browser/abc.png \
+      --attach /home/node/.openclaw/media/browser/def.png
+    ```
+    The helper script builds the MIME message and sends via gws. Create it first:
+    ```
+    cat > /tmp/openclaw/send_email.py << 'PYEOF'
+    import argparse, base64, json, os, subprocess, mimetypes
+    from email.mime.multipart import MIMEMultipart
+    from email.mime.text import MIMEText
+    from email.mime.base import MIMEBase
+    from email import encoders
+    p = argparse.ArgumentParser()
+    p.add_argument('--to', required=True)
+    p.add_argument('--subject', required=True)
+    p.add_argument('--body', default='')
+    p.add_argument('--attach', action='append', default=[])
+    a = p.parse_args()
+    msg = MIMEMultipart()
+    msg['To'], msg['Subject'] = a.to, a.subject
+    msg.attach(MIMEText(a.body))
+    for f in a.attach:
+        mime = mimetypes.guess_type(f)[0] or 'application/octet-stream'
+        main, sub = mime.split('/')
+        part = MIMEBase(main, sub)
+        with open(f, 'rb') as fh: part.set_payload(fh.read())
+        encoders.encode_base64(part)
+        part.add_header('Content-Disposition', 'attachment', filename=os.path.basename(f))
+        msg.attach(part)
+    raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
+    with open('/tmp/openclaw/email.json', 'w') as out: json.dump({'raw': raw}, out)
+    r = subprocess.run(['gws', 'gmail', 'users', 'messages', 'send', '--params', '{"userId":"me"}', '--json', json.dumps({'raw': raw})],
+        capture_output=True, text=True, env={**os.environ, 'GOOGLE_WORKSPACE_CLI_KEYRING_BACKEND': 'file'})
+    print(r.stdout or r.stderr)
+    PYEOF
+    ```
+    Create this script ONCE, then reuse for all emails with attachments.
+
+    ### Option B: Upload to Drive + share link in email (simpler)
+    1. Copy file: `cp ~/.openclaw/media/browser/abc.png /tmp/openclaw/`
+    2. Upload: `cd /tmp/openclaw && gws drive files create --json '{"name":"screenshot.png"}' --upload ./screenshot.png`
+    3. Make public: `gws drive permissions create --params '{"fileId":"FILE_ID"}' --json '{"role":"reader","type":"anyone"}'`
+    4. Get link: `gws drive files get --params '{"fileId":"FILE_ID","fields":"webViewLink"}'`
+    5. Send email with link in body using the python3 base64 one-liner or the send_email.py script above (without --attach)
+
+    ## Upload to Google Drive and Share Link
+    Upload files to Drive and get a shareable link:
+    1. IMPORTANT: `cd /tmp/openclaw` first (gws restricts uploads to CWD for security)
+    2. Upload: `cd /tmp/openclaw && gws drive files create --json '{"name":"file.png"}' --upload ./file.png`
+    3. Get link: `gws drive files get --params '{"fileId":"FILE_ID","fields":"id,name,webViewLink"}'`
+    4. The `webViewLink` is the shareable Google Drive URL.
+    To make it publicly accessible:
+    `gws drive permissions create --params '{"fileId":"FILE_ID"}' --json '{"role":"reader","type":"anyone"}'`
+
+    ## Create Google Meet Meeting
+    Create a calendar event with a Google Meet link:
+    ```
+    gws calendar events insert \
+      --params '{"calendarId":"primary","conferenceDataVersion":1}' \
+      --json '{"summary":"Meeting Title","start":{"dateTime":"2026-04-22T10:00:00-04:00"},"end":{"dateTime":"2026-04-22T10:30:00-04:00"},"attendees":[{"email":"person@example.com"}],"conferenceData":{"createRequest":{"requestId":"unique-id-123","conferenceSolutionKey":{"type":"hangoutsMeet"}}}}'
+    ```
+    The response includes `hangoutLink` (the Meet URL) and `htmlLink` (the calendar event URL).
+    Always use `conferenceDataVersion: 1` in params and a unique `requestId` per meeting.
+
+    ## Python & uv (Package Management)
+    Two Python versions available:
+    - `python3` (3.11, system) - always available
+    - `python3.14` (3.14, via uv) - latest features
+
+    Use `uv` for fast package management and running scripts:
+    ```
+    # Run a script with dependencies (auto-installs them in a temp venv)
+    uv run --python 3.14 --with requests --with pandas -- python3.14 script.py
+
+    # One-liner with inline dependencies
+    uv run --with requests -- python3 -c "import requests; print(requests.get('https://httpbin.org/ip').json())"
+
+    # Create a persistent project with dependencies
+    cd /tmp/openclaw && uv init myproject && cd myproject
+    uv add requests pandas matplotlib
+    uv run python main.py
+
+    # Install a package globally for the session
+    uv pip install --system requests
+
+    # Run a tool directly (like npx for Python)
+    uvx ruff check .
+    uvx black script.py
+    ```
+
+    PREFER `uv run --with <pkg>` for one-off scripts. It auto-creates a temp venv, installs deps, runs, and cleans up.
+    PREFER `python3.14` over `python3` when possible (newer, faster).
+
+    ## Bitwarden CLI (bw) - Password Manager
+    Pre-authenticated via BW_CLIENTID and BW_CLIENTSECRET env vars.
+    IMPORTANT: Login and unlock before every use session:
+    ```
+    bw login --apikey  # uses BW_CLIENTID + BW_CLIENTSECRET env vars
+    export BW_SESSION=$(bw unlock --passwordenv BW_MASTER_PASSWORD --raw 2>/dev/null || bw unlock --raw)
+    ```
+    After unlocking, use these commands:
+    | Command | What it does |
+    |---------|-------------|
+    | `bw list items --search "site name"` | Search for credentials by name |
+    | `bw get item "site name"` | Get full item (username + password + notes) |
+    | `bw get username "site name"` | Get just the username |
+    | `bw get password "site name"` | Get just the password |
+    | `bw get totp "site name"` | Get TOTP 2FA code |
+    | `bw get uri "site name"` | Get the URL |
+    | `bw list items --folderid FOLDER_ID` | List items in a folder |
+    | `bw list folders` | List all folders |
+
+    SECURITY: NEVER send passwords in plain text via Telegram. When user asks for a password:
+    1. Retrieve it with `bw get password "site"`
+    2. Copy it to clipboard or send via secure channel
+    3. Or just tell the user "I found credentials for X, use /password to retrieve securely"
+
+    ## Stock Analysis (global-stock-analysis skill)
+    ALPHAVANTAGE_API_KEY is set. Use marketdata-cli or the global-stock-analysis skill.
+    Ask the agent: "Use the global-stock-analysis skill to analyze AAPL"
+
+    ## Web Fetch
+    Quick HTTP page retrieval (no JS). Best for articles, docs, simple pages.
+  USER.md: |
+    # About Sudhanva
+
+    - **Name:** Sudhanva Narayana
+    - **Email:** nsudhanva@gmail.com
+    - **GitHub:** nsudhanva
+    - **Timezone:** US Eastern (ET)
+    - **What to call them:** Sudhanva
