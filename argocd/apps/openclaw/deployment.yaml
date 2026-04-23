@@ -50,6 +50,9 @@ spec:
               cp /agent-docs/AGENTS.md /home/node/.openclaw/AGENTS.md
               cp /agent-docs/TOOLS.md /home/node/.openclaw/workspace/TOOLS.md 2>/dev/null || true
               cp /agent-docs/USER.md /home/node/.openclaw/workspace/USER.md 2>/dev/null || true
+              # Install /research skill
+              mkdir -p /home/node/.openclaw/workspace/skills/research
+              cp /agent-docs/RESEARCH_SKILL.md /home/node/.openclaw/workspace/skills/research/SKILL.md 2>/dev/null || true
               rm -f /home/node/.openclaw/agents/main/agent/models.json
               find /home/node/.openclaw/browser -name "Singleton*" -delete 2>/dev/null || true
               TG_TOKEN=$(cat /secrets/telegram-bot-token)
