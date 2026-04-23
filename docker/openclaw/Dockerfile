@@ -5,7 +5,7 @@
 # Why custom image?
 # 1. OpenClaw's base image has no browser - needed for web browsing/screenshots
 # 2. Debian's chromium package works on ARM64 (Google Chrome has no ARM64 .deb)
-# 3. CLI tools (gogcli, goplaces, etc.) enable Google Workspace and Maps skills
+# 3. CLI tools (gws, goplaces, etc.) enable Google Workspace and Maps skills
 # 4. Chrome timeout patches needed because ARM64 is slower than x86
 #
 # Build: docker buildx build --platform linux/arm64 --no-cache -t ghcr.io/nsudhanva/openclaw:latest --push .

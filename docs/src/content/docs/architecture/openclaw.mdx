@@ -34,7 +34,7 @@ flowchart TB
             GW[Gateway<br/>:18789]
             Agent[AI Agent]
             TGChannel[Telegram Channel<br/>grammY]
-            Browser[Chromium<br/>Headless]
+            Browser[Chromium<br/>Xvfb Headful]
         end
 
         ESO[External Secrets<br/>Operator]
@@ -64,9 +64,9 @@ flowchart TB
 | **Telegram Bot** | Chat with AI via @CoochiepieBot |
 | **Web UI** | Control UI at claw.k8s.sudhanva.me |
 | **Gemini Integration** | Google Gemini 3.1 Flash Lite via API |
-| **Browser Control** | Headless Chromium for web browsing and scraping |
+| **Browser Control** | Chromium via Xvfb headful mode for web browsing and scraping |
 | **Memory + Dreaming** | Persistent memory with background consolidation |
-| **Session Isolation** | Per-sender sessions with 2hr idle auto-reset |
+| **Session Isolation** | Per-sender sessions with 30min idle auto-reset |
 | **Message Queuing** | Batches rapid Telegram messages (1.5s debounce) |
 | **Ack Reactions** | Eyes emoji when processing starts |
 | **Slash Commands** | `/model`, `/reset`, `/focus`, `/plugins` in chat |
@@ -79,7 +79,7 @@ The standard OpenClaw image lacks Chromium and system dependencies. A custom ima
 
 **Dockerfile:** `docker/openclaw/Dockerfile`
 
-**What it adds on top of `ghcr.io/openclaw/openclaw:latest`:**
+**What it adds on top of `ghcr.io/openclaw/openclaw:2026.4.15`:**
 
 | Category | Packages/Tools |
 |----------|---------------|
@@ -87,7 +87,8 @@ The standard OpenClaw image lacks Chromium and system dependencies. A custom ima
 | **Fonts** | Noto Color Emoji, Noto CJK (for browser screenshots) |
 | **Google Tools** | `gws` (Google Workspace CLI - Gmail, Calendar, Drive, Docs, Sheets, Tasks, Chat, etc.), `goplaces` (Google Maps/Places) |
 | **Media** | `ffmpeg` (audio/video processing) |
-| **Dev Tools** | `gh` (GitHub CLI), `jq`, `ripgrep`, `tmux`, `python3` |
+| **Dev Tools** | `gh` (GitHub CLI), `jq`, `ripgrep`, `tmux`, `python3`, `uv` (Python package manager), Python 3.14 via uv |
+| **Security** | `bw` (Bitwarden CLI) for password manager access |
 | **Other CLIs** | `spogo` (Spotify), `discrawl` (Discord), `camsnap` (RTSP cameras), `ordercli` (food delivery) |
 
 ### Building the Image
@@ -144,7 +145,7 @@ The `/dev/shm` tmpfs mount (1Gi) is required for Chrome. Without it, Chrome cras
   },
   "browser": {
     "enabled": true,
-    "headless": true,
+    "headless": false,
     "noSandbox": true,
     "defaultProfile": "remote",
     "ssrfPolicy": {
@@ -176,7 +177,12 @@ The `/dev/shm` tmpfs mount (1Gi) is required for Chrome. Without it, Chrome cras
   "agents": {
     "defaults": {
       "model": { "primary": "google/gemini-3.1-flash-lite-preview" },
-      "timeoutSeconds": 300
+      "timeoutSeconds": 300,
+      "compaction": { "mode": "safeguard", "reserveTokensFloor": 24000 },
+      "contextLimits": { "toolResultMaxChars": 12000 },
+      "bootstrapMaxChars": 10000,
+      "bootstrapTotalMaxChars": 40000,
+      "heartbeat": { "every": "15m", "target": "last" }
     }
   },
   "channels": {
@@ -188,7 +194,8 @@ The `/dev/shm` tmpfs mount (1Gi) is required for Chrome. Without it, Chrome cras
   "session": {
     "scope": "per-sender",
     "dmScope": "per-peer",
-    "reset": { "mode": "idle", "idleMinutes": 120 }
+    "reset": { "mode": "idle", "idleMinutes": 30 },
+    "maintenance": { "mode": "enforce", "pruneAfter": "7d", "maxEntries": 100 }
   },
   "plugins": {
     "entries": {
@@ -218,7 +225,7 @@ The `/dev/shm` tmpfs mount (1Gi) is required for Chrome. Without it, Chrome cras
 - **`baseUrl` is required** even for the Google provider. Use `https://generativelanguage.googleapis.com/v1beta`.
 - **Gemini API key** uses `${GEMINI_API_KEY}` env var substitution. The env var is populated from the `gemini-api-key` K8s secret.
 - **Agent timeout** is 300s (5 min), sufficient for cloud API responses.
-- **Context window** is 131072 (Gemini's native 128K context). No compaction tricks needed unlike local models.
+- **Context window** is 131072 (Gemini's native 128K context). Safeguard compaction keeps 24K tokens reserved.
 - **`botToken`** is NOT in the ConfigMap. It's injected by the init container (see below).
 
 ### Invalid Config Keys (v2026.4.15)
@@ -251,6 +258,10 @@ These keys cause startup crashes - do NOT use them:
 | `GOOGLE_PLACES_API_KEY` | (from secret, optional) | Google Places API |
 | `DISCORD_BOT_TOKEN` | (from secret, optional) | Discord bot authentication |
 | `GOOGLE_WORKSPACE_CLI_KEYRING_BACKEND` | `file` | gws credential storage backend |
+| `ALPHAVANTAGE_API_KEY` | (from secret) | Alpha Vantage stock/financial data API |
+| `BW_CLIENTID` | (from secret) | Bitwarden CLI client ID |
+| `BW_CLIENTSECRET` | (from secret) | Bitwarden CLI client secret |
+| `PATH` | (extended) | Includes uv-managed Python 3.14 bin directory |
 
 ## Init Container
 
@@ -258,7 +269,7 @@ The init container (`copy-config`) runs before the main OpenClaw process. It use
 
 **What it does:**
 
-1. **Copies config files** from ConfigMap to PVC (`openclaw.json`, `AGENTS.md`)
+1. **Copies config files** from ConfigMap to PVC (`openclaw.json`, `AGENTS.md`, `TOOLS.md`, `USER.md`)
 2. **Removes stale `models.json`** cache at `agents/main/agent/models.json` (this file overrides the main config's model settings and causes issues when switching providers)
 3. **Clears Chrome Singleton locks** at `browser/*/Singleton*` (stale locks from previous pods prevent Chrome from starting)
 4. **Injects Telegram bot token** by reading the mounted secret and writing `botToken` into the JSON config via a `node -e` script
@@ -279,6 +290,8 @@ Three secrets are managed via Terraform and synced by External Secrets Operator:
 | `google-places-api-key` | `google-places-api-key` | `api-key` | Google Places API |
 | `discord-bot-token` | `discord-bot-token` | `token` | Discord bot (optional) |
 | `github-pat` | `github-pat` | `github-pat` | GitHub CLI |
+| `alphavantage-api-key` | `alphavantage-api-key` | `api-key` | Alpha Vantage financial data API |
+| `bw-credentials` | `bw-credentials` | `client-id`, `client-secret` | Bitwarden CLI authentication |
 
 ### Terraform Variables
 
@@ -309,7 +322,7 @@ OpenClaw v2026.4.15 launches its own Chrome process via Playwright CDP. It does 
 OpenClaw's default browser launch has a hardcoded 15s timeout that's too short for ARM64. The solution uses **Remote CDP mode** - Chrome runs as a separate process and OpenClaw connects to it as a remote browser.
 
 **Architecture:**
-1. The custom entrypoint starts Debian `chromium` headless on `127.0.0.1:9222`
+1. The custom entrypoint starts Debian `chromium` via Xvfb (headful mode) on `127.0.0.1:9222`
 2. `socat` proxies from `podIP:9223` → `127.0.0.1:9222`
 3. The entrypoint patches `openclaw.json` with `cdpUrl: http://podIP:9223`
 4. Since the pod IP is non-loopback, OpenClaw treats it as **Remote CDP** (no local launch)
@@ -321,7 +334,7 @@ OpenClaw's default browser launch has a hardcoded 15s timeout that's too short f
 - Playwright installed via bundled CLI (`node /app/node_modules/playwright-core/cli.js install chromium`)
 - `/dev/shm` mounted as 1Gi tmpfs
 - `socat` installed for the CDP proxy
-- Chrome timeout patches in `cdp.helpers-Cx11b16A.js` (as backup)
+- Chrome timeout patches in `cdp.helpers-CJUeV0SO.js` (as backup)
 
 ### Logging Into Websites
 
@@ -492,7 +505,9 @@ kubectl exec deploy/openclaw -c openclaw -- \
 
 | File | Purpose |
 |------|---------|
-| `argocd/apps/openclaw/deployment.yaml` | PVC + ConfigMap + Deployment (main manifest) |
+| `argocd/apps/openclaw/deployment.yaml` | PVC + Deployment (main manifest) |
+| `argocd/apps/openclaw/configmap.yaml` | ConfigMap for openclaw.json |
+| `argocd/apps/openclaw/configmap-agents.yaml` | ConfigMap for AGENTS.md |
 | `argocd/apps/openclaw/service.yaml` | ClusterIP service (80 -> 18789) |
 | `argocd/apps/openclaw/httproute.yaml` | HTTPRoute + TLS Certificate |
 | `argocd/apps/openclaw/kustomization.yaml` | Kustomize resource list |
