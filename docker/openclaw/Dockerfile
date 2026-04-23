@@ -37,8 +37,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 ENV UV_INSTALL_DIR="/usr/local/bin"
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Bitwarden CLI - password manager access
-RUN npm install -g @bitwarden/cli
+# Bitwarden CLI - pinned to v2026.3.0 binary (NOT npm - supply chain attack on 2026.4.0)
+# See: https://thehackernews.com/2026/04/bitwarden-cli-compromised
+ARG TARGETARCH
+RUN BW_ARCH=$([ "$TARGETARCH" = "arm64" ] && echo "arm64" || echo "amd64") && \
+    curl -fsSL "https://github.com/bitwarden/clients/releases/download/cli-v2026.3.0/bw-linux-${BW_ARCH}-2026.3.0.zip" -o /tmp/bw.zip && \
+    apt-get update && apt-get install -y --no-install-recommends unzip && \
+    unzip -o /tmp/bw.zip -d /usr/local/bin && chmod +x /usr/local/bin/bw && \
+    rm /tmp/bw.zip && apt-get purge -y unzip && apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/*
 
 # GitHub CLI - for gh skill (PR reviews, issue management, repo operations)
 # Installed from GitHub's official apt repo

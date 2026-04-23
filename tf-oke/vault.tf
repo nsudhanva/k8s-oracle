@@ -241,6 +241,19 @@ resource "oci_vault_secret" "bw_client_secret" {
   }
 }
 
+resource "oci_vault_secret" "bw_master_password" {
+  count          = var.bw_master_password != "" ? 1 : 0
+  compartment_id = var.compartment_ocid
+  vault_id       = oci_kms_vault.oke_vault.id
+  key_id         = oci_kms_key.master_key.id
+  secret_name    = "bw-master-password"
+
+  secret_content {
+    content_type = "BASE64"
+    content      = base64encode(var.bw_master_password)
+  }
+}
+
 resource "oci_vault_secret" "alphavantage_api_key" {
   count          = var.alphavantage_api_key != "" ? 1 : 0
   compartment_id = var.compartment_ocid
