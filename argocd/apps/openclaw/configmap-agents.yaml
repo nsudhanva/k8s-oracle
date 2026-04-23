@@ -188,29 +188,27 @@ data:
     PREFER `uv run --with <pkg>` for one-off scripts. It auto-creates a temp venv, installs deps, runs, and cleans up.
     PREFER `python3.14` over `python3` when possible (newer, faster).
 
-    ## Bitwarden CLI (bw) - Password Manager
-    Pre-authenticated via BW_CLIENTID and BW_CLIENTSECRET env vars.
-    IMPORTANT: Login and unlock before every use session:
+    ## Bitwarden CLI (bw) - Password Manager (READ-ONLY)
+    Auto-authenticated. BW_CLIENTID, BW_CLIENTSECRET, and BW_MASTER_PASSWORD are all set.
+    Login and unlock in one step:
     ```
-    bw login --apikey  # uses BW_CLIENTID + BW_CLIENTSECRET env vars
-    export BW_SESSION=$(bw unlock --passwordenv BW_MASTER_PASSWORD --raw 2>/dev/null || bw unlock --raw)
+    bw login --apikey 2>/dev/null || true
+    export BW_SESSION=$(bw unlock --passwordenv BW_MASTER_PASSWORD --raw)
     ```
-    After unlocking, use these commands:
+    Then use READ-ONLY commands (pass --session $BW_SESSION to each):
     | Command | What it does |
     |---------|-------------|
-    | `bw list items --search "site name"` | Search for credentials by name |
-    | `bw get item "site name"` | Get full item (username + password + notes) |
-    | `bw get username "site name"` | Get just the username |
-    | `bw get password "site name"` | Get just the password |
-    | `bw get totp "site name"` | Get TOTP 2FA code |
-    | `bw get uri "site name"` | Get the URL |
-    | `bw list items --folderid FOLDER_ID` | List items in a folder |
-    | `bw list folders` | List all folders |
+    | `bw list items --search "site" --session $BW_SESSION` | Search credentials |
+    | `bw get username "site" --session $BW_SESSION` | Get username |
+    | `bw get password "site" --session $BW_SESSION` | Get password |
+    | `bw get totp "site" --session $BW_SESSION` | Get TOTP 2FA code |
+    | `bw get uri "site" --session $BW_SESSION` | Get URL |
+    | `bw list folders --session $BW_SESSION` | List folders |
 
-    SECURITY: NEVER send passwords in plain text via Telegram. When user asks for a password:
-    1. Retrieve it with `bw get password "site"`
-    2. Copy it to clipboard or send via secure channel
-    3. Or just tell the user "I found credentials for X, use /password to retrieve securely"
+    STRICT RULES:
+    - READ-ONLY access. NEVER use `bw create`, `bw edit`, `bw delete`, or `bw move`.
+    - NEVER send passwords as plain text in Telegram. Instead tell the user "I found credentials for X" and offer to use them to log into a site via the browser tool.
+    - When the user asks for a password, retrieve it silently and use it directly (e.g., to fill a login form), do NOT display it in chat.
 
     ## Stock Analysis (global-stock-analysis skill)
     ALPHAVANTAGE_API_KEY is set. Use marketdata-cli or the global-stock-analysis skill.

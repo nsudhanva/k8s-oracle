@@ -148,6 +148,12 @@ spec:
                   name: bw-credentials
                   key: client-secret
                   optional: true
+            - name: BW_MASTER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: bw-credentials
+                  key: master-password
+                  optional: true
             - name: PATH
               value: "/home/node/.local/bin:/usr/local/bin:/usr/bin:/bin"
           resources:

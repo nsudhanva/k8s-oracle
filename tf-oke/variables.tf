@@ -205,6 +205,13 @@ variable "bw_client_secret" {
   default     = ""
 }
 
+variable "bw_master_password" {
+  description = "Bitwarden master password for vault unlock"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
 variable "alphavantage_api_key" {
   description = "Alpha Vantage API key for stock analysis"
   type        = string
