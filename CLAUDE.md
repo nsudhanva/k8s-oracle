@@ -27,7 +27,7 @@ This project provisions an **OKE (Oracle Kubernetes Engine) Basic cluster on Ora
 
 ## Custom Docker Image
 
-OpenClaw uses a custom Docker image built from `docker/openclaw/Dockerfile`. It extends `ghcr.io/openclaw/openclaw:latest` with Chromium, steipete CLI tools, and system dependencies.
+OpenClaw uses a custom Docker image built from `docker/openclaw/Dockerfile`. It extends `ghcr.io/openclaw/openclaw:2026.4.15` with Chromium, steipete CLI tools, and system dependencies.
 
 ```bash
 cd docker/openclaw
@@ -150,6 +150,11 @@ gemini_api_key    = "your-google-api-key"
 # OpenClaw (stored in Vault)
 openclaw_gateway_token = "random-hex-string"
 telegram_bot_token     = "bot-token-from-botfather"
+
+# External APIs (stored in Vault)
+alphavantage_api_key = "your-alphavantage-key"
+bw_client_id         = "your-bitwarden-client-id"
+bw_client_secret     = "your-bitwarden-client-secret"
 ```
 
 ## OKE Cluster Configuration

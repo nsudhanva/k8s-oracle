@@ -150,6 +150,10 @@ gemini_api_key             = "your-google-api-key"
 
 openclaw_gateway_token     = "random-hex-string"
 telegram_bot_token         = "your-botfather-token"
+
+alphavantage_api_key       = "your-alphavantage-key"
+bw_client_id               = "your-bitwarden-client-id"
+bw_client_secret           = "your-bitwarden-client-secret"
 ```
 
 ### Deploy Infrastructure

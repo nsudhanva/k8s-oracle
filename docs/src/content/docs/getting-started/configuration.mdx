@@ -41,7 +41,11 @@ gemini_api_key         = "your-google-api-key" # Google Gemini API key for OpenC
 
 google_places_api_key = "your-google-places-key" # Google Places API (optional)
 discord_bot_token     = "your-discord-bot-token" # Discord bot token (optional)
-gog_keyring_password  = "your-keyring-password"  # gogcli keyring encryption (optional)
+gog_keyring_password  = "your-keyring-password"  # Google Workspace CLI keyring, legacy (optional)
+
+alphavantage_api_key = "your-alphavantage-key"   # Alpha Vantage financial data API (optional)
+bw_client_id         = "your-bitwarden-client-id" # Bitwarden CLI client ID (optional)
+bw_client_secret     = "your-bitwarden-secret"    # Bitwarden CLI client secret (optional)
 ```
 
 ## Variable Reference
@@ -71,7 +75,10 @@ gog_keyring_password  = "your-keyring-password"  # gogcli keyring encryption (op
 | `telegram_bot_token` | Telegram bot token from BotFather | Yes |
 | `google_places_api_key` | Google Places API key (optional) | Yes |
 | `discord_bot_token` | Discord bot token (optional) | Yes |
-| `gog_keyring_password` | gogcli keyring encryption password (optional) | Yes |
+| `gog_keyring_password` | Google Workspace CLI keyring password, legacy (optional) | Yes |
+| `alphavantage_api_key` | Alpha Vantage financial data API key (optional) | Yes |
+| `bw_client_id` | Bitwarden CLI client ID (optional) | Yes |
+| `bw_client_secret` | Bitwarden CLI client secret (optional) | Yes |
 
 :::note
   OCI authentication variables are not stored in Vault since they're needed to access Vault. Keep them in a password manager.
