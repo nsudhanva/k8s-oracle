@@ -109,7 +109,7 @@ data:
         }
       },
       "commands": {
-        "native": true,
+        "native": false,
         "nativeSkills": "auto",
         "text": true
       }
