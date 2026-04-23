@@ -111,6 +111,20 @@ data:
       "commands": {
         "native": true,
         "nativeSkills": "auto",
-        "text": true
+        "text": true,
+        "custom": {
+          "research": {
+            "description": "Run AutoResearchClaw autonomous research pipeline on a topic",
+            "args": "<research topic>"
+          }
+        }
+      },
+      "openclaw_bridge": {
+        "use_message": true,
+        "use_memory": true,
+        "use_web_fetch": true,
+        "use_browser": false,
+        "use_cron": false,
+        "use_sessions_spawn": false
       }
     }

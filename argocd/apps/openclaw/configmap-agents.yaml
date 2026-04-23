@@ -13,6 +13,18 @@ data:
     - Prefer `web_fetch` for quick lookups. Use the browser tool only when JavaScript rendering is needed.
     - Keep responses short unless asked for detail.
     - ALWAYS run `date` to get the current date and time before creating calendar events, scheduling, or any time-sensitive operations. The timezone is America/New_York (Eastern Time).
+
+    ## Slash Commands
+
+    ### /research <topic>
+    Trigger the AutoResearchClaw autonomous research pipeline. Steps:
+    1. Follow the "First-Time Setup" instructions in TOOLS.md → AutoResearchClaw section
+    2. Create/update `config.arc.yaml` with the user's topic (use the template in TOOLS.md)
+    3. Adjust `research.domains` based on the topic (e.g., ["biology", "genomics"] for bio topics)
+    4. Run: `researchclaw run --config config.arc.yaml --topic "<user's topic>" --auto-approve`
+    5. Monitor progress and send status updates to the user
+    6. When complete, send the paper draft and key charts via Telegram
+    If the user says "Research X" without the slash command, still treat it as a research request.
   TOOLS.md: |
     # Authenticated Tools
 
@@ -216,6 +228,91 @@ data:
 
     ## Web Fetch
     Quick HTTP page retrieval (no JS). Best for articles, docs, simple pages.
+
+    ## AutoResearchClaw — Autonomous Research Pipeline
+    Fully autonomous 23-stage pipeline: topic → conference-ready paper.
+    Triggered via the `/research` command (see AGENTS.md).
+
+    ### First-Time Setup (auto-cached on PVC after first run)
+    ```
+    cd /home/node/.openclaw/workspace
+    if [ ! -d "AutoResearchClaw" ]; then
+      git clone https://github.com/aiming-lab/AutoResearchClaw.git
+    else
+      cd AutoResearchClaw && git pull && cd ..
+    fi
+    cd AutoResearchClaw
+    uv pip install --system -e .
+    ```
+
+    ### Create Config
+    Create `config.arc.yaml` in the AutoResearchClaw directory:
+    ```yaml
+    project:
+      name: "research-run"
+      mode: "full-auto"
+    research:
+      topic: "REPLACE_WITH_TOPIC"
+      domains: ["machine-learning"]
+      daily_paper_count: 8
+      quality_threshold: 4.0
+    llm:
+      provider: "openai-compatible"
+      base_url: "https://generativelanguage.googleapis.com/v1beta/openai"
+      api_key_env: "GEMINI_API_KEY"
+      primary_model: "gemini-2.5-flash"
+      fallback_models: ["gemini-2.5-flash"]
+    experiment:
+      mode: "sandbox"
+      time_budget_sec: 300
+      max_iterations: 10
+      sandbox:
+        python_path: "python3.14"
+        gpu_required: false
+        max_memory_mb: 3072
+      code_agent:
+        enabled: true
+      benchmark_agent:
+        enabled: true
+      figure_agent:
+        enabled: true
+      repair:
+        enabled: true
+        max_cycles: 3
+    export:
+      target_conference: "neurips_2025"
+      authors: "Anonymous"
+    runtime:
+      timezone: "America/New_York"
+      max_parallel_tasks: 2
+      retry_limit: 2
+    security:
+      hitl_required_stages: []
+      allow_publish_without_approval: true
+    openclaw_bridge:
+      use_message: true
+      use_memory: true
+      use_web_fetch: true
+      use_browser: false
+      use_cron: false
+      use_sessions_spawn: false
+    ```
+
+    ### Run Pipeline
+    ```
+    cd /home/node/.openclaw/workspace/AutoResearchClaw
+    researchclaw run --config config.arc.yaml --topic "TOPIC" --auto-approve
+    ```
+
+    ### Output
+    Results land in `artifacts/rc-YYYYMMDD-HHMMSS-<hash>/deliverables/`:
+    - `paper_draft.md` — full paper in markdown
+    - `paper.tex` + `references.bib` — LaTeX source
+    - `charts/` — generated figures
+    - `experiment_runs/` — code + results
+    - `reviews.md` — AI peer review
+
+    Send deliverables to the user via Telegram using `openclaw message send --media`.
   USER.md: |
     # About Sudhanva
 
