@@ -313,6 +313,22 @@ data:
     - `reviews.md` — AI peer review
 
     Send deliverables to the user via Telegram using `openclaw message send --media`.
+  RESEARCH_SKILL.md: |
+    ---
+    name: research
+    description: "Run AutoResearchClaw autonomous research pipeline — turns a topic into a conference-ready paper"
+    user-invocable: true
+    ---
+    ## Usage
+    `/research <topic>` — e.g., `/research Impact of attention mechanisms on protein structure prediction`
+
+    ## How It Works
+    1. Follow the "First-Time Setup" instructions in TOOLS.md → AutoResearchClaw section
+    2. Create/update `config.arc.yaml` with the user's topic (template is in TOOLS.md)
+    3. Adjust `research.domains` based on the topic (e.g., ["biology", "genomics"] for bio topics)
+    4. Run: `researchclaw run --config config.arc.yaml --topic "<user's topic>" --auto-approve`
+    5. Monitor progress and send status updates to the user
+    6. When complete, send the paper draft and key charts via Telegram
   USER.md: |
     # About Sudhanva
 
