@@ -245,7 +245,7 @@ data:
     - Set `llm.provider: "openai-compatible"`
     - Set `llm.base_url: "https://generativelanguage.googleapis.com/v1beta/openai"`
     - Set `llm.api_key_env: "GEMINI_API_KEY"`
-    - Set `llm.primary_model: "gemini-2.5-flash"`
+    - Set `llm.primary_model: "gemini-3.1-flash-lite-preview"`
     - Set `experiment.sandbox.python_path: "python3.14"`
 
     ### Run
