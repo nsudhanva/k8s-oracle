@@ -101,6 +101,9 @@ data:
           },
           "duckduckgo": {
             "enabled": true
+          },
+          "bonjour": {
+            "enabled": false
           }
         }
       },
