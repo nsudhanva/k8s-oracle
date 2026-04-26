@@ -179,8 +179,8 @@ spec:
           startupProbe:
             exec:
               command: ["wget", "-q", "--spider", "http://127.0.0.1:18789/healthz"]
-            initialDelaySeconds: 10
-            periodSeconds: 5
+            initialDelaySeconds: 15
+            periodSeconds: 10
             failureThreshold: 30
           livenessProbe:
             exec:
