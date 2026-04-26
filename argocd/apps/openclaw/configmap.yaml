@@ -21,6 +21,7 @@ data:
         "enabled": true,
         "headless": false,
         "noSandbox": true,
+        "actionTimeoutMs": 60000,
         "defaultProfile": "remote",
         "ssrfPolicy": {
           "dangerouslyAllowPrivateNetwork": true
