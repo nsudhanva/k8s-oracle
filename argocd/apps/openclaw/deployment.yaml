@@ -161,11 +161,11 @@ spec:
               value: "/home/node/.local/bin:/usr/local/bin:/usr/bin:/bin"
           resources:
             requests:
-              memory: "1Gi"
-              cpu: "500m"
+              memory: "2Gi"
+              cpu: "800m"
             limits:
-              memory: "4Gi"
-              cpu: "2000m"
+              memory: "6Gi"
+              cpu: "3000m"
           volumeMounts:
             - name: home
               mountPath: /home/node
