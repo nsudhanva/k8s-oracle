@@ -97,6 +97,9 @@ data:
             "config": {
               "dreaming": { "enabled": true }
             }
+          },
+          "duckduckgo": {
+            "enabled": true
           }
         }
       },

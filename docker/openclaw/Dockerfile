@@ -99,6 +99,8 @@ USER node
 # Install Python 3.14 as node user (so it's accessible at runtime)
 RUN uv python install 3.14
 
+# Upgrade playwright-core to latest (bundled 1.59.1 lacks _snapshotForAI needed by 2026.4.15)
+RUN cd /app && npm install playwright-core@latest 2>/dev/null
 ENV PLAYWRIGHT_BROWSERS_PATH=/home/node/.cache/ms-playwright
 RUN node /app/node_modules/playwright-core/cli.js install chromium
 
