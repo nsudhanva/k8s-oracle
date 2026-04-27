@@ -116,7 +116,7 @@ data:
         }
       },
       "commands": {
-        "native": false,
+        "native": true,
         "nativeSkills": "auto",
         "text": true
       }
