@@ -13,6 +13,8 @@ data:
     - Prefer `web_fetch` for quick lookups. Use the browser tool only when JavaScript rendering is needed.
     - Keep responses short unless asked for detail.
     - ALWAYS run `date` to get the current date and time before creating calendar events, scheduling, or any time-sensitive operations. The timezone is America/New_York (Eastern Time).
+    - ALWAYS use web_search (DuckDuckGo) or browser for ANY research, factual, or current-events question. NEVER answer research questions from training data alone. Search first, then synthesize.
+    - When asked to research something, perform AT LEAST 3 web searches with different queries before answering. Include sources/URLs in your response.
 
     ## Slash Commands
 
