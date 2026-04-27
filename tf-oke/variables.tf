@@ -205,6 +205,13 @@ variable "bw_client_secret" {
   default     = ""
 }
 
+variable "nvidia_api_key" {
+  description = "NVIDIA API key for DeepSeek/LLM access"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
 variable "bw_master_password" {
   description = "Bitwarden master password for vault unlock"
   type        = string
