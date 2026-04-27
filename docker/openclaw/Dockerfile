@@ -1,11 +1,11 @@
 # Custom OpenClaw Docker image for ARM64 OKE cluster
-# Base: official OpenClaw 2026.4.24 (latest stable)
+# Base: official OpenClaw 2026.4.25 (latest stable)
 # Adds: Chromium browser, CLI tools, timeout patches, Playwright upgrade
 #
 # Build: docker buildx build --platform linux/arm64 --no-cache -t ghcr.io/nsudhanva/openclaw:latest --push .
 # GHCR package must be Public: https://github.com/users/nsudhanva/packages/container/openclaw/settings
 
-FROM ghcr.io/openclaw/openclaw:2026.4.24
+FROM ghcr.io/openclaw/openclaw:2026.4.25
 
 USER root
 
@@ -56,7 +56,7 @@ RUN sed -i \
     -e 's/CHROME_LAUNCH_READY_WINDOW_MS = 15e3/CHROME_LAUNCH_READY_WINDOW_MS = 6e4/g' \
     -e 's/CHROME_BOOTSTRAP_PREFS_TIMEOUT_MS = 1e4/CHROME_BOOTSTRAP_PREFS_TIMEOUT_MS = 3e4/g' \
     -e 's/CHROME_BOOTSTRAP_EXIT_TIMEOUT_MS = 5e3/CHROME_BOOTSTRAP_EXIT_TIMEOUT_MS = 15e3/g' \
-    /app/dist/cdp.helpers-2643q7gc.js
+    /app/dist/cdp.helpers-BGwBLp-6.js
 
 # Upgrade playwright-core (bundled 1.59.1 lacks _snapshotForAI needed for AI snapshots)
 USER node
