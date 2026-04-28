@@ -8,6 +8,7 @@
 
 # Clean stale Chrome locks
 find "${HOME}/.openclaw/browser" -name "Singleton*" -delete 2>/dev/null || true
+rm -rf /tmp/chrome-data 2>/dev/null || true
 
 POD_IP=$(hostname -i | awk '{print $1}')
 
@@ -34,10 +35,10 @@ chromium --no-sandbox --disable-gpu --disable-dev-shm-usage \
   --start-maximized \
   --user-agent="Mozilla/5.0 (X11; Linux aarch64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${CHROME_VERSION} Safari/537.36" \
   --lang=en-US \
-  about:blank >/dev/null 2>&1 &
+  about:blank >/tmp/chrome.log 2>&1 &
 
 # Proxy Chrome CDP from pod IP to localhost (Remote CDP mode)
-socat TCP-LISTEN:9223,fork,reuseaddr,bind=${POD_IP} TCP:127.0.0.1:9222 &
+socat TCP-LISTEN:9223,fork,reuseaddr TCP:127.0.0.1:9222 &
 
 # Wait for Chrome CDP to be ready
 for i in $(seq 1 30); do
