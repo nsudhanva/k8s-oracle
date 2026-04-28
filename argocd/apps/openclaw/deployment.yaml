@@ -8,7 +8,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 50Gi
+      storage: 200Gi
   storageClassName: oci-bv
 ---
 apiVersion: apps/v1
