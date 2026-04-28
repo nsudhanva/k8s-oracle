@@ -125,12 +125,6 @@ spec:
                   name: google-places-api-key
                   key: api-key
                   optional: true
-            - name: DISCORD_BOT_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: discord-bot-token
-                  key: token
-                  optional: true
             - name: GOOGLE_WORKSPACE_CLI_KEYRING_BACKEND
               value: "file"
             - name: NVIDIA_API_KEY
