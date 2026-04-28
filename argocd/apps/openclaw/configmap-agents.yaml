@@ -240,8 +240,10 @@ data:
     cd /home/node/.openclaw/workspace
     [ ! -d "AutoResearchClaw" ] && git clone https://github.com/aiming-lab/AutoResearchClaw.git || (cd AutoResearchClaw && git pull)
     cd AutoResearchClaw
-    uv pip install --system -e .
-    
+    uv venv .venv --python 3.14 2>/dev/null || true
+    source .venv/bin/activate
+    uv pip install -e .
+
     cat << 'EOF' > config.arc.yaml
     project:
       name: "research-run"
@@ -257,7 +259,7 @@ data:
       time_budget_sec: 300
       max_iterations: 10
       sandbox:
-        python_path: "python3.14"
+        python_path: "/home/node/.openclaw/workspace/AutoResearchClaw/.venv/bin/python"
         gpu_required: false
         max_memory_mb: 3072
       code_agent: { enabled: true }
@@ -274,7 +276,7 @@ data:
     EOF
 
     # Replace TOPIC with the actual user topic and run
-    researchclaw run --config config.arc.yaml --topic "TOPIC" --auto-approve
+    source .venv/bin/activate && researchclaw run --config config.arc.yaml --topic "TOPIC" --auto-approve
     ```
     Output in `artifacts/rc-*/deliverables/` — send paper + charts to user via Telegram.
   RESEARCH_SKILL.md: |
