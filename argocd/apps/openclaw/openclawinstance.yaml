@@ -72,6 +72,7 @@ spec:
       channels:
         telegram:
           enabled: true
+          botToken: "${TELEGRAM_BOT_TOKEN}"
           dmPolicy: pairing
       session:
         scope: per-sender
@@ -312,8 +313,8 @@ spec:
         - sh
         - -c
         - |
-          CONFIG=$(find /home/openclaw -maxdepth 2 -name "openclaw.json" -type f | head -1)
-          find /home/openclaw -maxdepth 2 -name "openclaw.json.bak" -o -name "openclaw.json.last-good" | xargs rm -f 2>/dev/null
+          CONFIG="/data/openclaw.json"
+          rm -f /data/openclaw.json.bak /data/openclaw.json.last-good
           until [ -f "$CONFIG" ]; do echo "waiting for config..."; sleep 1; done
           node -e "
           const fs = require('fs');
@@ -333,7 +334,7 @@ spec:
               key: telegram-bot-token
       volumeMounts:
         - name: data
-          mountPath: /home/openclaw
+          mountPath: /data
         - name: telegram-token
           mountPath: /secrets
           readOnly: true
