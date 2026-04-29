@@ -295,8 +295,7 @@ spec:
       failureThreshold: 3
 
   runtimeDeps:
-    python:
-      version: "3.14"
+    python: true
 
   resources:
     requests:
