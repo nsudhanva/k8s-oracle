@@ -312,7 +312,7 @@ spec:
         - sh
         - -c
         - |
-          CONFIG="/home/openclaw/.openclaw/openclaw.json"
+          CONFIG="/home/openclaw/openclaw.json"
           until [ -f "$CONFIG" ]; do echo "waiting for config..."; sleep 1; done
           node -e "
           const fs = require('fs');
