@@ -189,11 +189,6 @@ spec:
         secretKeyRef:
           name: gemini-api-key
           key: api-key
-    - name: OPENCLAW_GATEWAY_TOKEN
-      valueFrom:
-        secretKeyRef:
-          name: openclaw-secrets
-          key: gateway-token
     - name: TELEGRAM_BOT_TOKEN
       valueFrom:
         secretKeyRef:
