@@ -312,8 +312,8 @@ spec:
         - sh
         - -c
         - |
-          CONFIG="/home/openclaw/.openclaw/openclaw.json"
-          rm -f /home/openclaw/.openclaw/openclaw.json.bak /home/openclaw/.openclaw/openclaw.json.last-good
+          CONFIG=$(find /home/openclaw -maxdepth 2 -name "openclaw.json" -type f | head -1)
+          find /home/openclaw -maxdepth 2 -name "openclaw.json.bak" -o -name "openclaw.json.last-good" | xargs rm -f 2>/dev/null
           until [ -f "$CONFIG" ]; do echo "waiting for config..."; sleep 1; done
           node -e "
           const fs = require('fs');
