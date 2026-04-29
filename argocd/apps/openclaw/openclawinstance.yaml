@@ -72,7 +72,7 @@ spec:
       channels:
         telegram:
           enabled: true
-          botToken: "${TELEGRAM_BOT_TOKEN}"
+          tokenFile: "/secrets/telegram-bot-token"
           dmPolicy: pairing
       session:
         scope: per-sender
@@ -305,6 +305,15 @@ spec:
     limits:
       memory: "4Gi"
       cpu: "2000m"
+
+  extraVolumes:
+    - name: telegram-token
+      secret:
+        secretName: telegram-bot-token
+  extraVolumeMounts:
+    - name: telegram-token
+      mountPath: /secrets
+      readOnly: true
 
   gateway:
     enabled: false
