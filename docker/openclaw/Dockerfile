@@ -50,7 +50,7 @@ RUN set -e && \
     tar -xz -C /usr/local/bin -f goplaces.tar.gz && rm goplaces.tar.gz && \
     curl -fsSL --retry 3 -o spogo.tar.gz "https://github.com/steipete/spogo/releases/latest/download/spogo_0.2.0_linux_${ARCH}.tar.gz" && \
     tar -xz -C /usr/local/bin -f spogo.tar.gz && rm spogo.tar.gz && \
-    curl -fsSL --retry 3 -o discrawl.tar.gz "https://github.com/steipete/discrawl/releases/latest/download/discrawl_0.6.0_linux_${ARCH}.tar.gz" && \
+    curl -fsSL --retry 3 -o discrawl.tar.gz "https://github.com/steipete/discrawl/releases/latest/download/discrawl_0.6.1_linux_${ARCH}.tar.gz" && \
     tar -xz -C /usr/local/bin -f discrawl.tar.gz && rm discrawl.tar.gz && \
     curl -fsSL --retry 3 -o camsnap.tar.gz "https://github.com/steipete/camsnap/releases/latest/download/camsnap_0.2.0_linux_${ARCH}.tar.gz" && \
     tar -xz -C /usr/local/bin -f camsnap.tar.gz && rm camsnap.tar.gz && \
