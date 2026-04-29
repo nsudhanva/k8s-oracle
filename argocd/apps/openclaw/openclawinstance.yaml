@@ -72,7 +72,6 @@ spec:
       channels:
         telegram:
           enabled: true
-          botToken: "${TELEGRAM_BOT_TOKEN}"
           dmPolicy: pairing
       session:
         scope: per-sender
@@ -305,48 +304,6 @@ spec:
     limits:
       memory: "4Gi"
       cpu: "2000m"
-
-  initContainers:
-    - name: inject-telegram-token
-      image: ghcr.io/openclaw/openclaw:2026.4.26
-      command:
-        - sh
-        - -c
-        - |
-          CONFIG="/data/openclaw.json"
-          rm -f /data/openclaw.json.bak /data/openclaw.json.last-good
-          until [ -f "$CONFIG" ]; do echo "waiting for config..."; sleep 1; done
-          node -e "
-          const fs = require('fs');
-          const cfg = JSON.parse(fs.readFileSync('$CONFIG'));
-          cfg.channels = cfg.channels || {};
-          cfg.channels.telegram = cfg.channels.telegram || {};
-          cfg.channels.telegram.botToken = process.env.TG_TOKEN;
-          delete cfg.channels.telegram.tokenFile;
-          fs.writeFileSync('$CONFIG', JSON.stringify(cfg, null, 2));
-          console.log('Telegram token injected');
-          "
-      env:
-        - name: TG_TOKEN
-          valueFrom:
-            secretKeyRef:
-              name: telegram-bot-token
-              key: telegram-bot-token
-      volumeMounts:
-        - name: data
-          mountPath: /data
-        - name: telegram-token
-          mountPath: /secrets
-          readOnly: true
-
-  extraVolumes:
-    - name: telegram-token
-      secret:
-        secretName: telegram-bot-token
-  extraVolumeMounts:
-    - name: telegram-token
-      mountPath: /secrets
-      readOnly: true
 
   gateway:
     enabled: false
