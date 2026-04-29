@@ -312,15 +312,17 @@ spec:
         - sh
         - -c
         - |
-          TG_TOKEN=$(cat /secrets/telegram-bot-token)
+          CONFIG="/home/openclaw/.openclaw/openclaw.json"
+          until [ -f "$CONFIG" ]; do echo "waiting for config..."; sleep 1; done
           node -e "
           const fs = require('fs');
-          const cfg = JSON.parse(fs.readFileSync('/home/openclaw/.openclaw/openclaw.json'));
+          const cfg = JSON.parse(fs.readFileSync('$CONFIG'));
           cfg.channels = cfg.channels || {};
           cfg.channels.telegram = cfg.channels.telegram || {};
           cfg.channels.telegram.botToken = process.env.TG_TOKEN;
           delete cfg.channels.telegram.tokenFile;
-          fs.writeFileSync('/home/openclaw/.openclaw/openclaw.json', JSON.stringify(cfg, null, 2));
+          fs.writeFileSync('$CONFIG', JSON.stringify(cfg, null, 2));
+          console.log('Telegram token injected');
           "
       env:
         - name: TG_TOKEN
