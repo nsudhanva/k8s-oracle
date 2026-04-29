@@ -14,8 +14,16 @@ POD_IP=$(hostname -i | awk '{print $1}')
 
 # Start virtual display (Xvfb)
 export DISPLAY=:99
+rm -f /tmp/.X99-lock
 Xvfb :99 -screen 0 1920x1080x24 -ac -nolisten tcp >/dev/null 2>&1 &
-sleep 1
+
+# Wait for Xvfb to be ready (up to 10s)
+for i in $(seq 1 20); do
+  if xdpyinfo -display :99 >/dev/null 2>&1; then
+    break
+  fi
+  sleep 0.5
+done
 
 # Start dbus (needed for headful Chrome in containers)
 eval $(dbus-launch --sh-syntax 2>/dev/null) || true
@@ -40,7 +48,7 @@ chromium --no-sandbox --disable-gpu --disable-dev-shm-usage \
 # Proxy Chrome CDP from pod IP to localhost (Remote CDP mode)
 socat TCP-LISTEN:9223,fork,reuseaddr TCP:127.0.0.1:9222 &
 
-# Wait for Chrome CDP to be ready
+# Wait for Chrome CDP to be ready (up to 30s)
 for i in $(seq 1 30); do
   if wget -q --spider "http://127.0.0.1:9222/json/version" 2>/dev/null; then
     break
