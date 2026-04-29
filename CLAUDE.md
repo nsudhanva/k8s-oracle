@@ -23,18 +23,8 @@ This project provisions an **OKE (Oracle Kubernetes Engine) Basic cluster on Ora
 - **External Secrets Operator** with OCI Vault for secrets management
 - **Cert Manager** for Let's Encrypt TLS certificates
 - **External DNS** for Cloudflare DNS automation
-- **OpenClaw** AI agent with Telegram bot, Gemini API, and browser control (custom image: `ghcr.io/nsudhanva/openclaw:latest`)
-
-## Custom Docker Image
-
-OpenClaw uses a custom Docker image built from `docker/openclaw/Dockerfile`. It extends `ghcr.io/openclaw/openclaw:2026.4.15` with Chromium, steipete CLI tools, and system dependencies.
-
-```bash
-cd docker/openclaw
-docker buildx build --platform linux/arm64 --no-cache -t ghcr.io/nsudhanva/openclaw:latest --push .
-```
-
-The GHCR package must be set to **Public** visibility. The image must be rebuilt and pushed before deploying if the Dockerfile changes.
+- **OpenClaw Operator** (`openclaw-operator`) for declarative AI agent deployment via `OpenClawInstance` CRD
+- **OpenClaw** AI agent with Telegram bot, Gemini API, and browser control (managed by operator, no custom image)
 
 ## Critical Safety Rules
 

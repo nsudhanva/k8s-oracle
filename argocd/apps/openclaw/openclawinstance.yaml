@@ -1,0 +1,314 @@
+apiVersion: openclaw.rocks/v1alpha1
+kind: OpenClawInstance
+metadata:
+  name: openclaw
+  namespace: default
+spec:
+  chromium:
+    enabled: true
+
+  config:
+    gateway:
+      mode: local
+      port: 18789
+      controlUi:
+        allowedOrigins:
+          - "https://claw.k8s.sudhanva.me"
+          - "http://localhost:18789"
+          - "http://127.0.0.1:18789"
+    browser:
+      enabled: true
+      headless: false
+      noSandbox: true
+      actionTimeoutMs: 60000
+      defaultProfile: remote
+      ssrfPolicy:
+        dangerouslyAllowPrivateNetwork: true
+      profiles:
+        remote:
+          cdpUrl: "http://localhost:9222"
+          color: "#FF4500"
+    models:
+      mode: merge
+      providers:
+        google:
+          baseUrl: "https://generativelanguage.googleapis.com/v1beta"
+          apiKey: "${GEMINI_API_KEY}"
+          api: google-generative-ai
+          models:
+            - id: gemini-3.1-flash-lite-preview
+              name: Gemini 3.1 Flash Lite
+              contextWindow: 131072
+              maxTokens: 8192
+        nvidia:
+          baseUrl: "https://integrate.api.nvidia.com/v1"
+          apiKey: "${NVIDIA_API_KEY}"
+          api: openai-completions
+          models:
+            - id: deepseek-ai/deepseek-v4-pro
+              name: DeepSeek V4 Pro
+              contextWindow: 131072
+              maxTokens: 16384
+            - id: deepseek-ai/deepseek-v4-flash
+              name: DeepSeek V4 Flash
+              contextWindow: 131072
+              maxTokens: 16384
+    agents:
+      defaults:
+        model:
+          primary: google/gemini-3.1-flash-lite-preview
+        timeoutSeconds: 300
+        compaction:
+          mode: safeguard
+          reserveTokensFloor: 24000
+        contextLimits:
+          toolResultMaxChars: 12000
+        bootstrapMaxChars: 20000
+        bootstrapTotalMaxChars: 40000
+        heartbeat:
+          every: "15m"
+          target: last
+    channels:
+      telegram:
+        enabled: true
+        botToken: "${TELEGRAM_BOT_TOKEN}"
+        dmPolicy: pairing
+    session:
+      scope: per-sender
+      dmScope: per-peer
+      reset:
+        mode: idle
+        idleMinutes: 30
+      maintenance:
+        mode: enforce
+        pruneAfter: "7d"
+        maxEntries: 100
+    plugins:
+      entries:
+        memory-core:
+          enabled: true
+          config:
+            dreaming:
+              enabled: true
+        duckduckgo:
+          enabled: true
+        bonjour:
+          enabled: false
+    messages:
+      ackReaction: eyes
+      ackReactionScope: direct
+      queue:
+        mode: collect
+        debounceMs: 1500
+    commands:
+      native: true
+      nativeSkills: auto
+      text: true
+
+  workspace:
+    initialFiles:
+      AGENTS.md: |
+        Be concise and helpful. You are Sudhanva's personal AI assistant running on a Kubernetes cluster.
+
+        ## Important Rules
+        - All tools listed in TOOLS.md are pre-authenticated. NEVER attempt OAuth, login, or auth flows.
+        - For all `gws` commands, always set GOOGLE_WORKSPACE_CLI_KEYRING_BACKEND=file.
+        - Prefer `web_fetch` for quick lookups. Use the browser tool only when JavaScript rendering is needed.
+        - Keep responses short unless asked for detail.
+        - ALWAYS run `date` to get the current date and time before creating calendar events, scheduling, or any time-sensitive operations. The timezone is America/New_York (Eastern Time).
+        - ALWAYS use web_search (DuckDuckGo) or browser for ANY research, factual, or current-events question. NEVER answer research questions from training data alone. Search first, then synthesize.
+        - When asked to research something, perform AT LEAST 3 web searches with different queries before answering. Include sources/URLs in your response.
+
+        ## Slash Commands
+
+        ### /research <topic>
+        Trigger the AutoResearchClaw autonomous research pipeline. Steps:
+        1. Follow the "First-Time Setup" instructions in TOOLS.md -> AutoResearchClaw section
+        2. Create/update `config.arc.yaml` with the user's topic (use the template in TOOLS.md)
+        3. Adjust `research.domains` based on the topic
+        4. Run: `researchclaw run --config config.arc.yaml --topic "<user's topic>" --auto-approve`
+        5. Monitor progress and send status updates to the user
+        6. When complete, send the paper draft and key charts via Telegram
+        If the user says "Research X" without the slash command, still treat it as a research request.
+      TOOLS.md: |
+        # Authenticated Tools
+
+        All tools below are pre-authenticated and ready to use. Do NOT run any auth/login commands.
+
+        ## Google Workspace CLI (gws)
+        Pre-authenticated via credentials at /home/node/.config/gws/credentials.json.
+        GOOGLE_WORKSPACE_CLI_KEYRING_BACKEND=file is set.
+
+        | Command | What it does |
+        |---------|-------------|
+        | `gws gmail users messages list --params '{"userId":"me","maxResults":5}'` | List emails |
+        | `gws calendar events list --params '{"calendarId":"primary"}'` | List events |
+        | `gws drive files list` | List Drive files |
+
+        ## GitHub CLI (gh)
+        Account: `nsudhanva`. Authenticated via GH_TOKEN.
+
+        ## Google Places (goplaces)
+        API key configured via GOOGLE_PLACES_API_KEY.
+
+        ## Browser (Chromium)
+        Managed by the operator's chromium sidecar. Use the browser tool for navigating websites, screenshots, form filling.
+
+        ## Bitwarden CLI (bw) - READ-ONLY
+        Auto-authenticated. BW_CLIENTID, BW_CLIENTSECRET, and BW_MASTER_PASSWORD are all set.
+        Login: `bw login --apikey 2>/dev/null || true`
+        Unlock: `export BW_SESSION=$(bw unlock --passwordenv BW_MASTER_PASSWORD --raw)`
+        STRICT RULES: READ-ONLY. NEVER send passwords as plain text in Telegram.
+
+        ## Python & uv
+        Use `uv` for fast package management. Prefer `uv run --with <pkg>` for one-off scripts.
+
+        ## AutoResearchClaw
+        Repo: https://github.com/aiming-lab/AutoResearchClaw
+
+        ### Setup & Run
+        ```bash
+        cd /home/node/.openclaw/workspace
+        [ ! -d "AutoResearchClaw" ] && git clone https://github.com/aiming-lab/AutoResearchClaw.git || (cd AutoResearchClaw && git pull)
+        cd AutoResearchClaw
+        uv venv .venv --python 3.14 2>/dev/null || true
+        source .venv/bin/activate
+        uv pip install -e .
+
+        cat << 'EOF' > config.arc.yaml
+        project:
+          name: "research-run"
+          mode: "full-auto"
+        llm:
+          provider: "openai-compatible"
+          base_url: "https://generativelanguage.googleapis.com/v1beta/openai"
+          api_key_env: "GEMINI_API_KEY"
+          primary_model: "gemini-2.5-flash"
+          fallback_models: ["gemini-2.5-flash"]
+        experiment:
+          mode: "sandbox"
+          time_budget_sec: 300
+          max_iterations: 10
+          sandbox:
+            python_path: "/home/node/.openclaw/workspace/AutoResearchClaw/.venv/bin/python"
+            gpu_required: false
+            max_memory_mb: 3072
+        EOF
+
+        source .venv/bin/activate && researchclaw run --config config.arc.yaml --topic "TOPIC" --auto-approve
+        ```
+      USER.md: |
+        # About Sudhanva
+
+        - **Name:** Sudhanva Narayana
+        - **Email:** nsudhanva@gmail.com
+        - **GitHub:** nsudhanva
+        - **Timezone:** US Eastern (ET)
+        - **What to call them:** Sudhanva
+
+  env:
+    - name: GEMINI_API_KEY
+      valueFrom:
+        secretKeyRef:
+          name: gemini-api-key
+          key: api-key
+    - name: OPENCLAW_GATEWAY_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: openclaw-secrets
+          key: gateway-token
+    - name: TELEGRAM_BOT_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: telegram-bot-token
+          key: telegram-bot-token
+    - name: GH_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: github-pat
+          key: github-pat
+          optional: true
+    - name: GOOGLE_PLACES_API_KEY
+      valueFrom:
+        secretKeyRef:
+          name: google-places-api-key
+          key: api-key
+          optional: true
+    - name: NVIDIA_API_KEY
+      valueFrom:
+        secretKeyRef:
+          name: nvidia-api-key
+          key: api-key
+          optional: true
+    - name: ALPHAVANTAGE_API_KEY
+      valueFrom:
+        secretKeyRef:
+          name: alphavantage-api-key
+          key: api-key
+          optional: true
+    - name: BW_CLIENTID
+      valueFrom:
+        secretKeyRef:
+          name: bw-credentials
+          key: client-id
+          optional: true
+    - name: BW_CLIENTSECRET
+      valueFrom:
+        secretKeyRef:
+          name: bw-credentials
+          key: client-secret
+          optional: true
+    - name: BW_MASTER_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: bw-credentials
+          key: master-password
+          optional: true
+    - name: TZ
+      value: "America/New_York"
+    - name: GOOGLE_WORKSPACE_CLI_KEYRING_BACKEND
+      value: "file"
+    - name: NODE_OPTIONS
+      value: "--dns-result-order=ipv4first"
+
+  storage:
+    persistence:
+      enabled: true
+      size: 200Gi
+      storageClassName: oci-bv
+      orphan: true
+
+  probes:
+    startup:
+      initialDelaySeconds: 15
+      periodSeconds: 10
+      failureThreshold: 60
+    liveness:
+      initialDelaySeconds: 60
+      periodSeconds: 30
+      timeoutSeconds: 10
+      failureThreshold: 3
+    readiness:
+      initialDelaySeconds: 15
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+
+  runtimeDeps:
+    python:
+      version: "3.14"
+
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "500m"
+    limits:
+      memory: "4Gi"
+      cpu: "2000m"
+
+  observability:
+    logging:
+      level: info
+      format: json
+    metrics:
+      enabled: false
