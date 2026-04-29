@@ -42,13 +42,20 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | d
 ARG TARGETARCH
 RUN set -e && \
     GWS_ARCH=$([ "$TARGETARCH" = "arm64" ] && echo "aarch64" || echo "x86_64") && \
-    curl -fsSL "https://github.com/googleworkspace/cli/releases/latest/download/google-workspace-cli-${GWS_ARCH}-unknown-linux-gnu.tar.gz" | tar -xzf - -C /usr/local/bin --strip-components=0 ./gws && \
     ARCH=$([ "$TARGETARCH" = "arm64" ] && echo "arm64" || echo "amd64") && \
-    curl -fsSL "https://github.com/steipete/goplaces/releases/latest/download/goplaces_0.3.0_linux_${ARCH}.tar.gz" | tar -xz -C /usr/local/bin && \
-    curl -fsSL "https://github.com/steipete/spogo/releases/latest/download/spogo_0.2.0_linux_${ARCH}.tar.gz" | tar -xz -C /usr/local/bin && \
-    curl -fsSL "https://github.com/steipete/discrawl/releases/latest/download/discrawl_0.6.0_linux_${ARCH}.tar.gz" | tar -xz -C /usr/local/bin && \
-    curl -fsSL "https://github.com/steipete/camsnap/releases/latest/download/camsnap_0.2.0_linux_${ARCH}.tar.gz" | tar -xz -C /usr/local/bin && \
-    curl -fsSL "https://github.com/steipete/ordercli/releases/latest/download/ordercli_0.1.0_linux_${ARCH}.tar.gz" | tar -xz -C /usr/local/bin
+    cd /tmp && \
+    curl -fsSL --retry 3 -o gws.tar.gz "https://github.com/googleworkspace/cli/releases/latest/download/google-workspace-cli-${GWS_ARCH}-unknown-linux-gnu.tar.gz" && \
+    tar -xzf gws.tar.gz -C /usr/local/bin --strip-components=0 ./gws && rm gws.tar.gz && \
+    curl -fsSL --retry 3 -o goplaces.tar.gz "https://github.com/steipete/goplaces/releases/latest/download/goplaces_0.3.0_linux_${ARCH}.tar.gz" && \
+    tar -xz -C /usr/local/bin -f goplaces.tar.gz && rm goplaces.tar.gz && \
+    curl -fsSL --retry 3 -o spogo.tar.gz "https://github.com/steipete/spogo/releases/latest/download/spogo_0.2.0_linux_${ARCH}.tar.gz" && \
+    tar -xz -C /usr/local/bin -f spogo.tar.gz && rm spogo.tar.gz && \
+    curl -fsSL --retry 3 -o discrawl.tar.gz "https://github.com/steipete/discrawl/releases/latest/download/discrawl_0.6.0_linux_${ARCH}.tar.gz" && \
+    tar -xz -C /usr/local/bin -f discrawl.tar.gz && rm discrawl.tar.gz && \
+    curl -fsSL --retry 3 -o camsnap.tar.gz "https://github.com/steipete/camsnap/releases/latest/download/camsnap_0.2.0_linux_${ARCH}.tar.gz" && \
+    tar -xz -C /usr/local/bin -f camsnap.tar.gz && rm camsnap.tar.gz && \
+    curl -fsSL --retry 3 -o ordercli.tar.gz "https://github.com/steipete/ordercli/releases/latest/download/ordercli_0.1.0_linux_${ARCH}.tar.gz" && \
+    tar -xz -C /usr/local/bin -f ordercli.tar.gz && rm ordercli.tar.gz
 
 # Patch Chrome CDP timeouts for ARM64 (backup - primary fix is Remote CDP in entrypoint)
 # File hash changes with each OpenClaw version
