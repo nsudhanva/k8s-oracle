@@ -34,7 +34,7 @@ spec:
           model:
             primary: openai-codex/gpt-5.5
             fallbacks:
-              - google/gemini-2.5-flash
+              - google/gemini-3.1-flash-lite-preview
               - nvidia/deepseek-ai/deepseek-v4-pro
           timeoutSeconds: 300
           compaction:
