@@ -32,9 +32,9 @@ spec:
       agents:
         defaults:
           model:
-            primary: nvidia/deepseek-ai/deepseek-v4-pro
+            primary: openai-codex/gpt-5.5
             fallbacks:
-              - nvidia/deepseek-ai/deepseek-v4-flash
+              - nvidia/deepseek-ai/deepseek-v4-pro
           timeoutSeconds: 300
           compaction:
             mode: safeguard
@@ -71,6 +71,8 @@ spec:
             enabled: true
           bonjour:
             enabled: false
+          codex:
+            enabled: true
       messages:
         ackReaction: eyes
         ackReactionScope: direct
@@ -246,22 +248,22 @@ spec:
   storage:
     persistence:
       enabled: true
-      size: 200Gi
+      size: 180Gi
       storageClass: oci-bv
       orphan: true
 
   probes:
     startup:
-      initialDelaySeconds: 15
+      initialDelaySeconds: 30
       periodSeconds: 10
       failureThreshold: 60
     liveness:
-      initialDelaySeconds: 60
+      initialDelaySeconds: 120
       periodSeconds: 30
       timeoutSeconds: 10
       failureThreshold: 3
     readiness:
-      initialDelaySeconds: 15
+      initialDelaySeconds: 30
       periodSeconds: 10
       timeoutSeconds: 5
       failureThreshold: 3
@@ -276,9 +278,6 @@ spec:
     limits:
       memory: "4Gi"
       cpu: "2000m"
-
-  gateway:
-    enabled: false
 
   observability:
     logging:
