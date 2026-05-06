@@ -131,7 +131,7 @@ spec:
         All tools below are pre-authenticated and ready to use. Do NOT run any auth/login commands.
 
         ## Google Workspace CLI (gws)
-        Installed at $NPM_CONFIG_PREFIX/bin/gws. Credentials at /home/openclaw/.config/gws/credentials.json.
+        Installed at $NPM_CONFIG_PREFIX/bin/gws. Credentials at /home/openclaw/.openclaw/gws/credentials.json (on PVC, XDG_CONFIG_HOME=/home/openclaw/.openclaw).
         ALWAYS run before any gws command:
         ```
         export PATH="$NPM_CONFIG_PREFIX/bin:$PATH"
@@ -267,6 +267,8 @@ spec:
       value: "--dns-result-order=ipv4first"
     - name: NPM_CONFIG_PREFIX
       value: "/home/openclaw/.openclaw/npm-global"
+    - name: XDG_CONFIG_HOME
+      value: "/home/openclaw/.openclaw"
 
   storage:
     persistence:
