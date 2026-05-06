@@ -4,6 +4,10 @@ metadata:
   name: openclaw
   namespace: default
 spec:
+  image:
+    repository: ghcr.io/openclaw/openclaw
+    tag: "2026.5.4"
+
   chromium:
     enabled: true
 
