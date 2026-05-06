@@ -97,7 +97,7 @@ spec:
 
         ## Important Rules
         - All tools listed in TOOLS.md are pre-authenticated. NEVER attempt OAuth, login, or auth flows.
-        - For all `gws` commands, always set GOOGLE_WORKSPACE_CLI_KEYRING_BACKEND=file.
+        - For all `gws` commands, always run `export PATH="$NPM_CONFIG_PREFIX/bin:$PATH"` first, then set GOOGLE_WORKSPACE_CLI_KEYRING_BACKEND=file. If gws is not found, run `npm install -g @googleworkspace/cli` first.
         - Prefer `web_fetch` for quick lookups. Use the browser tool only when JavaScript rendering is needed.
         - Keep responses short unless asked for detail.
         - ALWAYS run `date` to get the current date and time before creating calendar events, scheduling, or any time-sensitive operations. The timezone is America/New_York (Eastern Time).
@@ -130,8 +130,13 @@ spec:
         All tools below are pre-authenticated and ready to use. Do NOT run any auth/login commands.
 
         ## Google Workspace CLI (gws)
-        Pre-authenticated via credentials at /home/node/.config/gws/credentials.json.
-        GOOGLE_WORKSPACE_CLI_KEYRING_BACKEND=file is set.
+        Installed at $NPM_CONFIG_PREFIX/bin/gws. Credentials at /home/node/.config/gws/credentials.json.
+        ALWAYS run before any gws command:
+        ```
+        export PATH="$NPM_CONFIG_PREFIX/bin:$PATH"
+        export GOOGLE_WORKSPACE_CLI_KEYRING_BACKEND=file
+        ```
+        If gws is not found: `npm install -g @googleworkspace/cli`
 
         | Command | What it does |
         |---------|-------------|
@@ -259,6 +264,8 @@ spec:
       value: "file"
     - name: NODE_OPTIONS
       value: "--dns-result-order=ipv4first"
+    - name: NPM_CONFIG_PREFIX
+      value: "/home/node/.openclaw/npm-global"
 
   storage:
     persistence:
