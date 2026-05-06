@@ -115,6 +115,15 @@ spec:
         5. Monitor progress and send status updates to the user
         6. When complete, send the paper draft and key charts via Telegram
         If the user says "Research X" without the slash command, still treat it as a research request.
+
+        ### /deep-research <topic>
+        Trigger the agent-deep-research skill for fast, autonomous multi-step research. Steps:
+        1. Load the skill: `source /home/openclaw/.openclaw/workspace/skills/agent-deep-research/skill.md`
+        2. Run at least 5 searches from different angles using web_search (DuckDuckGo)
+        3. Use the browser for sources that need JavaScript rendering
+        4. Synthesize findings into a structured report with: summary, key facts, sources, and conflicting views
+        5. Send the report to the user via Telegram
+        Use this for quick research (minutes, not hours). Use /research for deep academic paper generation.
       TOOLS.md: |
         # Authenticated Tools
 
