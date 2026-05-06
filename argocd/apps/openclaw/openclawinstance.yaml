@@ -103,6 +103,7 @@ spec:
         - ALWAYS run `date` to get the current date and time before creating calendar events, scheduling, or any time-sensitive operations. The timezone is America/New_York (Eastern Time).
         - ALWAYS use web_search (DuckDuckGo) or browser for ANY research, factual, or current-events question. NEVER answer research questions from training data alone. Search first, then synthesize.
         - When asked to research something, perform AT LEAST 3 web searches with different queries before answering. Include sources/URLs in your response.
+        - After any task that produces files (images, charts, PDFs, reports): ALWAYS send them to the user via Telegram using the `send_file` tool (or equivalent). Do NOT just save to disk — proactively deliver outputs.
 
         ## Slash Commands
 
@@ -113,7 +114,7 @@ spec:
         3. Adjust `research.domains` based on the topic
         4. Run: `researchclaw run --config config.arc.yaml --topic "<user's topic>" --auto-approve`
         5. Monitor progress and send status updates to the user
-        6. When complete, send the paper draft and key charts via Telegram
+        6. When complete, use `send_file` to send the paper draft (PDF/md) and each chart image via Telegram — do not just describe file paths
         If the user says "Research X" without the slash command, still treat it as a research request.
 
         ### /deep-research <topic>
