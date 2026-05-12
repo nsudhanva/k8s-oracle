@@ -194,7 +194,6 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
-      - ServerSideApply=true
       - Replace=true
 ---
 apiVersion: argoproj.io/v1alpha1
