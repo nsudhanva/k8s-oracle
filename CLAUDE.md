@@ -154,7 +154,7 @@ The OKE cluster uses the following defaults (configurable via variables):
 - **Kubernetes Version**: 1.35.2
 - **cert-manager**: v1.20.2
 - **external-dns**: 1.21.1
-- **envoy-gateway**: v1.7.3
+- **envoy-gateway**: v1.6.1
 - **external-secrets**: 0.12.1
 - **gateway-api CRDs**: v1.2.1
 - **metrics-server**: 3.13.0
