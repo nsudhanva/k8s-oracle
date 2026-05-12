@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: homer
-          image: b4bz/homer:latest
+          image: docker.io/b4bz/homer:latest
           ports:
             - containerPort: 8080
               name: http
