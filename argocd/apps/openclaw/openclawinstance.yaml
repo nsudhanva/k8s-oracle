@@ -10,6 +10,9 @@ spec:
 
   chromium:
     enabled: true
+    image:
+      repository: docker.io/chromedp/headless-shell
+      tag: stable
 
   config:
     raw:
