@@ -40,8 +40,8 @@ Expected output:
 
 ```text
 NAME          STATUS   ROLES   AGE   VERSION
-10.0.10.x     Ready    node    5m    v1.32.1
-10.0.10.y     Ready    node    5m    v1.32.1
+10.0.10.x     Ready    node    5m    v1.35.2
+10.0.10.y     Ready    node    5m    v1.35.2
 ```
 
 ## Argo CD UI

@@ -128,7 +128,7 @@ spec:
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
-  name: gemma-api-key-sync
+  name: openclaw-secrets-sync
   namespace: default
 spec:
   refreshInterval: 1h
@@ -136,17 +136,17 @@ spec:
     name: oci-vault
     kind: ClusterSecretStore
   target:
-    name: gemma-api-key
+    name: openclaw-secrets
     creationPolicy: Owner
   data:
-    - secretKey: api-key
+    - secretKey: gateway-token
       remoteRef:
-        key: gemma-api-key
+        key: openclaw-gateway-token
 ---
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
-  name: huggingface-token-sync
+  name: telegram-bot-token-sync
   namespace: default
 spec:
   refreshInterval: 1h
@@ -154,9 +154,141 @@ spec:
     name: oci-vault
     kind: ClusterSecretStore
   target:
-    name: huggingface-token
+    name: telegram-bot-token
     creationPolicy: Owner
   data:
-    - secretKey: token
+    - secretKey: telegram-bot-token
       remoteRef:
-        key: huggingface-token
+        key: telegram-bot-token
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: gemini-api-key-sync
+  namespace: default
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: oci-vault
+    kind: ClusterSecretStore
+  target:
+    name: gemini-api-key
+    creationPolicy: Owner
+  data:
+    - secretKey: api-key
+      remoteRef:
+        key: gemini-api-key
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: google-places-api-key-sync
+  namespace: default
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: oci-vault
+    kind: ClusterSecretStore
+  target:
+    name: google-places-api-key
+    creationPolicy: Owner
+  data:
+    - secretKey: api-key
+      remoteRef:
+        key: google-places-api-key
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: gog-keyring-password-sync
+  namespace: default
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: oci-vault
+    kind: ClusterSecretStore
+  target:
+    name: gog-keyring-password
+    creationPolicy: Owner
+  data:
+    - secretKey: password
+      remoteRef:
+        key: gog-keyring-password
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: github-pat-sync
+  namespace: default
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: oci-vault
+    kind: ClusterSecretStore
+  target:
+    name: github-pat
+    creationPolicy: Owner
+  data:
+    - secretKey: github-pat
+      remoteRef:
+        key: github-pat
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: alphavantage-api-key-sync
+  namespace: default
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: oci-vault
+    kind: ClusterSecretStore
+  target:
+    name: alphavantage-api-key
+    creationPolicy: Owner
+  data:
+    - secretKey: api-key
+      remoteRef:
+        key: alphavantage-api-key
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: bw-credentials-sync
+  namespace: default
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: oci-vault
+    kind: ClusterSecretStore
+  target:
+    name: bw-credentials
+    creationPolicy: Owner
+  data:
+    - secretKey: client-id
+      remoteRef:
+        key: bw-client-id
+    - secretKey: client-secret
+      remoteRef:
+        key: bw-client-secret
+    - secretKey: master-password
+      remoteRef:
+        key: bw-master-password
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: nvidia-api-key-sync
+  namespace: default
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: oci-vault
+    kind: ClusterSecretStore
+  target:
+    name: nvidia-api-key
+    creationPolicy: Owner
+  data:
+    - secretKey: api-key
+      remoteRef:
+        key: nvidia-api-key
