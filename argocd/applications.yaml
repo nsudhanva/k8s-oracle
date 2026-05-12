@@ -10,9 +10,14 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/nsudhanva/k8s-oracle.git
-    targetRevision: HEAD
-    path: argocd/infrastructure/metrics-server
+    repoURL: https://kubernetes-sigs.github.io/metrics-server
+    chart: metrics-server
+    targetRevision: 3.13.0
+    helm:
+      valuesObject:
+        args:
+          - --kubelet-insecure-tls
+          - --kubelet-preferred-address-types=InternalIP
   destination:
     server: https://kubernetes.default.svc
     namespace: kube-system
@@ -63,10 +68,16 @@ metadata:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
-  source:
-    repoURL: https://github.com/nsudhanva/k8s-oracle.git
-    targetRevision: HEAD
-    path: argocd/infrastructure/cert-manager
+  sources:
+    - repoURL: https://charts.jetstack.io
+      chart: cert-manager
+      targetRevision: v1.20.2
+      helm:
+        valuesObject:
+          installCRDs: true
+    - repoURL: https://github.com/nsudhanva/k8s-oracle.git
+      targetRevision: HEAD
+      path: argocd/infrastructure/cert-manager
   destination:
     server: https://kubernetes.default.svc
     namespace: cert-manager
@@ -87,10 +98,41 @@ metadata:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
-  source:
-    repoURL: https://github.com/nsudhanva/k8s-oracle.git
-    targetRevision: HEAD
-    path: argocd/infrastructure/external-dns
+  sources:
+    - repoURL: https://kubernetes-sigs.github.io/external-dns/
+      chart: external-dns
+      targetRevision: 1.21.1
+      helm:
+        valuesObject:
+          logLevel: debug
+          provider: cloudflare
+          env:
+            - name: CF_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: cloudflare-api-token-secret
+                  key: api-token
+          domainFilters:
+            - sudhanva.me
+          extraArgs:
+            - --zone-id-filter=293c1768d72a5378bbdb4d59fc8e8bfc
+          sources:
+            - crd
+          rbac:
+            create: true
+            extraRules:
+              - apiGroups: ["gateway.networking.k8s.io"]
+                resources: ["gateways", "httproutes", "grpcroutes", "tlsroutes", "tcproutes", "udproutes", "gatewayclasses"]
+                verbs: ["get", "watch", "list"]
+              - apiGroups: ["externaldns.k8s.io"]
+                resources: ["dnsendpoints"]
+                verbs: ["get", "watch", "list"]
+              - apiGroups: ["externaldns.k8s.io"]
+                resources: ["dnsendpoints/status"]
+                verbs: ["update"]
+    - repoURL: https://github.com/nsudhanva/k8s-oracle.git
+      targetRevision: HEAD
+      path: argocd/infrastructure/external-dns
   destination:
     server: https://kubernetes.default.svc
     namespace: external-dns
@@ -189,10 +231,26 @@ metadata:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
-  source:
-    repoURL: https://github.com/nsudhanva/k8s-oracle.git
-    targetRevision: HEAD
-    path: argocd/infrastructure/external-secrets
+  sources:
+    - repoURL: https://charts.external-secrets.io
+      chart: external-secrets
+      targetRevision: 2.4.1
+      helm:
+        valuesObject:
+          webhook:
+            port: 9443
+          serviceMonitor:
+            enabled: false
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+    - repoURL: https://github.com/nsudhanva/k8s-oracle.git
+      targetRevision: HEAD
+      path: argocd/infrastructure/external-secrets
   destination:
     server: https://kubernetes.default.svc
     namespace: external-secrets
@@ -202,7 +260,7 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
-      - Replace=true
+      - ServerSideApply=true
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
