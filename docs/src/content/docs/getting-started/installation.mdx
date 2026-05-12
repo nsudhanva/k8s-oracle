@@ -94,7 +94,7 @@ The OKE cluster control plane is managed by Oracle. Once Terraform completes, th
 
    ```bash
    kubectl create namespace argocd
-   kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+   kubectl apply -n argocd --server-side -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.4.1/manifests/install.yaml
    kubectl apply -f ../argocd/applications.yaml
    ```
 
@@ -112,8 +112,8 @@ Expected output:
 
 ```text
 NAME             STATUS   ROLES   AGE   VERSION
-10.0.10.x        Ready    node    5m    v1.32.1
-10.0.10.y        Ready    node    5m    v1.32.1
+10.0.10.x        Ready    node    5m    v1.35.2
+10.0.10.y        Ready    node    5m    v1.35.2
 ```
 
 ### Check Applications
@@ -125,17 +125,20 @@ kubectl get applications -n argocd
 Expected output:
 
 ```text
-NAME                  SYNC STATUS   HEALTH STATUS
-argocd-ingress        Synced        Healthy
-argocd-self-managed   Synced        Healthy
-cert-manager          Synced        Healthy
-docs-app              Synced        Healthy
-envoy-gateway         Synced        Healthy
-external-dns          Synced        Healthy
-external-secrets      Synced        Healthy
-gateway-api-crds      Synced        Healthy
-managed-secrets       Synced        Healthy
-root-app              Synced        Healthy
+NAME                SYNC STATUS   HEALTH STATUS
+argocd-ingress      Synced        Healthy
+cert-manager        Synced        Healthy
+docs-app            Synced        Healthy
+envoy-gateway       Synced        Healthy
+external-dns        Synced        Healthy
+external-secrets    Synced        Healthy
+gateway-api-crds    Synced        Healthy
+homer-app           Synced        Healthy
+k3s-docs-app        Synced        Healthy
+managed-secrets     Synced        Healthy
+metrics-server      Synced        Healthy
+openclaw-app        Synced        Healthy
+openclaw-operator   Synced        Healthy
 ```
 
 ### Check Pods
@@ -163,27 +166,12 @@ Let's Encrypt limits you to **5 certificates per week** for the same domain. If 
 
 ### Applications Stuck in Unknown/OutOfSync
 
-If ArgoCD applications remain in Unknown status after initial deploy:
-
-Check if `kustomize.buildOptions` is set:
+If ArgoCD applications remain in Unknown status after initial deploy, force a hard refresh:
 
 ```bash
-kubectl -n argocd get cm argocd-cm -o jsonpath='{.data.kustomize\.buildOptions}'
-```
-
-If empty, patch it and **restart the repo server**:
-
-```bash
-kubectl -n argocd patch cm argocd-cm --type=merge -p '{"data":{"kustomize.buildOptions":"--enable-helm"}}'
-kubectl -n argocd rollout restart deploy argocd-repo-server
-```
-
-Sync applications in dependency order:
-
-```bash
-for app in gateway-api-crds external-dns cert-manager external-secrets envoy-gateway managed-secrets argocd-self-managed argocd-ingress docs-app; do
-  kubectl -n argocd patch application $app --type=merge -p '{"operation":{"sync":{}}}'
-  sleep 10
+for app in gateway-api-crds cert-manager external-dns external-secrets envoy-gateway managed-secrets argocd-ingress docs-app homer-app k3s-docs-app openclaw-operator openclaw-app metrics-server; do
+  kubectl patch app $app -n argocd --type merge -p '{"metadata":{"annotations":{"argocd.argoproj.io/refresh":"hard"}}}'
+  sleep 5
 done
 ```
 
