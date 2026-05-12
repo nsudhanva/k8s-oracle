@@ -152,6 +152,7 @@ bw_client_secret     = "your-bitwarden-client-secret"
 The OKE cluster uses the following defaults (configurable via variables):
 
 - **Kubernetes Version**: 1.35.2
+- **ArgoCD**: v3.4.1
 - **cert-manager**: v1.20.2
 - **external-dns**: 1.21.1
 - **envoy-gateway**: v1.7.3
@@ -192,7 +193,7 @@ Before running `terraform apply` for the first time:
 
    ```bash
    kubectl create namespace argocd
-   kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+   kubectl apply -n argocd --server-side -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.4.1/manifests/install.yaml
    kubectl apply -f argocd/applications.yaml
    ```
 
