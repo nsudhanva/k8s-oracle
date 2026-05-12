@@ -3,6 +3,7 @@ kind: Kustomization
 namespace: external-secrets
 resources:
   - namespace.yaml
+  - crd-migration-hook.yaml
 
 helmCharts:
   - name: external-secrets
