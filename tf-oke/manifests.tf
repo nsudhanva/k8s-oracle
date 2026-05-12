@@ -43,6 +43,11 @@ resource "local_file" "envoy_gateway_kustomization" {
   content  = file("${path.module}/templates/manifests/envoy-gateway/kustomization.yaml")
 }
 
+resource "local_file" "envoy_gateway_crds" {
+  filename = "../argocd/infrastructure/envoy-gateway/envoy-crds.yaml"
+  content  = file("${path.module}/templates/manifests/envoy-gateway/envoy-crds.yaml")
+}
+
 resource "local_file" "envoy_gateway_dnsendpoint" {
   count    = var.load_balancer_ip != "" ? 1 : 0
   filename = "../argocd/infrastructure/envoy-gateway/dnsendpoint.yaml"

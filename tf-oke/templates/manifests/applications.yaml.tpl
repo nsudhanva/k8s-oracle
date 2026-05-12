@@ -155,10 +155,15 @@ metadata:
     argocd.argoproj.io/sync-wave: "2"
 spec:
   project: default
-  source:
-    repoURL: ${git_repo_url}
-    targetRevision: HEAD
-    path: argocd/infrastructure/envoy-gateway
+  sources:
+    - repoURL: oci://docker.io/envoyproxy/gateway-helm
+      chart: gateway-helm
+      targetRevision: v1.7.3
+      helm:
+        skipCrds: true
+    - repoURL: ${git_repo_url}
+      targetRevision: HEAD
+      path: argocd/infrastructure/envoy-gateway
   destination:
     server: https://kubernetes.default.svc
     namespace: envoy-gateway-system
