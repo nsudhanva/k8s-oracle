@@ -1,0 +1,72 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: external-secrets-crd-migrator
+  namespace: external-secrets
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+    argocd.argoproj.io/sync-wave: "-2"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: external-secrets-crd-migrator
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+    argocd.argoproj.io/sync-wave: "-2"
+rules:
+  - apiGroups: ["apiextensions.k8s.io"]
+    resources: ["customresourcedefinitions"]
+    verbs: ["get", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: external-secrets-crd-migrator
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+    argocd.argoproj.io/sync-wave: "-2"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: external-secrets-crd-migrator
+subjects:
+  - kind: ServiceAccount
+    name: external-secrets-crd-migrator
+    namespace: external-secrets
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: external-secrets-crd-migration
+  namespace: external-secrets
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      serviceAccountName: external-secrets-crd-migrator
+      restartPolicy: OnFailure
+      containers:
+        - name: kubectl
+          image: bitnami/kubectl:1.35
+          command:
+            - /bin/sh
+            - -c
+            - |
+              for crd in clustersecretstores.external-secrets.io externalsecrets.external-secrets.io secretstores.external-secrets.io; do
+                STRATEGY=$(kubectl get crd "$crd" -o jsonpath='{.spec.conversion.strategy}' 2>/dev/null)
+                if [ "$STRATEGY" = "Webhook" ]; then
+                  echo "Clearing webhook conversion from $crd"
+                  kubectl patch crd "$crd" --type=json -p '[{"op":"remove","path":"/spec/conversion"}]'
+                else
+                  echo "$crd: strategy=$STRATEGY, no patch needed"
+                fi
+              done
+              echo "CRD migration complete"
