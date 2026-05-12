@@ -155,10 +155,15 @@ metadata:
     argocd.argoproj.io/sync-wave: "2"
 spec:
   project: default
-  source:
-    repoURL: https://github.com/nsudhanva/k8s-oracle.git
-    targetRevision: HEAD
-    path: argocd/infrastructure/envoy-gateway
+  sources:
+    - repoURL: oci://docker.io/envoyproxy/gateway-helm
+      chart: gateway-helm
+      targetRevision: v1.7.3
+      helm:
+        skipCrds: true
+    - repoURL: https://github.com/nsudhanva/k8s-oracle.git
+      targetRevision: HEAD
+      path: argocd/infrastructure/envoy-gateway
   destination:
     server: https://kubernetes.default.svc
     namespace: envoy-gateway-system
