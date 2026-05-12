@@ -1,7 +1,9 @@
 resource "local_file" "argocd_apps" {
   filename = "../argocd/applications.yaml"
   content = templatefile("${path.module}/templates/manifests/applications.yaml.tpl", {
-    git_repo_url = var.git_repo_url
+    git_repo_url       = var.git_repo_url
+    base_domain        = join(".", slice(split(".", var.domain_name), 1, length(split(".", var.domain_name))))
+    cloudflare_zone_id = var.cloudflare_zone_id
   })
 }
 
@@ -19,9 +21,7 @@ resource "local_file" "cert_manager_cluster_issuer" {
 
 resource "local_file" "external_dns_kustomization" {
   filename = "../argocd/infrastructure/external-dns/kustomization.yaml"
-  content = templatefile("${path.module}/templates/manifests/external-dns/kustomization.yaml.tpl", {
-    domain_name = var.domain_name
-  })
+  content  = file("${path.module}/templates/manifests/external-dns/kustomization.yaml.tpl")
 }
 
 resource "local_file" "external_dns_rbac" {
@@ -108,22 +108,4 @@ resource "local_file" "k3s_docs_service" {
 resource "local_file" "k3s_docs_httproute" {
   filename = "../argocd/apps/k3s-docs/httproute.yaml"
   content  = file("${path.module}/templates/manifests/k3s-docs/httproute.yaml.tpl")
-}
-
-# Gemma LLM App (llama.cpp with Gemma 4 E2B at gemma.sudhanva.me)
-resource "local_file" "gemma_deployment" {
-  filename = "../argocd/apps/gemma/deployment.yaml"
-  content  = file("${path.module}/templates/manifests/gemma/deployment.yaml")
-}
-
-resource "local_file" "gemma_service" {
-  filename = "../argocd/apps/gemma/service.yaml"
-  content  = file("${path.module}/templates/manifests/gemma/service.yaml")
-}
-
-resource "local_file" "gemma_httproute" {
-  filename = "../argocd/apps/gemma/httproute.yaml"
-  content = templatefile("${path.module}/templates/manifests/gemma/httproute.yaml.tpl", {
-    domain_name = var.domain_name
-  })
 }

@@ -11,6 +11,9 @@ Thumbs.db
 node_modules/
 **/node_modules/
 
+# Kustomize Helm chart cache (never commit vendored charts)
+argocd/**/charts/
+
 # Build outputs
 dist/
 **/dist/

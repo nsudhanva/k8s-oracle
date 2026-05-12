@@ -10,9 +10,14 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: ${git_repo_url}
-    targetRevision: HEAD
-    path: argocd/infrastructure/metrics-server
+    repoURL: https://kubernetes-sigs.github.io/metrics-server
+    chart: metrics-server
+    targetRevision: 3.13.0
+    helm:
+      valuesObject:
+        args:
+          - --kubelet-insecure-tls
+          - --kubelet-preferred-address-types=InternalIP
   destination:
     server: https://kubernetes.default.svc
     namespace: kube-system
@@ -39,6 +44,14 @@ spec:
     path: config/crd/standard
   destination:
     server: https://kubernetes.default.svc
+  ignoreDifferences:
+    - group: apiextensions.k8s.io
+      kind: CustomResourceDefinition
+      jsonPointers:
+        - /spec/conversion
+        - /spec/preserveUnknownFields
+        - /status
+        - /metadata/annotations
   syncPolicy:
     automated:
       prune: true
@@ -55,10 +68,16 @@ metadata:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
-  source:
-    repoURL: ${git_repo_url}
-    targetRevision: HEAD
-    path: argocd/infrastructure/cert-manager
+  sources:
+    - repoURL: https://charts.jetstack.io
+      chart: cert-manager
+      targetRevision: v1.20.2
+      helm:
+        valuesObject:
+          installCRDs: true
+    - repoURL: ${git_repo_url}
+      targetRevision: HEAD
+      path: argocd/infrastructure/cert-manager
   destination:
     server: https://kubernetes.default.svc
     namespace: cert-manager
@@ -79,10 +98,41 @@ metadata:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
-  source:
-    repoURL: ${git_repo_url}
-    targetRevision: HEAD
-    path: argocd/infrastructure/external-dns
+  sources:
+    - repoURL: https://kubernetes-sigs.github.io/external-dns/
+      chart: external-dns
+      targetRevision: 1.21.1
+      helm:
+        valuesObject:
+          logLevel: debug
+          provider: cloudflare
+          env:
+            - name: CF_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: cloudflare-api-token-secret
+                  key: api-token
+          domainFilters:
+            - ${base_domain}
+          extraArgs:
+            - --zone-id-filter=${cloudflare_zone_id}
+          sources:
+            - crd
+          rbac:
+            create: true
+            extraRules:
+              - apiGroups: ["gateway.networking.k8s.io"]
+                resources: ["gateways", "httproutes", "grpcroutes", "tlsroutes", "tcproutes", "udproutes", "gatewayclasses"]
+                verbs: ["get", "watch", "list"]
+              - apiGroups: ["externaldns.k8s.io"]
+                resources: ["dnsendpoints"]
+                verbs: ["get", "watch", "list"]
+              - apiGroups: ["externaldns.k8s.io"]
+                resources: ["dnsendpoints/status"]
+                verbs: ["update"]
+    - repoURL: ${git_repo_url}
+      targetRevision: HEAD
+      path: argocd/infrastructure/external-dns
   destination:
     server: https://kubernetes.default.svc
     namespace: external-dns
@@ -181,10 +231,26 @@ metadata:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
-  source:
-    repoURL: ${git_repo_url}
-    targetRevision: HEAD
-    path: argocd/infrastructure/external-secrets
+  sources:
+    - repoURL: https://charts.external-secrets.io
+      chart: external-secrets
+      targetRevision: 2.4.1
+      helm:
+        valuesObject:
+          webhook:
+            port: 9443
+          serviceMonitor:
+            enabled: false
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+    - repoURL: ${git_repo_url}
+      targetRevision: HEAD
+      path: argocd/infrastructure/external-secrets
   destination:
     server: https://kubernetes.default.svc
     namespace: external-secrets
@@ -194,7 +260,7 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
-      - Replace=true
+      - ServerSideApply=true
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -247,7 +313,68 @@ spec:
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: gemma-app
+  name: openclaw-operator
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+spec:
+  project: default
+  source:
+    repoURL: ghcr.io/openclaw-rocks/charts
+    chart: openclaw-operator
+    targetRevision: "*"
+    helm:
+      valuesObject:
+        replicaCount: 1
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: openclaw-operator-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: openclaw-app
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+spec:
+  project: default
+  source:
+    repoURL: ${git_repo_url}
+    targetRevision: HEAD
+    path: argocd/apps/openclaw
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: homer-app
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
@@ -256,7 +383,7 @@ spec:
   source:
     repoURL: ${git_repo_url}
     targetRevision: HEAD
-    path: argocd/apps/gemma
+    path: argocd/apps/homer
   destination:
     server: https://kubernetes.default.svc
     namespace: default

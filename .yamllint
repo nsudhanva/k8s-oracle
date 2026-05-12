@@ -26,3 +26,4 @@ ignore: |
   .git/
   docs-site/dist/
   docs-site/node_modules/
+  argocd/infrastructure/*/charts/
