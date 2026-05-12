@@ -1,6 +1,32 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
+  name: metrics-server
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: default
+  source:
+    repoURL: ${git_repo_url}
+    targetRevision: HEAD
+    path: argocd/infrastructure/metrics-server
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
   name: gateway-api-crds
   namespace: argocd
   finalizers:
@@ -9,7 +35,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/kubernetes-sigs/gateway-api.git
-    targetRevision: v1.0.0
+    targetRevision: v1.5.1
     path: config/crd/standard
   destination:
     server: https://kubernetes.default.svc

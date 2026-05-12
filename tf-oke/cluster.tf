@@ -46,6 +46,10 @@ resource "oci_containerengine_cluster" "oke_cluster" {
   }
 
   freeform_tags = var.common_tags
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "oci_containerengine_node_pool" "oke_node_pool" {
@@ -90,4 +94,8 @@ resource "oci_containerengine_node_pool" "oke_node_pool" {
   ssh_public_key = local.ssh_public_key
 
   freeform_tags = var.common_tags
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
