@@ -6,7 +6,7 @@ metadata:
 spec:
   image:
     repository: ghcr.io/openclaw/openclaw
-    tag: "2026.5.4"
+    tag: "2026.5.7"
 
   chromium:
     enabled: true
