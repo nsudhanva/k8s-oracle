@@ -1,4 +1,4 @@
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ClusterSecretStore
 metadata:
   name: oci-vault
@@ -9,7 +9,7 @@ spec:
       region: ${oci_region}
       principalType: InstancePrincipal
 ---
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: regcred-sync
@@ -41,7 +41,7 @@ spec:
       remoteRef:
         key: github-pat
 ---
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: repo-creds-sync
@@ -67,7 +67,7 @@ spec:
       remoteRef:
         key: github-pat
 ---
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: argocd-admin-password-sync
@@ -89,7 +89,7 @@ spec:
       remoteRef:
         key: argocd-admin-password-hash
 ---
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: cloudflare-api-token-sync
@@ -107,7 +107,7 @@ spec:
       remoteRef:
         key: cloudflare-api-token
 ---
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: cert-manager-cloudflare-sync
@@ -125,7 +125,7 @@ spec:
       remoteRef:
         key: cloudflare-api-token
 ---
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: openclaw-secrets-sync
@@ -143,7 +143,7 @@ spec:
       remoteRef:
         key: openclaw-gateway-token
 ---
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: telegram-bot-token-sync
@@ -161,7 +161,7 @@ spec:
       remoteRef:
         key: telegram-bot-token
 ---
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: gemini-api-key-sync
@@ -179,7 +179,7 @@ spec:
       remoteRef:
         key: gemini-api-key
 ---
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: google-places-api-key-sync
@@ -197,7 +197,7 @@ spec:
       remoteRef:
         key: google-places-api-key
 ---
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: gog-keyring-password-sync
@@ -215,7 +215,7 @@ spec:
       remoteRef:
         key: gog-keyring-password
 ---
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: github-pat-sync
@@ -233,7 +233,7 @@ spec:
       remoteRef:
         key: github-pat
 ---
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: alphavantage-api-key-sync
@@ -251,7 +251,7 @@ spec:
       remoteRef:
         key: alphavantage-api-key
 ---
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: bw-credentials-sync
@@ -275,7 +275,7 @@ spec:
       remoteRef:
         key: bw-master-password
 ---
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: nvidia-api-key-sync
