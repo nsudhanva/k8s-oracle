@@ -8,35 +8,35 @@ spec:
     - dnsName: k8s.sudhanva.me
       recordType: A
       targets:
-        - "193.122.186.40"
+        - "193.122.152.51"
       providerSpecific:
         - name: cloudflare-proxied
           value: "false"
     - dnsName: cd.k8s.sudhanva.me
       recordType: A
       targets:
-        - "193.122.186.40"
+        - "193.122.152.51"
       providerSpecific:
         - name: cloudflare-proxied
           value: "false"
     - dnsName: k3s.sudhanva.me
       recordType: A
       targets:
-        - "193.122.186.40"
+        - "193.122.152.51"
       providerSpecific:
         - name: cloudflare-proxied
           value: "false"
     - dnsName: claw.k8s.sudhanva.me
       recordType: A
       targets:
-        - "193.122.186.40"
+        - "193.122.152.51"
       providerSpecific:
         - name: cloudflare-proxied
           value: "false"
     - dnsName: hub.sudhanva.me
       recordType: A
       targets:
-        - "193.122.186.40"
+        - "193.122.152.51"
       providerSpecific:
         - name: cloudflare-proxied
           value: "false"
