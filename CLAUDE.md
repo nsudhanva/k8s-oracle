@@ -155,7 +155,7 @@ The OKE cluster uses the following defaults (configurable via variables):
 - **cert-manager**: v1.20.2
 - **external-dns**: 1.21.1
 - **envoy-gateway**: v1.7.3
-- **external-secrets**: 2.4.1
+- **external-secrets**: 0.12.1
 - **gateway-api CRDs**: v1.5.1
 - **metrics-server**: 3.13.0
 - **Cluster Type**: BASIC_CLUSTER (free managed control plane)
