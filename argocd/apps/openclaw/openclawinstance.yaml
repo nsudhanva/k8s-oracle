@@ -6,7 +6,7 @@ metadata:
 spec:
   image:
     repository: ghcr.io/openclaw/openclaw
-    tag: "2026.5.7"
+    tag: "2026.5.28"
 
   chromium:
     enabled: true
@@ -292,7 +292,7 @@ spec:
   storage:
     persistence:
       enabled: true
-      size: 180Gi
+      size: 98Gi
       storageClass: oci-bv
       orphan: true
 
