@@ -40,7 +40,7 @@ spec:
       agents:
         defaults:
           model:
-            primary: nvidia/nemotron-3-super-120b-a12b
+            primary: openai/gpt-5.5
             fallbacks:
               - nvidia/moonshotai/kimi-k2.5
               - nvidia/z-ai/glm-5.1
