@@ -43,7 +43,7 @@ spec:
             primary: openai-codex/gpt-5.5
             fallbacks:
               - google/gemini-3.1-flash-lite
-              - nvidia/deepseek-ai/deepseek-v4-pro
+              - nvidia/moonshotai/kimi-k2.5
           timeoutSeconds: 300
           compaction:
             mode: safeguard
