@@ -200,3 +200,58 @@ Before running `terraform apply` for the first time:
 5. Wait for LoadBalancer IP to be assigned to Envoy Gateway
 6. Verify all ArgoCD applications are Synced/Healthy
 7. Test DNS resolution and HTTPS access
+
+## Operational Recipes (hard-won)
+
+These are non-obvious facts that have burned ~hours each. Keep them current.
+
+### OCI Always Free billing math
+
+- Free block storage is **200 GB total**, and that **includes boot volumes**.
+- 2× ARM nodes = 2× 47 GB boot vols = 94 GB baseline → only **~106 GB** left for PVCs.
+- `oci-bv` StorageClass defaults to **VPU=10** (Balanced) which is billed separately. Set PVCs to VPU=0 (Lower Cost) for free tier: `oci bv volume update --volume-id <ocid> --vpus-per-gb 0`.
+- Boot volumes minimum VPU=10 (OCI hard limit — cannot be lowered without recreating the node pool).
+- Check current usage: `oci usage-api usage-summary request-summarized-usages --tenant-id <TENANCY> --time-usage-started <YYYY-MM-DD>T00:00:00Z --time-usage-ended <YYYY-MM-DD>T00:00:00Z --granularity MONTHLY --group-by '["service","skuName"]'`
+- Max PVC size that stays free: **98 Gi** (98 × 1.0737 = 105.2 GB; total 199 GB).
+
+### Shrinking an OCI PVC without data loss
+
+OCI block volumes can only grow, never shrink. To reduce a PVC:
+
+1. **Backup to OCI Object Storage** (cluster→OCI same region is ~100 MB/s):
+   - In pod: `tar -czf /tmp/backup.tar.gz -C /home/openclaw .openclaw`
+   - Create write PAR: `oci os preauth-request create ... --access-type ObjectWrite`
+   - Upload from pod: `curl -X PUT -T /tmp/backup.tar.gz "<PAR_URL>"`
+2. **Set `spec.suspended: true`** on the `OpenClawInstance` CR — scales workload to 0, keeps PVC intact.
+3. **Delete old PVC** (PV reclaim policy is `Delete` → OCI volume auto-terminates).
+4. **Patch CR** with new smaller `storage.persistence.size` (e.g. `98Gi`).
+5. **Scale operator up** so it creates the new PVC. `oci-bv` is `WaitForFirstConsumer` — PVC stays Pending until a pod mounts it.
+6. **Run a temp restore Job** that mounts the new PVC + `curl`s from a read PAR + `tar -xzf` (run as `runAsUser: 0` to avoid `Permission denied`, then `chown -R 1000:1000 /data`). Use FQDN images (`docker.io/library/alpine:3.20`) — cri-o on Oracle Linux enforces short-name rejection.
+7. **Set new volume VPU=0** via `oci bv volume update`.
+8. **Set `spec.suspended: false`** — operator scales pod back up with restored data.
+
+### OpenClaw — model & auth gotchas (2026.6.x)
+
+- **Operator chart moved**: `ghcr.io/openclaw-rocks/charts` → `ghcr.io/paperclipinc/charts` (old org returns 403). Image is at `ghcr.io/paperclipinc/openclaw-operator`. OpenClaw itself stays at `ghcr.io/openclaw/openclaw`.
+- **Provider name for ChatGPT Plus is `openai`**, not `codex` or `openai-codex`. Canonical model ref is `openai/gpt-5.5`. Legacy refs (`openai-codex/*`, `codex/*`) error `model_not_found` at runtime even when listed.
+- **ChatGPT Plus OAuth login REQUIRES a real TTY**. Cannot run via Claude Code's `!` prefix or piped stdin — it errors `requires an interactive TTY`. Run from a native terminal: `kubectl exec -n default -it openclaw-0 -c openclaw -- openclaw models auth login --provider openai`. The OAuth token is then stored on the PVC at `~/.openclaw/agents/main/agent/auth-state.json` and survives pod restarts.
+- **Verify auth**: `openclaw models auth list` (look for `openai:<email> [openai/oauth; expires ...]`).
+- **`openclaw doctor --fix`** migrates legacy auth/state/plugin sidecars and disables unusable skills. Final exit code 1 from a read-only-fs `.zshrc` write is harmless.
+- **Useful NVIDIA fallbacks** (all use `NVIDIA_API_KEY` env, no separate auth): `nvidia/moonshotai/kimi-k2.5`, `nvidia/z-ai/glm-5.1`, `nvidia/nemotron-3-super-120b-a12b`. Avoid `nvidia/deepseek-ai/deepseek-v4-pro` — listed but errors `Unknown model` at runtime in 2026.6.1.
+
+### Gmail / gws auth lifetime
+
+- Google OAuth refresh tokens expire **every 7 days** if the OAuth app is in "Testing" mode. Publish the app at `console.cloud.google.com/auth/audience?project=<id>` ("Audience" → **Publish App**) to make tokens permanent. Browser-only toggle; no code change needed.
+- After publishing, existing test-mode tokens are invalidated once — re-auth needed one more time.
+- `gws auth` (`@googleworkspace/cli`) credentials live on the PVC at `~/.openclaw/gws/credentials.json` (or `.enc`). To force a refresh after rotation, delete `~/.openclaw/gws/token_cache.json`.
+
+### ArgoCD quirks specific to this cluster
+
+- `argocd/applications.yaml` is the **root app-of-apps** and is NOT managed by ArgoCD itself. Changes to it require `kubectl apply -f argocd/applications.yaml`.
+- Port-forwarding to `argocd-server` is flaky here. Use `kubectl patch app <name> -n argocd --type merge -p '{"metadata":{"annotations":{"argocd.argoproj.io/refresh":"hard"}}}'` to force a refresh instead.
+- ArgoCD self-heal **will revert** imperative `kubectl patch`/`edit` on managed resources. To make a change stick: edit the YAML in `argocd/`, commit, push, then optionally force-refresh.
+- The OpenClaw operator runs as a Deployment in `openclaw-operator-system`; scale it to 0 to safely pause reconciliation during destructive PVC operations.
+
+### Don't break the gateway
+
+- `OpenClawInstance.spec.gateway.enabled: false` is **required**. Envoy Gateway already does TLS. If you flip it to `true`, the operator injects an nginx sidecar and shifts OpenClaw to port 18790, breaking the HTTPRoute and health probes.
