@@ -327,14 +327,12 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: ghcr.io/openclaw-rocks/charts
+    repoURL: ghcr.io/paperclipinc/charts
     chart: openclaw-operator
     targetRevision: "*"
     helm:
       valuesObject:
         replicaCount: 1
-        imagePullSecrets:
-          - name: regcred
         resources:
           requests:
             cpu: 50m
