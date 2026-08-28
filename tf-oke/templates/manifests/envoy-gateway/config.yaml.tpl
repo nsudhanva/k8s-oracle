@@ -67,18 +67,6 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
-    - name: https-docs
-      port: 443
-      protocol: HTTPS
-      hostname: "${domain_name}"
-      allowedRoutes:
-        namespaces:
-          from: All
-      tls:
-        mode: Terminate
-        certificateRefs:
-          - name: docs-tls
-            namespace: default
     - name: https-argocd
       port: 443
       protocol: HTTPS
@@ -91,39 +79,15 @@ spec:
         certificateRefs:
           - name: argocd-tls
             namespace: argocd
-    - name: https-k3s-docs
+    - name: https-claw
       port: 443
       protocol: HTTPS
-      hostname: "k3s.sudhanva.me"
+      hostname: "claw.${domain_name}"
       allowedRoutes:
         namespaces:
           from: All
       tls:
         mode: Terminate
         certificateRefs:
-          - name: k3s-docs-tls
-            namespace: default
-    - name: https-gemma
-      port: 443
-      protocol: HTTPS
-      hostname: "gemma.${domain_name}"
-      allowedRoutes:
-        namespaces:
-          from: All
-      tls:
-        mode: Terminate
-        certificateRefs:
-          - name: gemma-tls
-            namespace: default
-    - name: https-chat
-      port: 443
-      protocol: HTTPS
-      hostname: "chat.${domain_name}"
-      allowedRoutes:
-        namespaces:
-          from: All
-      tls:
-        mode: Terminate
-        certificateRefs:
-          - name: chat-tls
+          - name: claw-tls
             namespace: default

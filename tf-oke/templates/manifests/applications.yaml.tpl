@@ -184,29 +184,6 @@ spec:
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: docs-app
-  namespace: argocd
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
-spec:
-  project: default
-  source:
-    repoURL: ${git_repo_url}
-    targetRevision: HEAD
-    path: argocd/apps/docs
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: default
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
----
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
   name: argocd-ingress
   namespace: argocd
   finalizers:
@@ -295,29 +272,6 @@ spec:
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: k3s-docs-app
-  namespace: argocd
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
-spec:
-  project: default
-  source:
-    repoURL: ${git_repo_url}
-    targetRevision: HEAD
-    path: argocd/apps/k3s-docs
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: default
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
----
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
   name: openclaw-operator
   namespace: argocd
   finalizers:
@@ -327,7 +281,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: ghcr.io/openclaw-rocks/charts
+    repoURL: ghcr.io/paperclipinc/charts
     chart: openclaw-operator
     targetRevision: "*"
     helm:
@@ -366,29 +320,6 @@ spec:
     repoURL: ${git_repo_url}
     targetRevision: HEAD
     path: argocd/apps/openclaw
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: default
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
----
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: homer-app
-  namespace: argocd
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
-spec:
-  project: default
-  source:
-    repoURL: ${git_repo_url}
-    targetRevision: HEAD
-    path: argocd/apps/homer
   destination:
     server: https://kubernetes.default.svc
     namespace: default

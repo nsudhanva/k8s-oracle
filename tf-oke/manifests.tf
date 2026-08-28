@@ -64,17 +64,6 @@ resource "local_file" "argocd_ingress_manifests" {
     domain_name = var.domain_name
   })
 }
-
-resource "local_file" "docs_manifests" {
-  for_each = fileset("${path.module}/templates/manifests/docs", "*")
-  filename = "../argocd/apps/docs/${replace(each.value, ".tpl", "")}"
-  content = templatefile("${path.module}/templates/manifests/docs/${each.value}", {
-    domain_name   = var.domain_name
-    git_username  = var.git_username
-    git_repo_name = var.git_repo_name
-  })
-}
-
 # External Secrets Operator Helm release
 resource "local_file" "external_secrets_manifests" {
   for_each = fileset("${path.module}/templates/manifests/external-secrets", "*")
@@ -97,20 +86,4 @@ resource "local_file" "managed_secrets_secrets" {
     git_email    = var.git_email
     git_repo_url = var.git_repo_url
   })
-}
-
-# K3s Docs App (legacy k3s documentation at k3s.sudhanva.me)
-resource "local_file" "k3s_docs_deployment" {
-  filename = "../argocd/apps/k3s-docs/deployment.yaml"
-  content  = file("${path.module}/templates/manifests/k3s-docs/deployment.yaml")
-}
-
-resource "local_file" "k3s_docs_service" {
-  filename = "../argocd/apps/k3s-docs/service.yaml"
-  content  = file("${path.module}/templates/manifests/k3s-docs/service.yaml")
-}
-
-resource "local_file" "k3s_docs_httproute" {
-  filename = "../argocd/apps/k3s-docs/httproute.yaml"
-  content  = file("${path.module}/templates/manifests/k3s-docs/httproute.yaml.tpl")
 }
