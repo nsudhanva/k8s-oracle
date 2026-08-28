@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://k8s.sudhanva.me/sitemap-index.xml

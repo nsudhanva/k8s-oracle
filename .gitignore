@@ -30,3 +30,4 @@ bun.lockb
 **/*.tfvars
 **/*.tfvars.json
 **/.terraform/
+.wrangler/

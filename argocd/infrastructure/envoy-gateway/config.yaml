@@ -67,18 +67,6 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
-    - name: https-docs
-      port: 443
-      protocol: HTTPS
-      hostname: "k8s.sudhanva.me"
-      allowedRoutes:
-        namespaces:
-          from: All
-      tls:
-        mode: Terminate
-        certificateRefs:
-          - name: docs-tls
-            namespace: default
     - name: https-argocd
       port: 443
       protocol: HTTPS
@@ -91,18 +79,6 @@ spec:
         certificateRefs:
           - name: argocd-tls
             namespace: argocd
-    - name: https-k3s-docs
-      port: 443
-      protocol: HTTPS
-      hostname: "k3s.sudhanva.me"
-      allowedRoutes:
-        namespaces:
-          from: All
-      tls:
-        mode: Terminate
-        certificateRefs:
-          - name: k3s-docs-tls
-            namespace: default
     - name: https-claw
       port: 443
       protocol: HTTPS
@@ -114,16 +90,4 @@ spec:
         mode: Terminate
         certificateRefs:
           - name: claw-tls
-            namespace: default
-    - name: https-homer
-      port: 443
-      protocol: HTTPS
-      hostname: "hub.sudhanva.me"
-      allowedRoutes:
-        namespaces:
-          from: All
-      tls:
-        mode: Terminate
-        certificateRefs:
-          - name: homer-tls
             namespace: default

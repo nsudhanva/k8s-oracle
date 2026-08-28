@@ -73,11 +73,6 @@ variable "git_username" {
   default     = "git"
 }
 
-variable "git_repo_name" {
-  description = "The repository name (e.g. k8s-oracle) to construct GHCR image paths."
-  type        = string
-  default     = "k8s-oracle"
-}
 
 variable "kubernetes_version" {
   description = "Kubernetes version for OKE cluster"
