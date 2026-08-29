@@ -87,14 +87,14 @@ k8s-oracle/
 
 ## OKE Cluster Configuration Defaults
 
-- **Kubernetes Version**: 1.35.2
-- **ArgoCD**: v3.4.1
-- **cert-manager**: v1.20.2
+- **Kubernetes Version**: 1.36.1
+- **ArgoCD**: v3.5.2
+- **cert-manager**: v1.21.1
 - **external-dns**: 1.21.1
-- **envoy-gateway**: v1.7.3
-- **external-secrets**: 2.4.1
-- **gateway-api CRDs**: v1.5.1
-- **metrics-server**: 3.13.0
+- **envoy-gateway**: v1.9.1
+- **external-secrets**: 2.10.0
+- **gateway-api CRDs**: v1.6.1
+- **metrics-server**: 3.14.0
 - **Cluster Type**: BASIC_CLUSTER (free managed control plane)
 - **Node Pool**: 2 ARM nodes (`VM.Standard.A1.Flex`)
 - **Total Resources**: 4 OCPUs, 24GB RAM (maximizes Always Free tier)
