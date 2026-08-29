@@ -63,10 +63,9 @@ The cluster uses OKE Basic (free managed control plane) with ARM64 worker nodes 
 | OKE Control Plane | Free (Basic cluster) | 1 cluster |
 | Ampere A1 Compute | 4 OCPUs, 24 GB RAM | 4 OCPUs, 24 GB |
 | Object Storage | 20 GB | ~1 MB (Terraform state) |
-| Vault Secrets | 150 secrets | ~15 secrets |
+| Vault Secrets | 150 secrets | Core platform credentials |
 | Vault Master Keys | 20 key versions | 1 key |
 | Load Balancer | Flexible NLB | 1 instance (Envoy Gateway) |
-| Identity Domain | 2 apps, 2000 users | 1 app (Open WebUI OIDC) |
 
 ```mermaid
 flowchart LR
@@ -84,7 +83,6 @@ flowchart LR
     subgraph External["External Services"]
         OCI[(OCI)]
         GH[(GitHub)]
-        GHCR[(GHCR)]
         CFl[(Cloudflare)]
         LE[(Let's Encrypt)]
         Vault[(OCI Vault)]
@@ -93,9 +91,7 @@ flowchart LR
     TF -->|provisions| OCI
     TF -->|provisions| Vault
     TF -->|generates| GH
-    GH -->|Actions| GHCR
     GH -->|syncs| Argo
-    GHCR -->|images| Argo
     Argo -->|deploys| EG
     Argo -->|deploys| CM
     Argo -->|deploys| ED
@@ -140,17 +136,6 @@ git_pat              = "ghp_..."
 
 argocd_admin_password      = "your-secure-password"
 argocd_admin_password_hash = "$2a$10$..."
-
-gemma_api_key              = "secure-random-key"
-huggingface_token          = "hf_..."
-gemini_api_key             = "your-google-api-key"
-
-openclaw_gateway_token     = "random-hex-string"
-telegram_bot_token         = "your-botfather-token"
-
-alphavantage_api_key       = "your-alphavantage-key"
-bw_client_id               = "your-bitwarden-client-id"
-bw_client_secret           = "your-bitwarden-client-secret"
 ```
 
 ### Deploy Infrastructure
@@ -197,12 +182,11 @@ kubectl get applications -n argocd
 
 ## CI/CD
 
-GitHub Actions workflows handle linting and deployment:
+GitHub Actions workflows handle linting and pre-commit verification:
 
 | Workflow | Trigger | Purpose |
 |----------|---------|---------|
 | `lint.yml` | Pull requests | Run pre-commit hooks (markdownlint, yamllint, tflint) |
-| `docker-publish.yml` | Push to main (docs/) | Build Docker image, push to GHCR |
 
 ### Local Development
 
@@ -210,28 +194,6 @@ GitHub Actions workflows handle linting and deployment:
 pre-commit install
 pre-commit run --all-files
 ```
-
-## Documentation
-
-The full documentation is available at the live cluster site.
-
-To view and edit the documentation locally:
-
-```bash
-cd docs
-bun install
-bun start
-```
-
-## Why OKE over K3s?
-
-| Aspect | K3s | OKE Basic |
-|--------|-----|-----------|
-| Control Plane | Uses 2 OCPU, 12GB of your free tier | Free, managed by Oracle |
-| Worker Capacity | ~2 nodes worth | 4 nodes worth (all resources for workloads) |
-| Management | Self-managed | Oracle-managed control plane |
-| Upgrades | Manual | Simplified through OCI Console |
-| SLA | None | SLO (no financial SLA for Basic) |
 
 ## License
 
