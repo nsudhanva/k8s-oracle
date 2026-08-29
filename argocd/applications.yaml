@@ -171,7 +171,6 @@ spec:
     - group: gateway.networking.k8s.io
       kind: Gateway
       jsonPointers:
-        - /spec/listeners
         - /status
   syncPolicy:
     automated:
