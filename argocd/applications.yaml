@@ -52,6 +52,16 @@ spec:
         - /spec/preserveUnknownFields
         - /status
         - /metadata/annotations
+    - group: admissionregistration.k8s.io
+      kind: ValidatingAdmissionPolicy
+      jsonPointers:
+        - /status
+        - /metadata/annotations
+    - group: admissionregistration.k8s.io
+      kind: ValidatingAdmissionPolicyBinding
+      jsonPointers:
+        - /status
+        - /metadata/annotations
   syncPolicy:
     automated:
       prune: true
@@ -173,6 +183,16 @@ spec:
       jsonPointers:
         - /spec/listeners
         - /status
+    - group: admissionregistration.k8s.io
+      kind: ValidatingAdmissionPolicy
+      jsonPointers:
+        - /status
+        - /metadata/annotations
+    - group: admissionregistration.k8s.io
+      kind: ValidatingAdmissionPolicyBinding
+      jsonPointers:
+        - /status
+        - /metadata/annotations
   syncPolicy:
     automated:
       prune: true
