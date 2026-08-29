@@ -8,7 +8,7 @@ spec:
     - dnsName: cd.k8s.sudhanva.me
       recordType: A
       targets:
-        - "129.80.2.214"
+        - "193.122.152.51"
       providerSpecific:
         - name: cloudflare-proxied
           value: "false"
