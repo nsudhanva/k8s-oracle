@@ -79,15 +79,3 @@ spec:
         certificateRefs:
           - name: argocd-tls
             namespace: argocd
-    - name: https-claw
-      port: 443
-      protocol: HTTPS
-      hostname: "claw.${domain_name}"
-      allowedRoutes:
-        namespaces:
-          from: All
-      tls:
-        mode: Terminate
-        certificateRefs:
-          - name: claw-tls
-            namespace: default
