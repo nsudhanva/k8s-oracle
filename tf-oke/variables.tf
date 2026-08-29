@@ -59,6 +59,7 @@ variable "domain_name" {
 variable "git_repo_url" {
   description = "Git repository URL for ArgoCD"
   type        = string
+  default     = "https://github.com/nsudhanva/k8s-oracle.git"
 }
 
 variable "git_pat" {
