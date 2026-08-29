@@ -31,3 +31,26 @@ bun.lockb
 **/*.tfvars.json
 **/.terraform/
 .wrangler/
+
+# Keys, certificates, and credentials
+*.pem
+*.key
+*.pub
+*.pfx
+*.p12
+*.crt
+*.csr
+oci_key*
+id_rsa*
+id_ed25519*
+
+# Environment and secrets
+*.env
+.env.*
+.env
+*.secret
+*.secrets
+
+# Kubernetes credentials
+kubeconfig*
+*.kubeconfig
