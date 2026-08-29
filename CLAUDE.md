@@ -23,8 +23,6 @@ This project provisions an **OKE (Oracle Kubernetes Engine) Basic cluster on Ora
 - **External Secrets Operator** with OCI Vault for secrets management
 - **Cert Manager** for Let's Encrypt TLS certificates
 - **External DNS** for Cloudflare DNS automation
-- **OpenClaw Operator** (`openclaw-operator`) for declarative AI agent deployment via `OpenClawInstance` CRD
-- **OpenClaw** AI agent with Telegram bot, Gemini API, and browser control (managed by operator, no custom image)
 
 ## Critical Safety Rules
 
