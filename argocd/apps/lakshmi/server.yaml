@@ -59,7 +59,7 @@ spec:
         - name: server
           image: ghcr.io/nsudhanva/lakshmi-server:sha-3638101
           imagePullPolicy: Always
-          command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+          command: ["python", "manage.py", "runserver", "0.0.0.0:8000", "--insecure"]
           ports:
             - containerPort: 8000
               name: http
