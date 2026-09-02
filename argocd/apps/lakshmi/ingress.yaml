@@ -69,6 +69,20 @@ spec:
     - matches:
         - path:
             type: PathPrefix
+            value: /admin
+      backendRefs:
+        - name: lakshmi-server
+          port: 8000
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /static
+      backendRefs:
+        - name: lakshmi-server
+          port: 8000
+    - matches:
+        - path:
+            type: PathPrefix
             value: /docs
       backendRefs:
         - name: lakshmi-docs
