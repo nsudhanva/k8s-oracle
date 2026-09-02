@@ -31,7 +31,7 @@ spec:
                 topologyKey: kubernetes.io/hostname
       containers:
         - name: client
-          image: ghcr.io/nsudhanva/lakshmi-client:latest
+          image: ghcr.io/nsudhanva/lakshmi-client:sha-3a83a4d
           imagePullPolicy: Always
           ports:
             - containerPort: 80
