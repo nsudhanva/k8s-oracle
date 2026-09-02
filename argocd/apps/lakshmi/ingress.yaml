@@ -1,0 +1,82 @@
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: allow-gateway-to-lakshmi-secrets
+  namespace: lakshmi
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      namespace: envoy-gateway-system
+  to:
+    - group: ""
+      kind: Secret
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: lakshmi-tls
+  namespace: lakshmi
+spec:
+  secretName: lakshmi-tls
+  issuerRef:
+    name: cloudflare-issuer
+    kind: ClusterIssuer
+    group: cert-manager.io
+  commonName: "lakshmi.k8s.sudhanva.me"
+  dnsNames:
+    - "lakshmi.k8s.sudhanva.me"
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: lakshmi-redirect
+  namespace: lakshmi
+spec:
+  parentRefs:
+    - name: public-gateway
+      namespace: envoy-gateway-system
+      sectionName: http
+  hostnames:
+    - "lakshmi.k8s.sudhanva.me"
+  rules:
+    - filters:
+        - type: RequestRedirect
+          requestRedirect:
+            scheme: https
+            statusCode: 301
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: lakshmi-route
+  namespace: lakshmi
+spec:
+  parentRefs:
+    - name: public-gateway
+      namespace: envoy-gateway-system
+      sectionName: https-lakshmi
+  hostnames:
+    - "lakshmi.k8s.sudhanva.me"
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /api
+      backendRefs:
+        - name: lakshmi-server
+          port: 8000
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /docs
+      backendRefs:
+        - name: lakshmi-docs
+          port: 80
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: lakshmi-client
+          port: 80
