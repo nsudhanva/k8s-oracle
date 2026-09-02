@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lakshmi-docs
+  namespace: lakshmi
+  labels:
+    app: lakshmi-docs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lakshmi-docs
+  template:
+    metadata:
+      labels:
+        app: lakshmi-docs
+    spec:
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: docs
+          image: ghcr.io/nsudhanva/lakshmi-docs:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+              name: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lakshmi-docs
+  namespace: lakshmi
+  labels:
+    app: lakshmi-docs
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 80
+      name: http
+  selector:
+    app: lakshmi-docs

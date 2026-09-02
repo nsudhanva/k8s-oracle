@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lakshmi
+  labels:
+    app.kubernetes.io/name: lakshmi
+    app.kubernetes.io/part-of: lakshmi
