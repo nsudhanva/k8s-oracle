@@ -5,7 +5,7 @@ metadata:
   namespace: lakshmi
 data:
   DEBUG: "False"
-  ALLOWED_HOSTS: "lakshmi.k8s.sudhanva.me,lakshmi.sudhanva.me,lakshmi-server,lakshmi-client,localhost,127.0.0.1"
+  ALLOWED_HOSTS: "*"
   CORS_ALLOWED_ORIGINS: "https://lakshmi.k8s.sudhanva.me,https://lakshmi.sudhanva.me"
   CSRF_TRUSTED_ORIGINS: "https://lakshmi.k8s.sudhanva.me,https://lakshmi.sudhanva.me"
 ---
