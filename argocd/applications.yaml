@@ -311,6 +311,17 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: lakshmi
+  ignoreDifferences:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      jsonPointers:
+        - /status
+    - group: apps
+      kind: StatefulSet
+      jsonPointers:
+        - /spec/persistentVolumeClaimRetentionPolicy
+        - /spec/template/metadata/creationTimestamp
+        - /status
   syncPolicy:
     automated:
       prune: true
