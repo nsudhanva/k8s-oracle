@@ -78,6 +78,13 @@ The PostgreSQL persistent volumes (such as `postgres-data-lakshmi-postgres-0` in
   3. Verify volume attachment in OCI Console / CSI driver (`csi-oci-node`).
   4. Always preserve the underlying block volume and data. Never attempt to resolve a crash by deleting the volume or resetting the database.
 
+### 6. Argo CD 100% Synchronization Invariant
+
+When debugging or diagnosing cluster issues with Argo CD:
+
+- **Always verify 100% Sync First**: Before troubleshooting pod crashes, routing issues, or runtime drift, confirm that Argo CD is 100% synced with the application manifests, git repository, and underlying cloud infrastructure (`kubectl get application -A`).
+- Never debug against an `OutOfSync`, syncing, or drifted Argo CD state. Always resolve repository drift or trigger a full synchronization first before inspecting runtime workloads.
+
 ---
 
 ## Repository Structure
