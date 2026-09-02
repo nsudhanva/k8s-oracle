@@ -1,0 +1,104 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lakshmi-server-config
+  namespace: lakshmi
+data:
+  DEBUG: "False"
+  ALLOWED_HOSTS: "lakshmi.k8s.sudhanva.me,lakshmi.sudhanva.me,lakshmi-server,lakshmi-client,localhost,127.0.0.1"
+  CORS_ALLOWED_ORIGINS: "https://lakshmi.k8s.sudhanva.me,https://lakshmi.sudhanva.me"
+  CSRF_TRUSTED_ORIGINS: "https://lakshmi.k8s.sudhanva.me,https://lakshmi.sudhanva.me"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lakshmi-server
+  namespace: lakshmi
+  labels:
+    app: lakshmi-server
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: lakshmi-server
+  template:
+    metadata:
+      labels:
+        app: lakshmi-server
+    spec:
+      imagePullSecrets:
+        - name: regcred
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - lakshmi-server
+                topologyKey: kubernetes.io/hostname
+      initContainers:
+        - name: init-migrate-and-seed
+          image: ghcr.io/nsudhanva/lakshmi-server:latest
+          imagePullPolicy: Always
+          command: ["sh", "-c"]
+          args:
+            - |
+              python manage.py migrate --noinput &&
+              python manage.py seed_signals
+          envFrom:
+            - secretRef:
+                name: lakshmi-secrets
+            - configMapRef:
+                name: lakshmi-server-config
+      containers:
+        - name: server
+          image: ghcr.io/nsudhanva/lakshmi-server:latest
+          imagePullPolicy: Always
+          command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+          ports:
+            - containerPort: 8000
+              name: http
+          envFrom:
+            - secretRef:
+                name: lakshmi-secrets
+            - configMapRef:
+                name: lakshmi-server-config
+          readinessProbe:
+            httpGet:
+              path: /api/core/health/
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/core/health/
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 1200m
+              memory: 2.5Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lakshmi-server
+  namespace: lakshmi
+  labels:
+    app: lakshmi-server
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8000
+      targetPort: 8000
+      name: http
+  selector:
+    app: lakshmi-server
