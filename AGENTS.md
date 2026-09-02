@@ -66,6 +66,18 @@ terraform apply tfplan
 - Do not delete persistent volume claims (PVCs) without explicit user approval.
 - Store sensitive values in OCI Vault and synchronize via External Secrets.
 
+### 5. Database Permanence & Zero Data Loss Invariant
+
+The PostgreSQL persistent volumes (such as `postgres-data-lakshmi-postgres-0` in `lakshmi`) store irreplaceable state, execution ledgers, and history.
+
+- **NEVER Delete PVCs or PVs**: Under no circumstances should persistent volume claims, persistent volumes, or storage classes bound to databases be deleted or recreated.
+- **NEVER Run Destructive Database Commands**: Commands like `flush`, `drop database`, `DROP TABLE`, or recreating StatefulSets with fresh storage are strictly prohibited.
+- **Handling Crashes / Degraded Pods**: If a database pod fails or crashes:
+  1. Diagnose non-destructively via logs (`kubectl logs`) and events (`kubectl describe`).
+  2. Check secret synchronization (`ExternalSecret`) and network connectivity.
+  3. Verify volume attachment in OCI Console / CSI driver (`csi-oci-node`).
+  4. Always preserve the underlying block volume and data. Never attempt to resolve a crash by deleting the volume or resetting the database.
+
 ---
 
 ## Repository Structure
