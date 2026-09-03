@@ -10,6 +10,7 @@ data:
   CSRF_TRUSTED_ORIGINS: "https://lakshmi.k8s.sudhanva.me,https://lakshmi.sudhanva.me"
   FINNHUB_API_KEY: "REDACTED-FINNHUB-KEY"
   ALPHA_VANTAGE_API_KEY: "REDACTED-ALPHAVANTAGE-KEY"
+  RESEND_FROM_EMAIL: "lakshmi@sudhanva.me"
 ---
 apiVersion: apps/v1
 kind: Deployment
