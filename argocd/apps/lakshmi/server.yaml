@@ -45,7 +45,7 @@ spec:
                 topologyKey: kubernetes.io/hostname
       initContainers:
         - name: init-migrate-and-seed
-          image: ghcr.io/nsudhanva/lakshmi-server:sha-3043fd5
+          image: ghcr.io/nsudhanva/lakshmi-server:sha-71b5c2e
           imagePullPolicy: Always
           command: ["sh", "-c"]
           args:
@@ -60,7 +60,7 @@ spec:
                 name: lakshmi-server-config
       containers:
         - name: server
-          image: ghcr.io/nsudhanva/lakshmi-server:sha-3043fd5
+          image: ghcr.io/nsudhanva/lakshmi-server:sha-71b5c2e
           imagePullPolicy: Always
           command: ["python", "manage.py", "runserver", "0.0.0.0:8000", "--insecure"]
           ports:
