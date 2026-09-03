@@ -19,7 +19,7 @@ spec:
         - name: regcred
       containers:
         - name: docs
-          image: ghcr.io/nsudhanva/lakshmi-docs:sha-5656b61
+          image: ghcr.io/nsudhanva/lakshmi-docs:sha-16dc0bd
           imagePullPolicy: Always
           ports:
             - containerPort: 80
