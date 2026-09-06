@@ -113,6 +113,7 @@ kubectl get pods -n lakshmi    # 2x client, 1x docs, 2x server, postgres-0
 - Everything secret lives in OCI Vault, reaches pods via `ExternalSecret` only. Never commit values.
 - `terraform apply` before pushing manifest changes, so Vault keys exist when ArgoCD syncs new refs.
 - `lakshmi-db-password` and `lakshmi-django-secret-key` are created once by hand in the OCI console, not by Terraform.
+- `lakshmi-secrets` syncs DB creds plus `ALPHA_VANTAGE_API_KEY` from Vault. Finnhub ref returns once a rotated key is set via `finnhub_api_key`.
 - State is local (`backend.tf` is commented out). The `oke-tfstate` bucket exists but is not wired up.
 - `templates/manifests/applications.yaml.tpl` lacks the `lakshmi` app. Re-applying Terraform without fixing that drops it from `argocd/applications.yaml`.
 
