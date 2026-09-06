@@ -79,3 +79,15 @@ spec:
         certificateRefs:
           - name: argocd-tls
             namespace: argocd
+    - name: https-lakshmi
+      port: 443
+      protocol: HTTPS
+      hostname: "lakshmi.${domain_name}"
+      allowedRoutes:
+        namespaces:
+          from: All
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: lakshmi-tls
+            namespace: lakshmi
