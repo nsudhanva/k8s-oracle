@@ -1,8 +1,8 @@
 # OKE on Oracle Cloud Always Free
 
-Terraform provisions network, cluster, and Vault. ArgoCD syncs 9 apps. Envoy Gateway exposes two HTTPS hostnames through one OCI NLB.
+Terraform provisions network, cluster, and Vault. ArgoCD syncs 9 apps. Envoy Gateway exposes two HTTPS hostnames through one free-tier flexible LB.
 
-**Docs:** <https://k8s.sudhanva.me/> · **ArgoCD:** `https://cd.k8s.sudhanva.me` · **App:** `https://lakshmi.k8s.sudhanva.me` · **NLB:** `193.122.152.51`
+**Docs:** <https://k8s.sudhanva.me/> · **ArgoCD:** `https://cd.k8s.sudhanva.me` · **App:** `https://lakshmi.k8s.sudhanva.me` · **LB:** `193.122.152.51` (flexible 10/10, free tier)
 
 ```mermaid
 graph TB
@@ -12,7 +12,7 @@ graph TB
     end
 
     subgraph OCI["Oracle Cloud"]
-        LB[OCI NLB<br/>193.122.152.51]
+        LB[OCI flexible LB<br/>10 Mbps free tier<br/>193.122.152.51]
         subgraph OKE["OKE Basic v1.36.1"]
             EG[Envoy Gateway]
             ARGO[ArgoCD<br/>9 apps]
