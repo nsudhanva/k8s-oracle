@@ -222,6 +222,13 @@ variable "alphavantage_api_key" {
   default     = ""
 }
 
+variable "finnhub_api_key" {
+  description = "Finnhub API key for stock quotes (primary provider in lakshmi market_data)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
 variable "oidc_client_id" {
   description = "OCI Identity Domain OIDC client ID for Open WebUI (from OCI Console after app creation)"
   type        = string

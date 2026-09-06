@@ -345,6 +345,19 @@ resource "oci_vault_secret" "oidc_provider_url" {
   }
 }
 
+resource "oci_vault_secret" "finnhub_api_key" {
+  count          = var.finnhub_api_key != "" ? 1 : 0
+  compartment_id = var.compartment_ocid
+  vault_id       = oci_kms_vault.oke_vault.id
+  key_id         = oci_kms_key.master_key.id
+  secret_name    = "finnhub-api-key"
+
+  secret_content {
+    content_type = "BASE64"
+    content      = base64encode(var.finnhub_api_key)
+  }
+}
+
 output "vault_ocid" {
   value       = oci_kms_vault.oke_vault.id
   description = "OCI Vault OCID for secret retrieval"
