@@ -50,8 +50,11 @@ spec:
       envoyService:
         type: LoadBalancer
         annotations:
-          oci.oraclecloud.com/load-balancer-type: "nlb"
-          oci-network-load-balancer.oraclecloud.com/subnet-id: "${public_subnet_id}"
+          oci.oraclecloud.com/load-balancer-type: "lb"
+          service.beta.kubernetes.io/oci-load-balancer-shape: "flexible"
+          service.beta.kubernetes.io/oci-load-balancer-shape-flex-min: "10"
+          service.beta.kubernetes.io/oci-load-balancer-shape-flex-max: "10"
+          service.beta.kubernetes.io/oci-load-balancer-subnet1: "${public_subnet_id}"
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
