@@ -33,9 +33,10 @@ An **OKE (Oracle Kubernetes Engine) Basic cluster on Oracle Cloud Infrastructure
 ### 1. NEVER Commit Secrets
 
 - `terraform.tfvars` contains sensitive credentials (always gitignored).
-- `terraform.tfstate` contains infrastructure state with secrets (persisted in secure OCI Object Storage).
-- Cloudflare tokens, GitHub PATs, and passwords are encrypted in OCI Vault.
-- Always check `git diff --staged` before committing.
+- `terraform.tfstate` is local (`tf-oke/backend.tf` backend block is commented out; the `oke-tfstate` bucket exists with versioning but is not wired as backend). Do not assume remote state.
+- Cloudflare tokens, GitHub PATs, and passwords are in OCI Vault (`oke-secrets-vault`).
+- App runtime secrets (DB password, Django key, market-data API keys) reach pods only through `ExternalSecret` refs (`argocd/apps/lakshmi/secret.yaml` to `lakshmi-secrets`). Never put values in ConfigMaps or manifests.
+- Always check `git diff --staged` before committing (rendered `argocd/*.yaml` can contain live OCIDs, zone IDs, subnet IDs, emails).
 
 ### 2. NEVER Run `kubectl apply` Directly for Workloads
 
@@ -92,12 +93,15 @@ When debugging or diagnosing cluster issues with Argo CD:
 ```text
 k8s-oracle/
 ├── tf-oke/                    # Terraform infrastructure code
-│   ├── *.tf                   # Terraform configuration files
-│   └── templates/manifests/   # ArgoCD manifest templates
-├── argocd/                    # GitOps manifests
-│   ├── applications.yaml      # ArgoCD Application declarations
-│   └── infrastructure/        # Platform components (cert-manager, envoy-gateway, etc.)
-├── .github/workflows/         # GitHub Actions workflows (linting, CI)
+│   ├── *.tf                   # cluster, network, vault, bucket, iam, identity, manifests, outputs
+│   └── templates/manifests/   # ArgoCD manifest templates rendered by manifests.tf
+├── argocd/                    # GitOps manifests (committed render output)
+│   ├── applications.yaml      # 9 ArgoCD Applications (metrics-server, gateway-api-crds, cert-manager, external-dns, envoy-gateway, argocd-ingress, external-secrets, managed-secrets, lakshmi)
+│   ├── apps/lakshmi/          # lakshmi workload (namespace, secret, postgres, server, client, docs, ingress)
+│   └── infrastructure/        # cert-manager, envoy-gateway, external-dns, external-secrets, managed-secrets, argocd-ingress
+├── docker/llama-server/       # arm64 llama.cpp image (b8638), built by llama-server.yml
+├── scripts/                   # empty, no scripts checked in
+├── .github/workflows/         # lint.yml (PR pre-commit), llama-server.yml (image build on docker/llama-server/**)
 ├── AGENTS.md                  # Assistant guidelines and operational notes
 └── README.md                  # Project overview and quick start
 ```
@@ -106,8 +110,8 @@ k8s-oracle/
 
 ## OKE Cluster Configuration Defaults
 
-- **Kubernetes Version**: 1.36.1
-- **ArgoCD**: v3.5.2
+- **Kubernetes Version**: 1.36.1 (live nodes `v1.36.1`, `kubectl v1.36.2` client)
+- **ArgoCD**: installed from unpinned `argo-cd/stable/manifests/install.yaml`, no version pinned in repo
 - **cert-manager**: v1.21.1
 - **external-dns**: 1.21.1
 - **envoy-gateway**: v1.9.1
@@ -117,6 +121,7 @@ k8s-oracle/
 - **Cluster Type**: BASIC_CLUSTER (free managed control plane)
 - **Node Pool**: 2 ARM nodes (`VM.Standard.A1.Flex`)
 - **Total Resources**: 4 OCPUs, 24GB RAM (maximizes Always Free tier)
+- **Live endpoints (2026-09-06)**: NLB `193.122.152.51`, Gateway `public-gateway`, hostnames `cd.k8s.sudhanva.me` + `lakshmi.k8s.sudhanva.me`, 9/9 apps Synced/Healthy
 
 ---
 
@@ -126,7 +131,7 @@ k8s-oracle/
 
 - Free block storage is **200 GB total** across the tenancy (including boot volumes).
 - 2× ARM nodes = 2× 47 GB boot volumes = 94 GB baseline → **~106 GB** available for PVCs.
-- Set persistent volume claims to VPU=0 (Lower Cost) to remain within free tier limits.
+- Postgres manifest `argocd/apps/lakshmi/postgres.yaml` requests `40Gi oci-bv RWO` with no VPU tuning; live PVC `postgres-data-lakshmi-postgres-0` is `Bound 50Gi` after in-place expansion. Keep manifest and live capacity in sync manually.
 
 ### ArgoCD Cluster Behavior
 
