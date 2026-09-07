@@ -8,14 +8,14 @@ spec:
     - dnsName: cd.k8s.sudhanva.me
       recordType: A
       targets:
-        - "193.122.152.51"
+        - "129.80.2.214"
       providerSpecific:
         - name: cloudflare-proxied
           value: "false"
     - dnsName: lakshmi.k8s.sudhanva.me
       recordType: A
       targets:
-        - "193.122.152.51"
+        - "129.80.2.214"
       providerSpecific:
         - name: cloudflare-proxied
           value: "false"
