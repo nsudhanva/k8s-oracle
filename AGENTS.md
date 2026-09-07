@@ -129,7 +129,7 @@ k8s-oracle/
 
 - Free block storage is **200 GB total** across the tenancy (including boot volumes).
 - 2× ARM nodes = 2× 47 GB boot volumes = 94 GB baseline → **~106 GB** available for PVCs.
-- Postgres manifest `argocd/apps/lakshmi/postgres.yaml` requests `40Gi oci-bv RWO` with no VPU tuning; live PVC `postgres-data-lakshmi-postgres-0` is `Bound 50Gi` after in-place expansion. Backup PVC `lakshmi-postgres-backup` (10Gi req, 50Gi Bound, OCI minimum) feeds the nightly pg_dump CronJob. Keep manifest and live capacity in sync manually.
+- Postgres manifest `argocd/apps/lakshmi/postgres.yaml` requests `40Gi oci-bv RWO` with no VPU tuning; live PVC `postgres-data-lakshmi-postgres-0` is `Bound 50Gi` after in-place expansion. No automated backups by owner decision (keep block storage inside free tier). Keep manifest and live capacity in sync manually.
 
 ### ArgoCD Cluster Behavior
 

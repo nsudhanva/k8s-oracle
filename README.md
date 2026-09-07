@@ -57,7 +57,7 @@ OKE Basic, Flannel, pods `10.244.0.0/16`, services `10.96.0.0/16`. See `tf-oke/c
 | argocd-ingress | git | `argocd` |
 | external-secrets | `2.10.0` | `external-secrets` |
 | managed-secrets | git | `external-secrets` |
-| lakshmi | git (`apps/lakshmi`: server x2, client x2, docs x2, postgres `16-alpine` + `40Gi oci-bv` PVC (live 50Gi Bound), nightly pg_dump CronJob + backup PVC) | `lakshmi` |
+| lakshmi | git (`apps/lakshmi`: server x2, client x2, docs x2, postgres `16-alpine` + `40Gi oci-bv` PVC (live 50Gi Bound)) | `lakshmi` |
 
 ArgoCD itself installs from the unpinned `argo-cd/stable` manifest URL. No version pinned here.
 
