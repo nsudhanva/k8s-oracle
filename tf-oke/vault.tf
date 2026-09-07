@@ -138,16 +138,16 @@ resource "oci_vault_secret" "ssh_public_key" {
   }
 }
 
-resource "oci_vault_secret" "gemma_api_key" {
-  count          = var.gemma_api_key != "" ? 1 : 0
+resource "oci_vault_secret" "resend_api_key" {
+  count          = var.resend_api_key != "" ? 1 : 0
   compartment_id = var.compartment_ocid
   vault_id       = oci_kms_vault.oke_vault.id
   key_id         = oci_kms_key.master_key.id
-  secret_name    = "gemma-api-key"
+  secret_name    = "resend-api-key"
 
   secret_content {
     content_type = "BASE64"
-    content      = base64encode(var.gemma_api_key)
+    content      = base64encode(var.resend_api_key)
   }
 }
 

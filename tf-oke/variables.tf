@@ -132,8 +132,8 @@ variable "load_balancer_ip" {
   default     = ""
 }
 
-variable "gemma_api_key" {
-  description = "API key for authenticating Gemma LLM API requests"
+variable "resend_api_key" {
+  description = "Resend API key for transactional email (daily digests, onboarding)"
   type        = string
   sensitive   = true
   default     = ""
