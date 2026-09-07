@@ -65,11 +65,13 @@ spec:
             type: Exact
             value: /docs
       filters:
-        - type: URLRewrite
-          urlRewrite:
+        - type: RequestRedirect
+          requestRedirect:
+            scheme: https
             path:
               type: ReplaceFullPath
               replaceFullPath: /docs/
+            statusCode: 301
     - matches:
         - path:
             type: PathPrefix
