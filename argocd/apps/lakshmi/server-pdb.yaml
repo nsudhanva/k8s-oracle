@@ -1,0 +1,10 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: lakshmi-server-pdb
+  namespace: lakshmi
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: lakshmi-server

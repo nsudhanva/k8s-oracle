@@ -11,6 +11,7 @@ spec:
   to:
     - group: ""
       kind: Secret
+      name: lakshmi-tls
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate

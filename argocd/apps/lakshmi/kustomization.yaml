@@ -5,7 +5,9 @@ resources:
   - namespace.yaml
   - secret.yaml
   - postgres.yaml
+  - postgres-backup.yaml
   - server.yaml
+  - server-pdb.yaml
   - client.yaml
   - docs.yaml
   - ingress.yaml
