@@ -21,7 +21,7 @@ An **OKE (Oracle Kubernetes Engine) Basic cluster on Oracle Cloud Infrastructure
 - **OKE Basic Cluster** - Free managed Kubernetes control plane
 - **ARM-based worker nodes** - 2 nodes with 2 OCPU / 12GB RAM each (4 OCPUs, 24GB RAM total)
 - **ArgoCD** for GitOps-based continuous delivery
-- **Envoy Gateway** for ingress (Gateway API) with OCI Network Load Balancer
+- **Envoy Gateway** for ingress (Gateway API) with OCI flexible LB (lb, 10/10, free tier)
 - **External Secrets Operator** with OCI Vault for automated secrets management
 - **Cert Manager** for Let's Encrypt TLS certificates
 - **External DNS** for Cloudflare DNS automation
@@ -99,9 +99,7 @@ k8s-oracle/
 │   ├── applications.yaml      # 9 ArgoCD Applications (metrics-server, gateway-api-crds, cert-manager, external-dns, envoy-gateway, argocd-ingress, external-secrets, managed-secrets, lakshmi)
 │   ├── apps/lakshmi/          # lakshmi workload (namespace, secret, postgres, server, client, docs, ingress)
 │   └── infrastructure/        # cert-manager, envoy-gateway, external-dns, external-secrets, managed-secrets, argocd-ingress
-├── docker/llama-server/       # arm64 llama.cpp image (b8638), built by llama-server.yml
-├── scripts/                   # empty, no scripts checked in
-├── .github/workflows/         # lint.yml (PR pre-commit), llama-server.yml (image build on docker/llama-server/**)
+├── .github/workflows/         # lint.yml (PR pre-commit)
 ├── AGENTS.md                  # Assistant guidelines and operational notes
 └── README.md                  # Project overview and quick start
 ```
@@ -121,7 +119,7 @@ k8s-oracle/
 - **Cluster Type**: BASIC_CLUSTER (free managed control plane)
 - **Node Pool**: 2 ARM nodes (`VM.Standard.A1.Flex`)
 - **Total Resources**: 4 OCPUs, 24GB RAM (maximizes Always Free tier)
-- **Live endpoints (2026-09-06)**: NLB `193.122.152.51`, Gateway `public-gateway`, hostnames `cd.k8s.sudhanva.me` + `lakshmi.k8s.sudhanva.me`, 9/9 apps Synced/Healthy
+- **Live endpoints (2026-09-06)**: flexible LB `129.80.2.214`, Gateway `public-gateway`, hostnames `cd.k8s.sudhanva.me` + `lakshmi.k8s.sudhanva.me`, 9/9 apps Synced/Healthy
 
 ---
 
@@ -131,7 +129,7 @@ k8s-oracle/
 
 - Free block storage is **200 GB total** across the tenancy (including boot volumes).
 - 2× ARM nodes = 2× 47 GB boot volumes = 94 GB baseline → **~106 GB** available for PVCs.
-- Postgres manifest `argocd/apps/lakshmi/postgres.yaml` requests `40Gi oci-bv RWO` with no VPU tuning; live PVC `postgres-data-lakshmi-postgres-0` is `Bound 50Gi` after in-place expansion. Keep manifest and live capacity in sync manually.
+- Postgres manifest `argocd/apps/lakshmi/postgres.yaml` requests `40Gi oci-bv RWO` with no VPU tuning; live PVC `postgres-data-lakshmi-postgres-0` is `Bound 50Gi` after in-place expansion. Backup PVC `lakshmi-postgres-backup` (10Gi req, 50Gi Bound, OCI minimum) feeds the nightly pg_dump CronJob. Keep manifest and live capacity in sync manually.
 
 ### ArgoCD Cluster Behavior
 

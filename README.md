@@ -2,7 +2,7 @@
 
 Terraform provisions network, cluster, and Vault. ArgoCD syncs 9 apps. Envoy Gateway exposes two HTTPS hostnames through one free-tier flexible LB.
 
-**Docs:** <https://k8s.sudhanva.me/> · **ArgoCD:** `https://cd.k8s.sudhanva.me` · **App:** `https://lakshmi.k8s.sudhanva.me` · **LB:** `193.122.152.51` (flexible 10/10, free tier)
+**Docs:** <https://lakshmi.k8s.sudhanva.me/docs> · **ArgoCD:** `https://cd.k8s.sudhanva.me` · **App:** `https://lakshmi.k8s.sudhanva.me` · **LB:** `129.80.2.214` (flexible 10/10, free tier)
 
 ```mermaid
 graph TB
@@ -12,7 +12,7 @@ graph TB
     end
 
     subgraph OCI["Oracle Cloud"]
-        LB[OCI flexible LB<br/>10 Mbps free tier<br/>193.122.152.51]
+        LB[OCI flexible LB<br/>10 Mbps free tier<br/>129.80.2.214]
         subgraph OKE["OKE Basic v1.36.1"]
             EG[Envoy Gateway]
             ARGO[ArgoCD<br/>9 apps]
@@ -40,8 +40,8 @@ OKE Basic, Flannel, pods `10.244.0.0/16`, services `10.96.0.0/16`. See `tf-oke/c
 
 | Node | Shape | Status |
 |------|-------|--------|
-| `10.0.2.116` | 2 OCPU, 12GB `VM.Standard.A1.Flex` ARM | Ready, v1.36.1 |
-| `10.0.2.124` | 2 OCPU, 12GB `VM.Standard.A1.Flex` ARM | Ready, v1.36.1 |
+| `10.0.2.215` | 2 OCPU, 12GB `VM.Standard.A1.Flex` ARM | Ready, v1.36.1 |
+| `10.0.2.46` | 2 OCPU, 12GB `VM.Standard.A1.Flex` ARM | Ready, v1.36.1 |
 
 4 OCPUs / 24GB total, the Always Free max. VCN `10.0.0.0/16` (public `10.0.1.0/24`, private `10.0.2.0/24`).
 
@@ -57,7 +57,7 @@ OKE Basic, Flannel, pods `10.244.0.0/16`, services `10.96.0.0/16`. See `tf-oke/c
 | argocd-ingress | git | `argocd` |
 | external-secrets | `2.10.0` | `external-secrets` |
 | managed-secrets | git | `external-secrets` |
-| lakshmi | git (`apps/lakshmi`: server x2, client x2, docs, postgres `16-alpine` + `40Gi oci-bv` PVC) | `lakshmi` |
+| lakshmi | git (`apps/lakshmi`: server x2, client x2, docs x2, postgres `16-alpine` + `40Gi oci-bv` PVC (live 50Gi Bound), nightly pg_dump CronJob + backup PVC) | `lakshmi` |
 
 ArgoCD itself installs from the unpinned `argo-cd/stable` manifest URL. No version pinned here.
 
@@ -103,9 +103,9 @@ kubectl apply -f argocd/applications.yaml
 ```bash
 kubectl get application -A   # 9/9 Synced/Healthy
 kubectl get nodes              # 2x Ready v1.36.1 arm64
-kubectl get gateway -A         # public-gateway 193.122.152.51
+kubectl get gateway -A         # public-gateway 129.80.2.214
 kubectl get httproute -A       # cd + lakshmi hostnames
-kubectl get pods -n lakshmi    # 2x client, 1x docs, 2x server, postgres-0
+kubectl get pods -n lakshmi    # 2x client, 2x docs, 2x server, postgres-0
 ```
 
 ## Secrets
@@ -113,13 +113,12 @@ kubectl get pods -n lakshmi    # 2x client, 1x docs, 2x server, postgres-0
 - Everything secret lives in OCI Vault, reaches pods via `ExternalSecret` only. Never commit values.
 - `terraform apply` before pushing manifest changes, so Vault keys exist when ArgoCD syncs new refs.
 - `lakshmi-db-password` and `lakshmi-django-secret-key` are created once by hand in the OCI console, not by Terraform.
-- `lakshmi-secrets` syncs DB creds plus `ALPHA_VANTAGE_API_KEY` from Vault. Finnhub ref returns once a rotated key is set via `finnhub_api_key`.
+- `lakshmi-secrets` syncs DB creds plus `ALPHA_VANTAGE_API_KEY` and `FINNHUB_API_KEY` from Vault.
 - State is local (`backend.tf` is commented out). The `oke-tfstate` bucket exists but is not wired up.
-- `templates/manifests/applications.yaml.tpl` lacks the `lakshmi` app. Re-applying Terraform without fixing that drops it from `argocd/applications.yaml`.
 
 ## CI
 
-`lint.yml` (pre-commit on PRs), `llama-server.yml` (arm64 image build). Local: `pre-commit run --all-files`.
+`lint.yml` (pre-commit on PRs). Local: `pre-commit run --all-files`.
 
 ## License
 
