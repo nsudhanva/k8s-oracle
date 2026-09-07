@@ -62,6 +62,18 @@ spec:
   rules:
     - matches:
         - path:
+            type: Exact
+            value: /docs
+      filters:
+        - type: RequestRedirect
+          requestRedirect:
+            scheme: https
+            path:
+              type: ReplaceFullPath
+              replaceFullPath: /docs/
+            statusCode: 301
+    - matches:
+        - path:
             type: PathPrefix
             value: /api
       backendRefs:
