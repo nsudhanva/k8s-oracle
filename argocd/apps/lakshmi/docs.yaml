@@ -31,7 +31,7 @@ spec:
                 topologyKey: kubernetes.io/hostname
       containers:
         - name: docs
-          image: ghcr.io/nsudhanva/lakshmi-docs:sha-1455d0d
+          image: ghcr.io/nsudhanva/lakshmi-docs:sha-3e881f5
           imagePullPolicy: Always
           ports:
             - containerPort: 80
