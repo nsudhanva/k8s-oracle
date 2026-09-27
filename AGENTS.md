@@ -129,6 +129,7 @@ k8s-oracle/
 
 - Free block storage is **200 GB total** across the tenancy (including boot volumes).
 - 2× ARM nodes = 2× 47 GB boot volumes = 94 GB baseline → **~106 GB** available for PVCs.
+- `lakshmi-server` runs 2 replicas with required pod anti-affinity (one per node), a `maxSurge: 0` / `maxUnavailable: 1` rollout so updates fit on the 2 free-tier nodes, and PDB `minAvailable: 1`. All probes hit `/api/core/health/` (exempt from DRF throttling in the app) with `timeoutSeconds: 5`.
 - Postgres manifest `argocd/apps/lakshmi/postgres.yaml` requests `40Gi oci-bv RWO` with no VPU tuning; live PVC `postgres-data-lakshmi-postgres-0` is `Bound 50Gi` after in-place expansion. No automated backups by owner decision (keep block storage inside free tier). Keep manifest and live capacity in sync manually.
 
 ### ArgoCD Cluster Behavior

@@ -22,8 +22,8 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxUnavailable: 0
-      maxSurge: 1
+      maxUnavailable: 1
+      maxSurge: 0
   selector:
     matchLabels:
       app: lakshmi-server
@@ -36,16 +36,14 @@ spec:
         - name: regcred
       affinity:
         podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 100
-              podAffinityTerm:
-                labelSelector:
-                  matchExpressions:
-                    - key: app
-                      operator: In
-                      values:
-                        - lakshmi-server
-                topologyKey: kubernetes.io/hostname
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - lakshmi-server
+              topologyKey: kubernetes.io/hostname
       initContainers:
         - name: init-migrate-and-seed
           image: ghcr.io/nsudhanva/lakshmi-server:sha-dec8561
@@ -94,12 +92,14 @@ spec:
               port: 8000
             initialDelaySeconds: 5
             periodSeconds: 10
+            timeoutSeconds: 5
           startupProbe:
             httpGet:
               path: /api/core/health/
               port: 8000
             initialDelaySeconds: 10
             periodSeconds: 10
+            timeoutSeconds: 5
             failureThreshold: 30
           livenessProbe:
             httpGet:
@@ -107,6 +107,7 @@ spec:
               port: 8000
             initialDelaySeconds: 15
             periodSeconds: 20
+            timeoutSeconds: 5
           resources:
             requests:
               cpu: 500m
