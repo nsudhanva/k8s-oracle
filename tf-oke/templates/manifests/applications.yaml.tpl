@@ -117,7 +117,9 @@ spec:
       helm:
         valuesObject:
           logLevel: debug
-          provider: cloudflare
+          policy: upsert-only
+          provider:
+            name: cloudflare
           env:
             - name: CF_API_TOKEN
               valueFrom:
