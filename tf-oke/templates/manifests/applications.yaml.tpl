@@ -40,7 +40,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/kubernetes-sigs/gateway-api.git
-    targetRevision: v1.6.1
+    targetRevision: v1.6.3
     path: config/crd/standard
   destination:
     server: https://kubernetes.default.svc
@@ -83,7 +83,7 @@ spec:
   sources:
     - repoURL: https://charts.jetstack.io
       chart: cert-manager
-      targetRevision: v1.21.1
+      targetRevision: v1.21.2
       helm:
         valuesObject:
           installCRDs: true
@@ -113,7 +113,7 @@ spec:
   sources:
     - repoURL: https://kubernetes-sigs.github.io/external-dns/
       chart: external-dns
-      targetRevision: 1.21.1
+      targetRevision: 1.23.0
       helm:
         valuesObject:
           logLevel: debug
@@ -170,7 +170,7 @@ spec:
   sources:
     - repoURL: oci://docker.io/envoyproxy/gateway-helm
       chart: gateway-helm
-      targetRevision: v1.9.1
+      targetRevision: v1.9.2
       helm:
         skipCrds: true
     - repoURL: ${git_repo_url}
@@ -240,7 +240,7 @@ spec:
   sources:
     - repoURL: https://charts.external-secrets.io
       chart: external-secrets
-      targetRevision: 2.10.0
+      targetRevision: 2.13.0
       helm:
         valuesObject:
           webhook:

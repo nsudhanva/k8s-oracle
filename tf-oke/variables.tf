@@ -78,7 +78,7 @@ variable "git_username" {
 variable "kubernetes_version" {
   description = "Kubernetes version for OKE cluster"
   type        = string
-  default     = "1.36.1"
+  default     = "1.37.0"
 }
 
 variable "node_pool_size" {

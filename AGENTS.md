@@ -108,18 +108,18 @@ k8s-oracle/
 
 ## OKE Cluster Configuration Defaults
 
-- **Kubernetes Version**: 1.36.1 (live nodes `v1.36.1`, `kubectl v1.36.2` client)
+- **Kubernetes Version**: 1.37.0 (live nodes `v1.37.0`, `kubectl v1.36.2` client)
 - **ArgoCD**: installed from unpinned `argo-cd/stable/manifests/install.yaml`, no version pinned in repo
-- **cert-manager**: v1.21.1
-- **external-dns**: 1.21.1
-- **envoy-gateway**: v1.9.1
-- **external-secrets**: 2.10.0
-- **gateway-api CRDs**: v1.6.1
+- **cert-manager**: v1.21.2
+- **external-dns**: 1.23.0
+- **envoy-gateway**: v1.9.2
+- **external-secrets**: 2.13.0
+- **gateway-api CRDs**: v1.6.3
 - **metrics-server**: 3.14.0
 - **Cluster Type**: BASIC_CLUSTER (free managed control plane)
 - **Node Pool**: 2 ARM nodes (`VM.Standard.A1.Flex`)
 - **Total Resources**: 4 OCPUs, 24GB RAM (maximizes Always Free tier)
-- **Live endpoints (2026-09-06)**: flexible LB `129.80.2.214`, Gateway `public-gateway`, hostnames `cd.k8s.sudhanva.me` + `lakshmi.k8s.sudhanva.me`, 9/9 apps Synced/Healthy
+- **Live endpoints (2026-10-22)**: flexible LB `129.80.2.214`, Gateway `public-gateway`, hostnames `cd.k8s.sudhanva.me` + `lakshmi.k8s.sudhanva.me`, 9/9 apps Synced/Healthy
 
 ---
 

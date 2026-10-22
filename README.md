@@ -13,7 +13,7 @@ graph TB
 
     subgraph OCI["Oracle Cloud"]
         LB[OCI flexible LB<br/>10 Mbps free tier<br/>129.80.2.214]
-        subgraph OKE["OKE Basic v1.36.1"]
+        subgraph OKE["OKE Basic v1.37.0"]
             EG[Envoy Gateway]
             ARGO[ArgoCD<br/>9 apps]
             LAK[lakshmi<br/>server/client/docs/postgres]
@@ -40,8 +40,8 @@ OKE Basic, Flannel, pods `10.244.0.0/16`, services `10.96.0.0/16`. See `tf-oke/c
 
 | Node | Shape | Status |
 |------|-------|--------|
-| `10.0.2.215` | 2 OCPU, 12GB `VM.Standard.A1.Flex` ARM | Ready, v1.36.1 |
-| `10.0.2.46` | 2 OCPU, 12GB `VM.Standard.A1.Flex` ARM | Ready, v1.36.1 |
+| `10.0.2.215` | 2 OCPU, 12GB `VM.Standard.A1.Flex` ARM | Ready, v1.37.0 |
+| `10.0.2.46` | 2 OCPU, 12GB `VM.Standard.A1.Flex` ARM | Ready, v1.37.0 |
 
 4 OCPUs / 24GB total, the Always Free max. VCN `10.0.0.0/16` (public `10.0.1.0/24`, private `10.0.2.0/24`).
 
@@ -50,12 +50,12 @@ OKE Basic, Flannel, pods `10.244.0.0/16`, services `10.96.0.0/16`. See `tf-oke/c
 | App | Version | Namespace |
 |-----|---------|-----------|
 | metrics-server | `3.14.0` | `kube-system` |
-| gateway-api-crds | `v1.6.1` | cluster-scoped |
-| cert-manager | `v1.21.1` | `cert-manager` |
-| external-dns | `1.21.1` (Cloudflare) | `external-dns` |
-| envoy-gateway | `v1.9.1` | `envoy-gateway-system` |
+| gateway-api-crds | `v1.6.3` | cluster-scoped |
+| cert-manager | `v1.21.2` | `cert-manager` |
+| external-dns | `1.23.0` (Cloudflare) | `external-dns` |
+| envoy-gateway | `v1.9.2` | `envoy-gateway-system` |
 | argocd-ingress | git | `argocd` |
-| external-secrets | `2.10.0` | `external-secrets` |
+| external-secrets | `2.13.0` | `external-secrets` |
 | managed-secrets | git | `external-secrets` |
 | lakshmi | git (`apps/lakshmi`: server x2 (one per node), client x2, docs x2, postgres `16-alpine` + `40Gi oci-bv` PVC (live 50Gi Bound)) | `lakshmi` |
 
@@ -102,7 +102,7 @@ kubectl apply -f argocd/applications.yaml
 
 ```bash
 kubectl get application -A   # 9/9 Synced/Healthy
-kubectl get nodes              # 2x Ready v1.36.1 arm64
+kubectl get nodes              # 2x Ready v1.37.0 arm64
 kubectl get gateway -A         # public-gateway 129.80.2.214
 kubectl get httproute -A       # cd + lakshmi hostnames
 kubectl get pods -n lakshmi    # 2x client, 2x docs, 2x server, postgres-0
