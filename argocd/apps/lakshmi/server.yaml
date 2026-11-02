@@ -131,3 +131,41 @@ spec:
       name: http
   selector:
     app: lakshmi-server
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: lakshmi-track-record
+  namespace: lakshmi
+spec:
+  schedule: "30 18 * * 1-5"
+  timeZone: America/New_York
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 1800
+      template:
+        spec:
+          restartPolicy: OnFailure
+          imagePullSecrets:
+            - name: regcred
+          containers:
+            - name: track-record
+              image: ghcr.io/nsudhanva/lakshmi-server:sha-e31f84f
+              imagePullPolicy: Always
+              command: ["python", "manage.py", "track_record", "nightly"]
+              envFrom:
+                - secretRef:
+                    name: lakshmi-secrets
+                - configMapRef:
+                    name: lakshmi-server-config
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  cpu: 500m
+                  memory: 768Mi
