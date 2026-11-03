@@ -46,7 +46,7 @@ spec:
               topologyKey: kubernetes.io/hostname
       initContainers:
         - name: init-migrate-and-seed
-          image: ghcr.io/nsudhanva/lakshmi-server:sha-e31f84f
+          image: ghcr.io/nsudhanva/lakshmi-server:sha-c5511be
           imagePullPolicy: Always
           command: ["sh", "-c"]
           args:
@@ -61,7 +61,7 @@ spec:
                 name: lakshmi-server-config
       containers:
         - name: server
-          image: ghcr.io/nsudhanva/lakshmi-server:sha-e31f84f
+          image: ghcr.io/nsudhanva/lakshmi-server:sha-c5511be
           imagePullPolicy: Always
           command: ["gunicorn", "config.wsgi:application"]
           args:
@@ -154,7 +154,7 @@ spec:
             - name: regcred
           containers:
             - name: track-record
-              image: ghcr.io/nsudhanva/lakshmi-server:sha-e31f84f
+              image: ghcr.io/nsudhanva/lakshmi-server:sha-c5511be
               imagePullPolicy: Always
               command: ["python", "manage.py", "track_record", "nightly"]
               envFrom:
