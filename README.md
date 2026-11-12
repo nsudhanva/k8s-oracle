@@ -51,15 +51,15 @@ OKE Basic, Flannel, pods `10.244.0.0/16`, services `10.96.0.0/16`. See `tf-oke/c
 |-----|---------|-----------|
 | metrics-server | `3.14.0` | `kube-system` |
 | gateway-api-crds | `v1.6.3` | cluster-scoped |
-| cert-manager | `v1.21.2` | `cert-manager` |
+| cert-manager | `v1.21.3` | `cert-manager` |
 | external-dns | `1.23.0` (Cloudflare) | `external-dns` |
-| envoy-gateway | `v1.9.2` | `envoy-gateway-system` |
+| envoy-gateway | `v1.10.0` | `envoy-gateway-system` |
 | argocd-ingress | git | `argocd` |
-| external-secrets | `2.13.0` | `external-secrets` |
+| external-secrets | `2.15.0` | `external-secrets` |
 | managed-secrets | git | `external-secrets` |
 | lakshmi | git (`apps/lakshmi`: server x2 (one per node), client x2, docs x2, postgres `16-alpine` + `40Gi oci-bv` PVC (live 50Gi Bound)) | `lakshmi` |
 
-ArgoCD itself installs from the unpinned `argo-cd/stable` manifest URL. No version pinned here.
+ArgoCD itself installs from the unpinned `argo-cd/stable` manifest URL (live `v3.6.1`). No version pinned here. Upgrade: `kubectl apply -n argocd --server-side --force-conflicts -f <install.yaml>`.
 
 ```mermaid
 flowchart LR
