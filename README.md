@@ -13,7 +13,7 @@ graph TB
 
     subgraph OCI["Oracle Cloud"]
         LB[OCI flexible LB<br/>10 Mbps free tier<br/>129.80.2.214]
-        subgraph OKE["OKE Basic v1.37.0"]
+        subgraph OKE["OKE Basic v1.37.1"]
             EG[Envoy Gateway]
             ARGO[ArgoCD<br/>9 apps]
             LAK[lakshmi<br/>server/client/docs/postgres]
@@ -40,8 +40,8 @@ OKE Basic, Flannel, pods `10.244.0.0/16`, services `10.96.0.0/16`. See `tf-oke/c
 
 | Node | Shape | Status |
 |------|-------|--------|
-| `10.0.2.245` | 2 OCPU, 12GB `VM.Standard.A1.Flex` ARM | Ready, v1.37.0 |
-| `10.0.2.9` | 2 OCPU, 12GB `VM.Standard.A1.Flex` ARM | Ready, v1.37.0 |
+| `10.0.2.133` | 2 OCPU, 12GB `VM.Standard.A1.Flex` ARM | Ready, v1.37.1 |
+| `10.0.2.71` | 2 OCPU, 12GB `VM.Standard.A1.Flex` ARM | Ready, v1.37.1 |
 
 4 OCPUs / 24GB total, the Always Free max. VCN `10.0.0.0/16` (public `10.0.1.0/24`, private `10.0.2.0/24`).
 
@@ -102,7 +102,7 @@ kubectl apply -f argocd/applications.yaml
 
 ```bash
 kubectl get application -A   # 9/9 Synced/Healthy
-kubectl get nodes              # 2x Ready v1.37.0 arm64
+kubectl get nodes              # 2x Ready v1.37.1 arm64
 kubectl get gateway -A         # public-gateway 129.80.2.214
 kubectl get httproute -A       # cd + lakshmi hostnames
 kubectl get pods -n lakshmi    # 2x client, 2x docs, 2x server, postgres-0

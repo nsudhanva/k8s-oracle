@@ -78,7 +78,7 @@ variable "git_username" {
 variable "kubernetes_version" {
   description = "Kubernetes version for OKE cluster"
   type        = string
-  default     = "1.37.0"
+  default     = "1.37.1"
 }
 
 variable "node_pool_size" {
@@ -247,4 +247,10 @@ variable "oidc_provider_url" {
   description = "OCI Identity Domain OIDC provider URL (e.g., https://idcs-xxx.identity.oraclecloud.com)"
   type        = string
   default     = ""
+}
+
+variable "node_availability_domain" {
+  description = "Availability domain suffix for worker nodes; must match the AD of the postgres block volume"
+  type        = string
+  default     = "AD-2"
 }

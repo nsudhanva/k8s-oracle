@@ -62,7 +62,7 @@ resource "oci_containerengine_node_pool" "oke_node_pool" {
     size = var.node_pool_size
 
     dynamic "placement_configs" {
-      for_each = [for ad in data.oci_identity_availability_domains.ads.availability_domains : ad.name]
+      for_each = [for ad in data.oci_identity_availability_domains.ads.availability_domains : ad.name if endswith(ad.name, var.node_availability_domain)]
       content {
         availability_domain = placement_configs.value
         subnet_id           = oci_core_subnet.private_subnet.id

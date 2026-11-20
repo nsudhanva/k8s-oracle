@@ -108,7 +108,7 @@ k8s-oracle/
 
 ## OKE Cluster Configuration Defaults
 
-- **Kubernetes Version**: 1.37.0 (live nodes `v1.37.0`, `kubectl v1.37.2` client)
+- **Kubernetes Version**: 1.37.1 (live nodes `v1.37.1`, `kubectl v1.37.2` client)
 - **ArgoCD**: installed from unpinned `argo-cd/stable/manifests/install.yaml`, no version pinned in repo (live `v3.6.1` as of 2026-11-11)
 - **cert-manager**: v1.21.3
 - **external-dns**: 1.23.0
@@ -130,6 +130,8 @@ k8s-oracle/
 - Free block storage is **200 GB total** across the tenancy (including boot volumes).
 - 2× ARM nodes = 2× 47 GB boot volumes = 94 GB baseline → **~106 GB** available for PVCs.
 - `lakshmi-server` runs 2 replicas with required pod anti-affinity (one per node), a `maxSurge: 0` / `maxUnavailable: 1` rollout so updates fit on the 2 free-tier nodes, and PDB `minAvailable: 1`. All probes hit `/api/core/health/` (exempt from DRF throttling in the app) with `timeoutSeconds: 5`.
+- Worker nodes are pinned to `US-ASHBURN-AD-2` (`var.node_availability_domain`) because the postgres block volume lives there; a node in another AD cannot mount it. OKE Basic clusters cannot use boot-volume-replace node cycling, so node upgrades replace instances.
+- The Envoy LB Service sets `oci.oraclecloud.com/security-rule-management-mode: "None"`; the Terraform security lists already allow LB-to-NodePort traffic, so OKE must not add its own rules (they show up as Terraform drift).
 - Postgres manifest `argocd/apps/lakshmi/postgres.yaml` requests `40Gi oci-bv RWO` with no VPU tuning; live PVC `postgres-data-lakshmi-postgres-0` is `Bound 50Gi` after in-place expansion. No automated backups by owner decision (keep block storage inside free tier). Keep manifest and live capacity in sync manually.
 
 ### ArgoCD Cluster Behavior

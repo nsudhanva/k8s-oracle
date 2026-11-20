@@ -55,6 +55,7 @@ spec:
           service.beta.kubernetes.io/oci-load-balancer-shape-flex-min: "10"
           service.beta.kubernetes.io/oci-load-balancer-shape-flex-max: "10"
           service.beta.kubernetes.io/oci-load-balancer-subnet1: "${public_subnet_id}"
+          oci.oraclecloud.com/security-rule-management-mode: "None"
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
